@@ -7,8 +7,8 @@ Imports: graphics
 Suggests: knitr, rmarkdown, bookdown
 Authors@R: c(person(c("Terry", "M"), "Therneau",
                     email="therneau.terry@mayo.edu",
-	            role=c("aut", "cre")),
- 	       person("Atkinson", "Elizabeth", role="ctb"),
+	            role="aut"),
+ 	       person("Atkinson", "Elizabeth", role=c("cre","ctb"),
 	       person("Crowson", "Cynthia", role="ctb"))
 Description: This package contains many of the vignettes for the survival package,
  along with some optional data sets used in those vignettes. 
