@@ -1,0 +1,12 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+survivalVignettes.Rproj
+vignettes/*.log
+vignettes/*.tex
+vignettes/*.toc
+vignettes/*.bbl
+vignettes/*.synctex.gz
+.hg
+vignettes/original/*

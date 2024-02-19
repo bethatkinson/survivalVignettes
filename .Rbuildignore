@@ -1,0 +1,7 @@
+^\.hg$
+^\.hg/wcache$
+^vignettes/original$
+^.*\.Rproj$
+^\.Rproj\.user$
+^\.gitignore$
+^\.Rhistory$
