@@ -6,6 +6,8 @@ bibliography: refer.bib
 output: 
     bookdown::html_document2:
         base_format: rmarkdown::html_vignette
+        number_sections: true
+        toc: true
 vignette: |
   %\VignetteIndexEntry{Competing Risks and Multistate Models}
   %\VignetteEncoding{UTF-8}

@@ -1,6 +1,6 @@
 ^\.hg$
 ^\.hg/wcache$
-^vignettes/original$
+^vignettes/sweave$
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^\.gitignore$
