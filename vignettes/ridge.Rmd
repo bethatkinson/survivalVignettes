@@ -95,7 +95,7 @@ columns of said data.
 The problem with this approach comes if we want to do prediction using a new
 set of data.
 
-```{r, pass4}
+```{r, pass4, error=TRUE}
 newsnp <- matrix(rbinom(20*4, 1, p=.12), nrow=4)
 prdata <- data.frame(age= c(50, 65, 48, 70), sex= c(1, 1, 2,1),
                        newsnp)
