@@ -1,21 +1,14 @@
 \documentclass{article}[11pt]
+
 \usepackage{amsmath}
-%\usepackage{Sweave}
-%\usepackage{times}
-\addtolength{\textwidth}{.8in}
-\addtolength{\oddsidemargin}{-.4in}
+\addtolength{\textwidth}{1in}
+\addtolength{\oddsidemargin}{-.5in}
 \setlength{\evensidemargin}{\oddsidemargin}
-\newcommand{\myfig}[1]{\resizebox{\textwidth}{!}
-                        {\includegraphics{figure/#1.pdf}}}
 \newcommand{\code}[1]{\texttt{#1}}
 
-%\VignetteIndexEntry{The design of the survival libraries}
+%\VignetteIndexEntry{Design of the Survival Libraries}
 %\VignetteEngine{knitr::knitr}
 %\VignetteEncoding{UTF-8}
-
-<<echo=FALSE>>=
-library(survival)
-@ 
 
 \title{The Design of the Survival Libraries}
 \author{Terry Therneau\\Mayo Clinic}
@@ -24,12 +17,28 @@ library(survival)
 \maketitle
 \tableofcontents
 
+
+
+<<echo=FALSE>>=
+library(knitr)
+opts_chunk$set(tidy=FALSE, fig.keep='none',
+               fig.path='compete',fig.width=6,fig.height=4)
+
+options(continue="  ", width=60)
+pdf.options(pointsize=10) #text in graph about the same as regular text
+options(contrasts=c("contr.treatment", "contr.poly")) #ensure default
+
+library(survival)
+@ 
+
+
+
 \section{Introduction}
 Before returning to graduate school I was a SAS programmer and came to
 know the language intimately; I wrote the first SAS procedure for Cox models
 and presented it at the 1979 SAS user's conference.  
 It's a powerful language
-and I still occassionally interface with it.
+and I still occasionally interface with it.
 I was introduced to S in 1984, however, and never looked back.
 The language was a rough around the edges at that time,
 nevertheless I obtained a license for a local copy soon after
@@ -41,7 +50,7 @@ Why the long loyalty to this tool?
 The reason is that S/R has allowed me to turn ideas into software.  
 Not just programs that can let me write a paper, but software that 
 I can count on for practical analysis,
-imbedded into a system with rich tools for data manipulation and
+embedded into a system with rich tools for data manipulation and
 presentation.
 I am a biostatistician by trade, in an institution where the primary 
 motivation is
@@ -51,25 +60,25 @@ Successful software is defined by the problems it helps me address.
 
 Much of my work has been in fatal diseases, e.g., multiple myeloma, advanced lung
 cancer, liver failure, and treatment after a myocardial infarction; 
-for all of these extending the time to event (progression, retransplant, death,
+for all of these extending the time to event (progression, re-transplant, death,
 \ldots) is the measure of success.
 This in turn led to a focus on survival analysis.  
 I've often needed analysis methods in that domain which were not yet 
 available, writing these in S and gathering them together has been the
 ongoing genesis of the package.
 The design details of the package have changed over time, but the primary 
-design goals have remainded fairly constant.
+design goals have remained fairly constant.
 \begin{enumerate}
   \item Responsiveness.  Every addition to the package has been in response to
     a particular data analysis need, 
     so I need to be able to translate a new idea into software quickly.
     The medical paper can't go on hold.
   \item Flexibility.  I often mix and match approaches from prior functions, 
-    or use their results in new ways that were unforseen at the time of writing. 
+    or use their results in new ways that were unforeseen at the time of writing. 
     As much as anything else, facilitating this means documenting all of the 
     components of a model's output. 
   \item Ease of use, for both me and others.
-  \item Reliability.  One of my colleages said this best during the interview of
+  \item Reliability.  One of my colleagues said this best during the interview of
     a new graduate (BA in statistics) who would be working on analysis of patient
     data:
     ``An B is no longer good enough: results have to be correct''.
@@ -122,7 +131,7 @@ Below are the primary functions for survival
 
 An example call is
 
-<<eval=FALSE>>= 
+<<eval=FALSE>>=
 fit <- coxph(Surv(time, status) ~ ns(age,3) + sex + ph.ecog, data=lung)
 rr <- resid(fit, type='dfbeta')
 @
@@ -223,7 +232,7 @@ However it is done the operation is simple and fast, so the method doesn't reall
 matter.
 
 The print method turns the object into a character form and then calls
-the ususal print function with \code{quote=FALSE}.
+the usual print function with \code{quote=FALSE}.
 A more complicated method method for Surv objects
 is \code{as.character}, at least in terms of lines of code. I chose
 to use an extension of the notation found in Miller 
@@ -280,20 +289,20 @@ to be seamless.
     anyDuplicated, duplicated, as.data.frame, t, unique
   \item names and names<- are implemented internally as row names of the
     underlying matrix, but to the user it looks like a vector of names
-  \item plotting methdos: print a ``not valid'' error message for barplot, 
+  \item plotting methods: print a ``not valid'' error message for barplot, 
     density, hist, identify, image, lines, points, pairs, text
     text.  For plot.Surv we elected to print a Kaplan-Meier.
   \item as.character, as.logical, as.integer, as.matrix, is.na, as.numeric, 
     format
   \item head, tail
   \item levels: show the set of status values
-  \item mean, median, quantile: we chose to leave the mean undefinded (print
+  \item mean, median, quantile: we chose to leave the mean undefined (print
     an error), while the median and quantiles are based on a Kaplan-Meier
   \item print: lists the as.character form.  There is no summary method.
   \item rep, rep.int, rep\_len: all the forms of rep
   \item xtrfm: this method is used internally by the sort and order functions.
     We chose to order data by status within time
-  \item c: concatonate Surv objects.  This turns out to be harder than one 
+  \item c: concatenate Surv objects.  This turns out to be harder than one 
     would expect.  What if they are different types, say one right censored
     vector and one interval censored?  There are many combinations.
 \end{itemize}
@@ -309,7 +318,7 @@ For instance, here is the R print generic
 <<print, echo=TRUE>>=
 print
 @ 
-Thus the \code{print.coxph} function also should have exactly two argumets,
+Thus the \code{print.coxph} function also should have exactly two arguments,
 of the same name, in the same order.  
 Your package generics will often still work if this advice is ignored,
 but at the cost of higher overhead and some loss in stability. 
@@ -392,7 +401,7 @@ The code then has to do extra work to pull the cluster variable out of the
 model frame, including post-hoc removal of the term from the model formula 
 itself in order to prevent
 its appearance in the final $X$ matrix.
-(This design mistake will be with me forever, to support backwards compatability
+(This design mistake will be with me forever, to support backwards compatibility
 for old code.)
 
 For the usual arguments there are the \code{model.response(mf)},
@@ -442,7 +451,7 @@ When processing this code,
 the model.frame function can't handle extra variables that have a 
 complex right-hand side, however, so we cannot simply add \code{rmap}
 to the match statement.
-The basic trick is to find out what the variables are, create a temorary
+The basic trick is to find out what the variables are, create a temporary
 formula that includes them, and then pass that formula forward.
 
 \begin{verbatim}
@@ -508,7 +517,7 @@ From a statistical perspective this is legal in a Cox model.
 Things are just a bit more complicated then, enough so that I wrote a
 short helper routine \code{untangle.specials}.
 (It also helped insulate me from several changes to the terms object's
-form that occured in early versions of Splus and R.  That has
+form that occurred in early versions of Splus and R.  That has
 all settled down now, but I still use the helper function).
 This accepts a terms object, the name of the special and an optional order,
 and returns an index vector and a vector of names.
@@ -542,7 +551,7 @@ which will trigger the specials flag, but the resulting X matrix has
 no strata column that needs to be removed.
 This model has separate strata and coefficients for each sex; results
 are identical to fitting a separate model for each sex.
-That is, it is a completly legal model, but not something I anticipated,
+That is, it is a completely legal model, but not something I anticipated,
 leading to assumptions in the downstream code that were not quite true
 (though now long fixed).
 
@@ -567,7 +576,7 @@ checks to see if it was called with \code{method = 'model.frame'};
 if so the routine returns the just constructed model frame \code{m}, 
 otherwise it goes forward with the
 usual computation.  Note that \code{lm} already has a method argument which is
-used to decide the compuational approach.  
+used to decide the computational approach.  
 The \code{model.frame.lm} function is then very simple: if its
 argument is a prior fit that already contains a model frame (from a call that
 saved the model frame) and there are no further arguments such as data or subset
@@ -605,7 +614,7 @@ All of these were serious issues in S.
 The current version of R has addressed all of them, but in different ways.
 Factors were the first to be repaired, 
 information about them is saved in the model frame,
-and contrast informaion is returned as an attribute of the $X$ matrix.
+and contrast information is returned as an attribute of the $X$ matrix.
 These are stored in the coxph object as \code{xlevels} and \code{contrasts}.
 Information about data dependent transformations is saved in the
 \code{predvars} attribute of the \code{terms} object, and information about
@@ -648,7 +657,7 @@ predict.lm <- function (object, newdata, se.fit = FALSE,
         X <- model.matrix(Terms, m, contrasts.arg = object$contrasts)
     }
 \end{verbatim}
-By using the terms from the orignal fit as the ``formula'' argument
+By using the terms from the original fit as the ``formula'' argument
 for the call to \code{model.frame} variable dependent transformations
 are retained; information about factor levels is explicitly carried
 forward through \code{xlevels}.  
@@ -729,7 +738,7 @@ Harold: There is no other music ...  The Big Chill
 
 More serious examples can occur in simulation studies, which is
 the type of situation where variables often are not in a data
-frame, and a later compuational step needs more data information than
+frame, and a later computational step needs more data information than
 was saved in the fit.
 A survival example is the computation of dfbeta residuals from a
 coxph fit.  (I need to include an concrete example).
@@ -825,7 +834,7 @@ date-integer, and date-date will create sensible results,
 but integer-date and date + date should not.
 The S4 system has defined recipes for all of these.
 As another example, the
-coxme function makes heavy use of a libary for 
+coxme function makes heavy use of a library for 
 Block Diagonal Sparse matrices.
 The bdsmatrix library used S4 classes entirely, since it allowed me to
 set up structures such that \code{bdsmatrix * numeric} or 
@@ -834,7 +843,7 @@ set up structures such that \code{bdsmatrix * numeric} or
 The model fit objects for survival are all of S3 form.
 The survival model objects in particular have evolved over time,
 and a particular strength of S3 classes is the ease with which they
-accomodate change.  
+accommodate change.  
 Additions to the original (1990) coxph object now comprise over
 half of the current elements within it (see section \ref{sect:output}),
 and that original was itself the culmination
@@ -845,7 +854,7 @@ etc with each having more components. There would have been at least 15
 such extensions by now, leading to a complete mess.
 Essentially, creating a good S4 object requires near omniscience with respect to
 any future components that will be needed.
-This is attainable for the simple stuctures found in a CS classroom, a date, or
+This is attainable for the simple structures found in a CS classroom, a date, or
 even a matrix.  
 Seeing the future is much harder, perhaps impossible, for the results of a
 complex fitting routine such as coxph. 
@@ -861,17 +870,17 @@ Ripley and Venables in \emph{S Programming} have an example using S4 methods
 to define a principle components result, something much simpler in scope
 than a survival curve or model fit; 
 it is instructive to both show how the process
-\emph{can} be done as well being an an illstration of how difficult the task
+\emph{can} be done as well being an an illustration of how difficult the task
 is within the S4 constraints.
 
 The Surv object is in the middle.  It is currently of S3 form, 
 which succeeds due to
 the fact that the needed transformations are so few and so simple.  
 If redoing it from scratch I would 
-likely use the S4 paradym.
+likely use the S4 paradigm.
 There is a rudimentary facility to define general methods for S3 objects,
 i.e., numerical, logical, etc.  This was sufficient for Surv and continues
-to exist for backwards compatability, but it should not be used for
+to exist for backwards comparability, but it should not be used for
 any new code.  
 
 My strongest feelings on the S3 versus S4 debate is a 
@@ -880,7 +889,7 @@ who preach that either of the two systems is inferior
 and should never be used.
 I am a pragmatist, with both metric and inches wrenches in my toolbox 
 (both well used),
-both frequentist and Bayes methods in my analyses, 
+both frequentest and Bayes methods in my analyses, 
 and both S3 and S4 methods in my code.  
 
 
@@ -889,7 +898,7 @@ and both S3 and S4 methods in my code.
 \label{sect:output}
 A primary question in creating the output of a function is
 ``what to keep''?
-There is a tradeoff between precomputing and keeping everything that a
+There is a trade-off between precomputing and keeping everything that a
 user might need, which costs both time and space, and storing only a
 minimal subset, which has costs later on.
 The functions
@@ -922,7 +931,7 @@ prior releases of the code to Statlib).
         for things like computation of residuals.
       \item Martingale residuals and linear predictor (as in lm).  
         At the time I
-        wrote coxph matrigale residuals were the most often used, 
+        wrote coxph martingale residuals were the most often used, 
         enough so that
         it seemed worthwhile to include them by default while other 
         residuals
@@ -934,8 +943,8 @@ prior releases of the code to Statlib).
         computation.  The Cox model coefficients and likelihood are 
         unchanged by this
         centering, but the internal numerical computations are much 
-        more stabile if
-        you do it.  Also, it has been traditional to report the basedline 
+        more stable if
+        you do it.  Also, it has been traditional to report the baseline 
         survival for this particular covariate combination.
       \item Miscellaneous information: the number of observations in the 
         fit,
@@ -950,7 +959,7 @@ prior releases of the code to Statlib).
         The first of these is kept by default.
 \end{itemize}
 
-Since that time the following portions have been accreted, listed
+Since that time the following portions have been created, listed
 in roughly the order they were added (as best I can remember).
 \begin{itemize}
   \item Robust variance.  If someone asks for a robust variance 
@@ -1019,7 +1028,7 @@ predict(fit, type='expect', se=TRUE)
 \end{verbatim}
 The coxph routine has no knowledge of the actual data set name, 
 and so will contain references only to ``tdata''.  
-A prediction that contains standar errors requires more data than is
+A prediction that contains standard errors requires more data than is
 saved by default in a coxph model.
 When the \code{predict} routine attempts to recreate the data it will
 given an error message that tdata is not found.
@@ -1110,7 +1119,7 @@ Dealing with missings in residuals and predicted values is an
 issue too often ignored.
 Consider the following simple case using the lung data set, in
 which one patient has a missing value for the Eastern Cooperative
-Oncology Group (ECOG) definition of performace status.
+Oncology Group (ECOG) definition of performance status.
 Plots of the martingale residuals versus other variables which are
 not in the equation is one recommended way to examine the 
 proper functional form for age.
@@ -1185,7 +1194,7 @@ Many if not most R packages are feeble in this regard.
 The bedrock set of formal tests for the survival package are all based on
 small synthetic data sets.
 For said data sets, however, I know the results precisely.  
-For instance consider the first of these which has only six obeservations
+For instance consider the first of these which has only six observations
 and a single covariate, the time, covariate pairs are (1, 1),
 (1+, 1), (6, 1), (6, 0), (8+, 0) and (9, 0) where + indicates a censored value.
 Though small it contains four important cases of a unique censoring time,
@@ -1200,7 +1209,7 @@ regression coefficient $\beta$ we have
       \frac{r}{(r+1)^2} + \frac{6r}{(r+3)^2}
 \end{align*}
 where $LL$ is the logarithm of the Cox partial likelihood.
-The maximum likeihood solution using the Breslow approximation is
+The maximum likelihood solution using the Breslow approximation is
 $r = (1/2)(3 + \sqrt{33})$.
 Many further results of this type are documented in the appendix of my book,
 and even more are found in the test suite for the package.
@@ -1208,9 +1217,9 @@ and even more are found in the test suite for the package.
 This set of exact results arose out of frustration: when an update to the 
 programs changed an answer, how did I know for sure which was right?  
 Working these out was time consuming (I still keep the black loose-leaf
-notebook with the penciled derivations as a momento), but has
+notebook with the penciled derivations as a memento), but has
 paid for itself a dozen times over. 
-When validating a calculation I know not just the final anwer but 
+When validating a calculation I know not just the final answer but 
 the correct values for all the intermediate steps.
 There is a set of results that are known to be absolutely correct.
 This helps externally when someone argues that I must be wrong
@@ -1235,7 +1244,7 @@ They can be organized into 3 primary groups.
     and print out the results.  This is then compared to prior results by the
     standard facilities of R CMD check.  This the smallest portion of my tests,
     but they catch errors surprisingly often: aspects of the output for which 
-    I have not created an equaltiy check, and mistakes in the print functions
+    I have not created an equality check, and mistakes in the print functions
     themselves where results are correct but the reporting is not.
     They are the most annoying of the tests in that unimportant changes to R, 
     say to the rounding
@@ -1276,12 +1285,12 @@ do not attach the survival library.
 The edit/source/debug cycle works as desired within this subspace.
 
 \subsection{Manual pages and vignettes}
-All user-visible R functions in a libary should have a help file.  A
+All user-visible R functions in a library should have a help file.  A
 skeleton is easily created using the \code{prompt} function.  The
-R documenation has a thorough desciption of what information they should
+R documentation has a thorough description of what information they should
 contain, their format, and placement within the project tree.
 Help files are very limited, however; they are essentially reminder information
-for users who already know about your functions and have forgotton a few
+for users who already know about your functions and have forgotten a few
 details.
 
 A useful structure for models which have a rich output structure is to
@@ -1307,14 +1316,14 @@ form one of the more comprehensive \emph{integrated} tests of a package in that
 results from multiple functions need to be concordant.
 \section{Using noweb}
 \subsection{Code}
-A last area of documenation is of the code itself.
+A last area of documentation is of the code itself.
  The \code{coxme} function for mixed effects analyses based on a Cox
 proportional hazards model is one of the later additions to the
 \code{survival} library in S.
 It is easily the most complex bit of code in the package from all points
 of view: mathematical, algorithmic, and S code wise.
 As such, it seemed like a natural candidate for documentation and 
-maintainance using the literate programming model introduced by
+maintenance using the literate programming model introduced by
 D Knuth.
 \begin{quotation}
 Let us change or traditional attitude to the construction of programs.
@@ -1340,10 +1349,10 @@ The first generation of literate programming tools were computer
 language-specific, e.g. pascal-web.  
 The noweb system is language-agnostic.
 
-Noweb files look almost idential to Sweave files; this should be
+Noweb files look almost identical to Sweave files; this should be
 no surprise since Sweave was based on noweb.
 Most of my noweb code uses a \emph{.Rnw} suffix, taking
-advantage of the very capable emacs modes that are part of the ESS pacakge.
+advantage of the very capable emacs modes that are part of the ESS package.
 I use the .nw suffix for portions documenting C-code, 
 but could easily use it for R code as well; this might
 avoid confusion for consumers of my packages.
@@ -1359,7 +1368,7 @@ be used to set the default code mode for the file.
 
 To process the file I use the \code{noweb} package of R, 
 users of Unix systems can alternatively install the original 
-noweb program using the standard sytem installation tools.
+noweb program using the standard system installation tools.
 We cannot use \code{Sweave}, which is designed for reports containing 
 \emph{exectuted} S code. 
 Noweb differs from Sweave in 3 important ways:
@@ -1369,7 +1378,7 @@ Noweb differs from Sweave in 3 important ways:
     irrelevant and processing options within the brackets are key.
   \item The formatting of the output is better tailored to code 
     presentation.
-  \item The use of unordered subordiante clauses is fully supported.
+  \item The use of unordered subordinate clauses is fully supported.
 \end{enumerate}
 
 The last is quite important. 
@@ -1487,7 +1496,7 @@ Most computations for survival analysis have a common thread,
 which is to add up some formula over time
 where the denominator at each time point is the set of subjects
 ``currently at risk''.
-This caclulation is not usually amenable to vectorizing, meaning that
+This calculation is not usually amenable to vectorizing, meaning that
 native R code can be too slow, and as a consequence many of the 
 survival functions dip into C.
 
@@ -1495,7 +1504,7 @@ survival functions dip into C.
 There are different approaches to calling C used in the routines,
 which is used  depends to a large degree on two factors: 
 when that section was written
-and persuit of efficiency. 
+and pursuit of efficiency. 
 The simplest, and currently my preferred method in most situations is
 shown in the below for coxph.wtest.  We'll refer to it as method 1.
 The \code{coxph.wtest} function is a simple internal routine to 
@@ -1566,7 +1575,7 @@ The wrapper calls such as as.double(var) above are critical
 as they ensure the type.
 One cannot always assume that an input vector ``x'' is stored in floating
 point: the user just might have used a set of integer predictors.  More than
-a few of the surival routines have weathered this mistake, passing
+a few of the survival routines have weathered this mistake, passing
 all my initial tests only to fail months or years later.
 
 \begin{verbatim}
@@ -1651,9 +1660,9 @@ If the overwrite
 promise is broken the resulting damage will spread outside
 the C routine and can be very hard to track down.  
 An R program may fail
-some time after the C routine (and the R function that called it) have finsihed
+some time after the C routine (and the R function that called it) have finished
 leading to a search for ``bugs'' in another function that has none, mistaken
-acusations of a problem in base R itself, etc.
+accusations of a problem in base R itself, etc.
 This has not endeared .C to the R core team.
 A second reason for not using the above method is that the .Call interface,
 though undoubtedly more work, offers more tools for memory control.
@@ -1668,7 +1677,7 @@ Most of the data being passed into my C routines is simple
 such as the length of a vector or a flag, and so the memory or efficiency
 issues of the call process itself are minor compared to other aspects 
 of the computation.
-R has also gotton more efficient: it used to make a copy of 
+R has also gotten more efficient: it used to make a copy of 
 \emph{everything}, including the scratch vectors created to hold the
 results.  This made the \code{DUP=FALSE} argument more tempting.
 
@@ -1915,7 +1924,7 @@ A second more important issue is that it does not allow for
 variables that participate in both the fixed and random effects. 
 The new form is similar (but not identical) to the direction
 taken by the \code{lmer} project.  
-Here is a moderately complex example modivated by a multi-institutional
+Here is a moderately complex example motivated by a multi-institutional
 study where we are concerned about possible different patient
 populations (and hence effects) in each enrolling institution.
 
@@ -2029,14 +2038,14 @@ to lessen crowding in the plot objects of class `name' do not have the class
 listed.
 The arguments to a call are the branches below each call.
 A formula is structured like a call to the ``\verb2~2'' operator, and a
-parenthesised expression like a call with a single argument.
+parenthesized expression like a call with a single argument.
 
 The \code{formula1} routine is called with the model formula,
 the response and the fixed parts are returned as the \code{fixed}
 component, the random parts are separated into a list.  
 The primary concern of this function is to
 separate out the random terms;
-by definition this is a parenthesised term whose first child in the
+by definition this is a parenthesized term whose first child in the
 parse tree is a call to the vertical bar function.
 A random term is separated from the rest of the equation by one of
 the four operators +, -, *, or :,
@@ -2107,7 +2116,7 @@ evaluation.  Then ask yourself again.
 
 \subsection{Random effects Cox models}
 When I first considered adding random effects terms to Cox models,
-othewise known as \emph{frailty} models, I
+otherwise known as \emph{frailty} models, I
 decided to do it within the context of the current coxph function.
 This feature still exists, i.e.,
 \code{coxph(Surv(time, status) ~ age + frailty(ph.ecog), lung)},
@@ -2186,7 +2195,7 @@ Was this the right design choice?  I can argue both sides.
   \item I followed the same path with survexp.  In this case the user view
     of the two methods is much closer: the only difference in the calls is
     whether an external population value or a coxph model is used as the
-    rate table arguement.  The resulting survexp object, however, has to
+    rate table argument.  The resulting survexp object, however, has to
     remember its source, since the population result is normally plotted as
     a continuous curve and the coxph result as a step function.  
     
@@ -2232,7 +2241,7 @@ random effect that has several added attributes.
 These include a printing function, which allows for a special form
 of printout without additions to the coxph code itself.
 
-Here is a copy of the relevent portion from the frailty.gamma
+Here is a copy of the relevant portion from the frailty.gamma
 function.
 \begin{verbatim}
     printfun <- function(coef, var, var2, df, history) {
@@ -2258,7 +2267,7 @@ One day I noted that the save of a fitted coxph model was taking a long
 time, then that it had created a huge disk file.
 The reason is that R functions take a snapshot of their environment at
 the time they are created. (Called, not surprisingly, the environment
-of the funcion).  This includes all of the local variables plus a pointer
+of the function).  This includes all of the local variables plus a pointer
 to the parent environment.  The code to frailty.gamma that lies above
 this location does manipulation of some temporary matrices that are
 potentially huge, and copies of these never-needed-again matrices were
@@ -2276,7 +2285,7 @@ namespace using an internal function, which is unfortunately marked as
 An alternative would have been to use \code{globalenv()} along with the
 fully qualified name \code{survival:::coxph.wtest}.  
 
-There is a collary to this that arises in ordinary work.  Consider the
+There is a corollary to this that arises in ordinary work.  Consider the
 following code:
 \begin{verbatim}
 myfun <- function(tdata) {
