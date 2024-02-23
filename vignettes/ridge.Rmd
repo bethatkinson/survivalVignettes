@@ -6,7 +6,7 @@ bibliography: refer.bib
 output: 
     bookdown::html_document2:
         base_format: rmarkdown::html_vignette
-vignette: >
+vignette: |
   %\VignetteIndexEntry{The ridge function, matrices, and prediction}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
@@ -37,7 +37,7 @@ that I analyse.
 
 This vignette was created to address a common issue with using the function,
 one that arises with some frequency on internet message boards.
-Hopefully this a note will provide context and a reference for a solution.
+Hopefully this note will provide context and a reference for a solution.
 I will create a dummy dataset with 20 random 0/1 variables as a running
 example.
 
@@ -64,7 +64,8 @@ cfit1 <- coxph(Surv(time, status) ~ age + sex + ridge(X1, X2, X3, X4, X5, X6,
 ```
 
 The problem with this, of course, is that typing this statement is cumbersome
-for 20 SNPs, impossible if there were 500. One can use `.` in R formulas to
+for 20 SNPs and practically impossible if there were 500. 
+One can use `.` in R formulas to
 stand for "all the other variables", but this does not work inside a function.
 This leads to the first work-around, which is to create the formula
 programatically.
@@ -84,21 +85,21 @@ the ridge function with a single matrix argument.
 
 ```{r, pass3}
 cfit3 <- coxph(Surv(time, status) ~ age + sex + ridge(snp, theta=.1),
-      	 data= snpdata)
+      	 data = snpdata)
 ```
 
-This fit has completely ignored the variable X1, X2, ..., X50 found in the
+This fit has completely ignored the variables X1, X2, ..., X50 found in the
 dataframe. If the SNP data had come to us as a dataframe, then we would create a
-temporary  matrix using the as.matrix command, applied to the appropriate
+temporary matrix using the as.matrix command applied to the appropriate
 columns of said data.
 
-The problem with this approach comes if we want to do prediction using a new
+The problem with this approach comes if we want to do predictions using a new
 set of data.
 
 ```{r, pass4, error=TRUE}
 newsnp <- matrix(rbinom(20*4, 1, p=.12), nrow=4)
 prdata <- data.frame(age= c(50, 65, 48, 70), sex= c(1, 1, 2,1),
-                       newsnp)
+                     newsnp)
 predict(cfit3, newdata=prdata)
 ```
 
@@ -114,7 +115,7 @@ What if we put those variables in the the main data, instead of a dataframe?
 
 ```{r, pass5}
 prdata <- data.frame(age= c(50, 65, 48, 70), sex= c(1, 1, 2,1),
-                       newsnp)
+                     newsnp)
 snpsave <- snp
 snp <- newsnp
 age <- prdata$age
@@ -138,8 +139,8 @@ to special coding, it is fairly easy to do the computation.
 
 ```{r, pass6}
 prmat <- cbind(age= c(50, 65, 48, 70), sex=c(1,1,2,1), newsnp)
-drop(prmat %*% coef(cfit3))
-#alternate
+drop(prmat %*% coef(cfit3)) # simplify results to vector
+#alternate (center)
 drop(prmat %*% coef(cfit3)) - sum(coef(cfit3)* cfit3$mean)
 ```
 
