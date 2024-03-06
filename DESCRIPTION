@@ -1,7 +1,7 @@
 Package: survivalVignettes
 Version: 0.1
 Date: 2024-03-06
-Title: Survival analysis vignettes and optional datasets
+Title: Survival Analysis Vignettes and Optional Datasets
 Depends: R (>= 3.5.0), survival
 Imports: graphics
 Suggests: knitr, rmarkdown, bookdown, survey, geepack, mstate
@@ -25,4 +25,4 @@ Description: This package contains many of the vignettes for the survival
 License: LGPL (>=2)
 LazyData: Yes
 LazyDataCompression: xz
-VignetteBuilder: knitr, rmarkdown
+VignetteBuilder: knitr

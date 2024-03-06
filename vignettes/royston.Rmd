@@ -8,7 +8,7 @@ output:
         base_format: rmarkdown::html_vignette
         number_sections: true
         toc: true
-vignette: |
+vignette: >
   %\VignetteIndexEntry{Breast cancer data}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}

@@ -6,7 +6,7 @@ bibliography: refer.bib
 output: 
     bookdown::html_document2:
         base_format: rmarkdown::html_vignette
-vignette: |
+vignette: >
   %\VignetteIndexEntry{The ridge function, matrices, and prediction}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}

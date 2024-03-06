@@ -8,7 +8,7 @@ output:
         base_format: rmarkdown::html_vignette
         number_sections: true
         toc: true
-vignette: |
+vignette: >
   %\VignetteIndexEntry{Competing Risks and Multistate Models}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
