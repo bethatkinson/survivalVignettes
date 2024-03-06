@@ -1,6 +1,6 @@
 Package: survivalVignettes
 Version: 0.1
-Date: 2024-02-23
+Date: 2024-03-06
 Title: Survival analysis vignettes and optional datasets
 Depends: R (>= 3.5.0), survival
 Imports: graphics
