@@ -324,7 +324,7 @@ for (i in 1:3) {
 
     time1 <- system.time(fit1[[i]] <-coxph(Surv(age1, age2, death) ~ x1+ x2 + xb,
                          ties="breslow", temp))
-    stats[5,i] <- sum(time1[-3])   # ignore elapsed time
+    stats[5,i] <- sum(time1[-3],na.rm=T)   # ignore elapsed time
 }
 
 dimnames(stats) <- list(c("number of observations", "number of events",
@@ -475,8 +475,8 @@ for (i in 1:3) {
     stat2[2, i] <- sum(temp$death)
     stat2[3, i] <- length(unique(temp$age2[temp$death==1]))
     stat2[4, i] <- mean(km$n.risk[km$n.event > 0])
-    stat2[5, i] <- sum(time1[-3])
-    stat2[6, i] <- sum(time2[-3])
+    stat2[5, i] <- sum(time1[-3],na.rm=T)
+    stat2[6, i] <- sum(time2[-3],na.rm=T)
 }
 all.equal(coef(fit3a[[3]]), coef(fit3b[[3]]))
 
@@ -488,7 +488,7 @@ round(stat2)
 
 ytemp <- cbind(stats[5,], stat2[5,], stat2[6,])
 matplot(cbind(stats[1,], stat2[1,], stat2[1,])/1e6,  ytemp,
-        ylim=c(0, max(ytemp)), pch="1ab",
+        ylim=c(0, max(as.vector(ytemp))), pch="1ab",
         xlab="Data set size (millions)", ylab="Coxph run time")
 @ 
 
