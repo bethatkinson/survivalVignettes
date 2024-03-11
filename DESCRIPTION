@@ -14,12 +14,10 @@ Authors@R: c(person(c("Terry", "M"), "Therneau",
 URL: https://github.com/bethatkinson/survivalVignettes
 BugReports: https://github.com/bethatkinson/survivalVignettes/issues 
 Description: Vignettes for the survival package. 
-    Since survival is a recommended package, the documentation is  
-    required to be completely "vanilla". In particular, the survival package  
-    vignettes use Sweave rather than knitr or markdown, and no other packages  
-    outside the base + recommended set can be referenced. Splitting vignettes  
-    into this package overcomes this, and also allowed the survival package  
-    itself to be a smaller object.	  
+    Split from the survival package since the vignettes were getting large.  
+    Also, since survival is a recommended package it cannot make use of other 
+    packages outside of base+recommended.  This includes markdown vignettes 
+    and the GEE model used in the pseudo vignette.
 License: LGPL (>=2)
 LazyData: Yes
 LazyDataCompression: xz

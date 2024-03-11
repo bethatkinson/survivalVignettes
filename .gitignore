@@ -9,5 +9,4 @@ vignettes/*.toc
 vignettes/*.bbl
 vignettes/*.synctex.gz
 .hg
-inst/doc
 vignettes/*.html

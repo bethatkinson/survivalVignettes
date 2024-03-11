@@ -2,6 +2,7 @@
 ^\.hg/wcache$
 ^vignettes/sweave$
 ^vignettes/sascode$
+^vignettes/sas_runbyhand\.Rnw$
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^\.gitignore$
