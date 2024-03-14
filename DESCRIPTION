@@ -4,7 +4,7 @@ Date: 2024-03-11
 Title: Survival Analysis Vignettes and Optional Datasets
 Depends: R (>= 3.5.0), survival
 Imports: graphics
-Suggests: knitr, rmarkdown, bookdown, survey, geepack, mstate
+Suggests: knitr, rmarkdown, bookdown, survey, geepack, mstate, R.rsp
 Authors@R: c(person(c("Terry", "M"), "Therneau",
 	                  role="aut"),
  	           person("Elizabeth","Atkinson",  
@@ -21,4 +21,6 @@ Description: Vignettes for the survival package.
 License: LGPL (>=2)
 LazyData: Yes
 LazyDataCompression: xz
+Config/build/clean-inst-doc: FALSE
 VignetteBuilder: knitr
+

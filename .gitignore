@@ -10,3 +10,5 @@ vignettes/*.bbl
 vignettes/*.synctex.gz
 .hg
 vignettes/*.html
+/doc/
+/Meta/

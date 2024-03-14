@@ -8,3 +8,5 @@
 ^\.gitignore$
 ^\.Rhistory$
 ^README\.md$
+^doc$
+^Meta$
