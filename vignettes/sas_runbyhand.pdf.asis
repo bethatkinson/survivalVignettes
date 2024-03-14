@@ -1,0 +1,9 @@
+%\VignetteIndexEntry{SAS comparisons}
+%\VignetteEngine{R.rsp::asis}
+%% If the *.asis file has a UTF-8 symbol (e.g. in
+%% %\VignetteIndexEntry{}), we must tell R about it
+%\VignetteEncoding{UTF-8}
+%% Optional:
+%\VignetteKeyword{PDF}
+%\VignetteKeyword{vignette}
+%\VignetteKeyword{package}
