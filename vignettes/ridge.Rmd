@@ -2,10 +2,7 @@
 title: "The ridge function, matrices, and prediction"
 author: "Terry Therneau"
 date: Dec 2020
-bibliography: refer.bib
-output: 
-    bookdown::html_document2:
-        base_format: rmarkdown::html_vignette
+output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{The ridge function, matrices, and prediction}
   %\VignetteEngine{knitr::rmarkdown}
