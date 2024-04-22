@@ -9,7 +9,7 @@ output:
         number_sections: true
         toc: true
 vignette: >
-  %\VignetteIndexEntry{Breast cancer data}
+  %\VignetteIndexEntry{Recreating a Royston and Altman paper}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

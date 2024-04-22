@@ -26,7 +26,7 @@ knitr::opts_chunk$set(
   fig.width=7, fig.height=5.5
 )
 
-library("survival")
+library(survival)
 library(geepack)
 library(survey)
 ```
@@ -202,13 +202,17 @@ introduce informative censoring. (Differential follow-up of quite common in
 multi-center studies; some will join late due to administrative delays.)
 
 ```{r strata}
-lfit4 <- survfit(Surv(time/365.25, status) ~ inst, data=lung)
+# There is 1 missing value for inst so pseudo by default will have 227 values instead of 228
+# When creating pmean4, you need to put the values in the correct spot.
+# Specifying na.exclude expands the results to have the proper length
+
+lfit4 <- survfit(Surv(time/365.25, status) ~ inst, data=lung, na.action=na.exclude)
 pmean4 <- pseudo(lfit4, time=2.5, type="auc")
 ldata$pmean4 <- c(pmean4)
-afit4a <- lm(pmean4 ~ ph.ecog + sex + age, ldata)
+afit4a <- lm(pmean4 ~ ph.ecog + sex + age, data=ldata)
 
 # survey package does not allow a missing strata, and one obs in the lung data
-#  set has institution missing
+# has institution missing
 temp <- subset(ldata, !is.na(inst))
 ldesign4 <- svydesign(data=temp,  id= ~id, weights=NULL, strata= ~inst,
                       variables= ~ .-id -inst)
@@ -323,7 +327,7 @@ summary(lfit3)$coefficients
 # When an id is constructed rather than supplied, pseudo() purposely gives
 #  it a non-standard name to avoid confusion with any user's variable names.
 #  But that name is a PITA to use in formulas
-pdata$id <- pdata[['(Id)']] 
+pdata$id <- pdata[['(id)']] 
 pdesign <- svydesign(id= ~ id, varibles= ~ pseudo + x + time, weights=NULL,
                      data=pdata)
 sfit <- svyglm(pseudo ~ x + factor(time), design=pdesign)
