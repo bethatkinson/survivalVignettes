@@ -327,7 +327,8 @@ summary(lfit3)$coefficients
 # When an id is constructed rather than supplied, pseudo() purposely gives
 #  it a non-standard name to avoid confusion with any user's variable names.
 #  But that name is a PITA to use in formulas
-pdata$id <- pdata[['(id)']] 
+flag <- toupper(names(pdata))=='(ID)'
+pdata$id <- pdata[,flag] 
 pdesign <- svydesign(id= ~ id, varibles= ~ pseudo + x + time, weights=NULL,
                      data=pdata)
 sfit <- svyglm(pseudo ~ x + factor(time), design=pdesign)
