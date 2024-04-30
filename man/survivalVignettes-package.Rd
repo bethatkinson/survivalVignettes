@@ -8,12 +8,7 @@
 \description{
 \packageDescription{survivalVignettes}
 }
-\details{
 
-The DESCRIPTION file:
-\packageDESCRIPTION{survivalVignettes}
-\packageIndices{survivalVignettes}
-}
 \author{
 \packageAuthor{survivalVignettes}
 
