@@ -16,8 +16,7 @@ BugReports: https://github.com/bethatkinson/survivalVignettes/issues
 Description: Vignettes for the 'survival' package. Split from the 'survival' 
     package since the vignettes were getting large. Also, since 'survival' is a 
     recommended package it cannot make use of other packages outside of 
-    base+recommended. This includes markdown vignettes and the GEE model used in 
-    the pseudo vignette.
+    base+recommended (e.g. `rmarkdown`).
 License: LGPL (>=2)
 LazyData: Yes
 LazyDataCompression: xz
