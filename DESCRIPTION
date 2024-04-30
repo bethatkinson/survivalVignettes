@@ -1,6 +1,6 @@
 Package: survivalVignettes
-Version: 0.1.4
-Date: 2024-04-26
+Version: 0.1.5
+Date: 2024-04-29
 Title: Survival Analysis Vignettes and Optional Datasets
 Depends: R (>= 3.5.0), survival
 Imports: graphics
@@ -13,11 +13,11 @@ Authors@R: c(person(c("Terry", "M"), "Therneau",
 	           person("Cynthia","Crowson", role="ctb"))
 URL: https://github.com/bethatkinson/survivalVignettes
 BugReports: https://github.com/bethatkinson/survivalVignettes/issues 
-Description: Vignettes for the survival package. 
-    Split from the survival package since the vignettes were getting large.  
-    Also, since survival is a recommended package it cannot make use of other 
-    packages outside of base+recommended.  This includes markdown vignettes 
-    and the GEE model used in the pseudo vignette.
+Description: Vignettes for the 'survival' package. Split from the 'survival' 
+    package since the vignettes were getting large. Also, since 'survival' is a 
+    recommended package it cannot make use of other packages outside of 
+    base+recommended. This includes markdown vignettes and the GEE model used in 
+    the pseudo vignette.
 License: LGPL (>=2)
 LazyData: Yes
 LazyDataCompression: xz
