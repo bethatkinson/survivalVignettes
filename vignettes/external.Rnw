@@ -847,7 +847,7 @@ while DC is an average over all point in the upper left and lower right
 quadrants (time 1 $<5$ and time 2 $>5$ or vice versa).
 
  
-<<gbsg5c, echo=FALSE, fig.cap="Image plot of the concordance for pairs of observed time values in the Rotterdam data set.  The dashed contour lines are at  .5 (diagonal), .55, .6, .65, .7 and .75.>>=
+<<gbsg5c, echo=FALSE, fig.cap="Image plot of the concordance for pairs of observed time values in the Rotterdam data set.  The dashed contour lines are at  .5 (diagonal), .55, .6, .65, .7 and .75.">>=
 # Create a data set of all pairs for the gbsg data.
 dtime <- rott2$ryear[rott2$rfs==1] # death times
 lp <- predict(rfit2)
@@ -1884,7 +1884,7 @@ Since $C_G$ is essentially a measure of the spread of the predicted
 values $\hat\eta$,
  one possible solution to the above flaw would be to refit the Cox model
  on the validation
-data, using $\eta\hat_i$ as the predictor for subject $i$, then compute $C_G$
+data, using $\hat\eta_i$ as the predictor for subject $i$, then compute $C_G$
 using the rescaled data. This is essentially the same idea as the regression
 slope.
 
@@ -1893,9 +1893,9 @@ The Royston and Saurbrei statistics $D$ and $R_D$ are also based on a particular
  measure of variation in the risk scores.  First convert the $\hat\eta$
 values into normal scores
 \begin{equation*}
-  z_i &= \Phi^{-1}(\frac{{\rm{rank}(\hat\eta_i - 3/8)}{n + .25}
+  z_i = \Phi^{-1}(\frac{{\rm rank}(\hat\eta_i - 3/8)}{n + .25}
 \end{equation*}
-If there are tied $\eta\hat$ values replace those $z$ values with their average.
+If there are tied $\hat\eta$ values replace those $z$ values with their average.
 Third, fit a new Cox model with $z$ as the only covariate, and use the resulting
 coefficient as a measure of the variation in risk scores.
 Last, compute the three estimates.  (Since $z$ has standard devation 1, 
@@ -1908,7 +1908,7 @@ $\beta z$ will have standard deviation $\beta$.)
 \end{align*}
 
 Translation of this to the validation context is challenging. The first step
-is easy, i.e., to form reference $\eta\hat^*$ using the prior coefficients and
+is easy, i.e., to form reference $\hat\eta^*$ using the prior coefficients and
 the validiation data. But a z-transform of these new values will not be the same
 transformation function as was used in the original data. 
 The distribution of risk scores is quite different for the Rotterdam and
