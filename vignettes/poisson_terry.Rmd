@@ -1,0 +1,402 @@
+---
+title: "Poisson models and person-years data"
+author: "Terry Therneau and Elizabeth Atkinson"
+date: '`r format(Sys.time(),"%d %B, %Y")`'
+bibliography: refer.bib
+output: 
+    bookdown::html_document2:
+        base_format: rmarkdown::html_vignette
+        number_sections: true
+        toc: true
+vignette: >
+  %\VignetteIndexEntry{Poisson models and person-years data}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+# Overview
+
+A common type of model in epidemiologic studies is based on observed event
+rates.  For a set of subjects with a 0/1 outcome $y_i$, each with observation
+time $t_i$ the simple event rate is
+$$
+ \lambda = \frac{\sum_i y_i}{\sum _i t_i}
+$$
+The denominator of this fraction is the total observed time on the study, and
+is often referred to as the  total *person years* (with $t$ in years).
+The `pyears` routine is a convenient way to examine these results in tabular
+form.  Here is a table by sex and baseline age for the mgus data set:
+
+```{r, pyears1}
+library(survival)
+options(show.signif.stars = FALSE)  # display statistical intelligence
+
+pfit1 <- pyears(Surv(futime, death) ~ sex + cut(age, c(30, 50, 70, 100)), 
+                data = mgus)
+
+round(1000* pfit1$event/pfit1$pyears, 1)
+```
+
+This shows the unsurprising result that death rates are higher for males and that
+death rates rise with age.
+Death rates in the highest group are 125 per thousand per
+year, a little over 12%.
+The pyears routine creates a set of arrays whose dimension is the number of
+covariates on the right hand side of the formula.
+ 
+* n: the number of observations that contribute to each cell
+* event: the number of events in each cell
+* pyears: the total number of person-years. By default the routine assumes that
+the input is in days, and divides the total by 365.25. See the `scale` argument.
+
+Another component `offtable` is largely for data checking. If for instance the
+cut statement above had started at age 40, then the 9 subjects in the mgus data
+set with ages between 30 and 40 have nowhere to go in the main tables; their
+time is counted in offtable. One should always check that this is 0.
+
+There is a close connection between these tables and Poisson regression.  As
+a simple example, assume that we want a confidence interval for the rate in
+the upper left corner of the above table. First look at the two components
+of the rate, and then plug them into a glm model.
+
+```{r, pyears2}
+pfit1$event
+
+pfit1$pyears
+
+temp <- glm(pfit1$event[1,1] ~ 1+ offset(log(pfit1$pyears[1,1])), family = poisson)
+summary(temp)$coefficients
+
+1000* exp(c(rate= -3.584, lower= -3.584 - 1.96*.267, upper= -3.584 + 1.96* .267))
+```
+
+You can also use the `broom` package to extract confidence intervals.  The `broom` package calls the `confint` function which is a part of the `MASS` package and calculates the confidence intervals by interpolation in the profile traces. The difference in confidence intervals is often a source of confusion.
+
+```{r}
+temp2 <- (broom::tidy(temp, conf.int=T, exponentiate=T))
+temp2$rate <- temp2$estimate*1000
+temp2$conf.low <- temp2$conf.low*1000
+temp2$conf.high <- temp2$conf.high*1000
+print(data.frame(temp2[,c('rate','conf.low','conf.high')]))
+
+
+1000*exp(confint(temp))
+```
+
+An important insight into the model is that we are interested in modeling the
+death *rate* but the poisson density predicts the total *number* of deaths.
+In GLM notation
+$$ \begin{aligned}
+  E(d) &= \lambda t \\
+	   &= e^{X\beta + \log(t)}
+\end{aligned}
+$$
+
+The rate is modeled as $\exp(X \beta)$ for the usual reason, i.e., to avoid
+negative rates (i.e. the dead coming back to life), and on this scale the log 
+follow-up time appears as a covariate with a known coefficient of 1.
+This is known as an offset in glm models.
+A second insight is that 
+the number of events is not actually Poisson.  In fact, if all the subjects
+had been followed to death $y_i$ would be 1 for all subjects while the 
+offset $\log(t_i)$ would be the random variable.
+The true likelihood for the data, however, turns out to be identical to the 
+Poisson density, up to a constant (Berry 1978).
+Thus estimates, confidence intervals and likelihood ratio tests based on
+Poisson regression are all statistically valid.
+A standard statistical tool just happens to be exactly the right thing.
+A more modern proof of the same result can be based on counting processes.
+
+The more important use of this is in modeling, as below.
+
+```{r, pyears3}
+mgus$agegrp <- cut(mgus$age, c(30, 50, 70, 100), c("30-50", "50-70", "70+"))
+gfit <- glm(death ~ sex + agegrp + offset(log(futime)),
+                              poisson, data = mgus)
+summary(gfit)
+```
+
+# Slicing time
+
+Three frequent margins for these tables are calendar year, current age, and time
+since onset of disease or enrollment.
+The figure below shows an example with age and calendar year.
+The diagonal line represents a subject who begins study follow-up at age
+47.8 (17459 days) on 1967/08/24 and has 6.4 years( 2338 days) 
+of follow up.  They will contribute 72 days of follow-up to the (1967, 47) cell,
+then 57 to the (1967, 48) cell, 308 days to the (1968, 48) cell, etc.
+
+```{r, pyfit, echo=FALSE}
+opar <- par(mar=c(1,5,5,1))
+# make a box and put lines on it
+plot(c(45, 60), c(1965, 1975), type='n', xaxt='n', yaxt='n', xlab='', ylab='')
+abline(v=46:59)
+abline(h=1966:1974)
+axis(2, 1965:1974 + .5, 1974:1965, las=2, tick=FALSE, col='gray')
+axis(3, 45:59 + .5, 45:59, las=1, tick=FALSE, col='gray')
+segments(47.8, 1972.36,  54.2, 1965.96, lwd=2)
+par(opar)
+```
+
+Here is the code to track this single subject. 
+The tcut function is given the starting point for each subject as the first
+argument, the boundaries of the cells as the second and optional labels
+for each category as the third. For ordinary tables the effect of tcut will
+be the same as cut, but the pyears command treats the two differently: cut
+creates a category that persists over time, tcut categories that subjects 
+can transition through.
+
+```{r, pyears4}
+ytemp <- tcut(as.Date("1967-08-24"), as.Date(paste0(1964:1974, "-12-31")),
+              1965:1974)
+atemp <- tcut(17459, floor(44:60 * 365.25 -1), 45:60)
+pfit2 <- pyears(Surv(2338, 1) ~ atemp + ytemp, scale=1)
+pfit2$pyears[3:12,2:10]
+```
+
+One important restriction for tcut and pyears is that all the time variables
+must all be on the same scale; this includes the argument of Surv.
+Normally this is easiest to accomplish by using days at the time scale, since
+that is the natural unit for Date objects.
+Here is an example using the jasa data set.
+(This is not a one of the few public data sets that has dates, which are normally
+omitted to protect participant confidentiality.)
+There is one subject in the data set with 0 days of follow-up, who had 
+enrollment, surgery, and death on the same day; omit that subject due to issues
+with 0 length intervals.
+
+```{r, pyears5}
+data1 <- subset(jasa, futime >0)
+data1$id <- 1:nrow(data1)
+# etime = time since enrollment, year = year of enrollment
+etime <- tcut(rep(0, nrow(data1)), floor(c(0, .25, 1,2, 5)*365.25), 
+                  label= c("0-3 m", "3-12 m", "1-2 y", "2-5 y"))
+data1$year <- as.numeric(format(data1$accept.dt, "%Y"))
+jfit1 <- pyears(Surv(futime, fustat) ~ year + etime, data1, scale=30.5)
+jfit1$off
+jfit1$event
+round(jfit1$pyears)  # total months of FU
+```
+
+In this data set there are many early deaths, and few with long follow up.
+If we want to fit a model to the data, say with these two variables and
+hla.a2, we can rerun pyears with the data.frame argument.  This returns
+the event, n, and pyears matrices as a data.frame.
+
+```{r, pyears6}
+jfit2 <-  pyears(Surv(futime, fustat) ~ year + etime + hla.a2, data1,
+                 scale= 30.5, data.frame=TRUE)
+dim(jfit2$data)
+jfit2$data[1:5,]
+gfit2 <- glm(event ~ year + etime + hla.a2 + offset(log(pyears)),
+             family=poisson, data= jfit2$data)
+summary(gfit2)
+```
+
+As expected from the tabular data, the death rates are highest during the
+first 3 months (the default reference level) than in later periods.
+Notice that the data frame has less than dim(jfit1$pyears)*2 = 64 rows, as
+any cell with pyears =0 is eliminated from the data frame.
+This is necessary for the glm fit.
+The poisson likelihood for a cell with 0 events and 0 time is 0 log(0), which is
+equal to 0 by L'Hospital's rule, but the glm algorithm does not know calculus
+and will generate an NA.
+One aspect to be aware of is that even though the data frame omits those rows,
+the computation within the pyears routine uses the entire matrix.
+For instance if the tcut above had used cutpoints of (0, .25, 1:100) the 
+intermediate matrix for jfit2 would have dimensions of (8, 101, 2), almost all
+of which is 0.
+An incautious use of multiple tcut terms can exhaust available computer memory.
+
+The result of a tcut term will appear as a factor in the data frame.
+Suppose that you wanted to treat this as continuous in the model, e.g. the
+tabulation was in terms of current age rather than enrollment age (as was done
+above), and one wanted to fit a spline.
+For instance, say that there single year age categories from 30 to 90, the latter
+being the maximal age at last follow-up for any subject and 30 the minimum age
+at enrollment, in a variable `age_grp`  Then
+```{r, eval=FALSE, echo=TRUE}
+tdata <- fit$data
+tdata$iage <- 29 * as.integer(tdata$age_grp)
+```
+could be used to create the integer age, prior to fitting a model with tdata.
+In some cases we may want to use the center of a category as the numeric value.
+
+An alternative way to split up time is to create the partitioned data set prior
+to the pyears call.
+If the purpose is to fit a glm model without the parallel table of counts, then
+the pyears call can be omitted all together.
+The above example using time on study is simple.
+
+```{r, split1}
+data2 <- survSplit(Surv(futime, fustat) ~., data1,
+                   cut= floor(c(.25, 1, 2,5)* 365.25), episode= "egrp")
+table(table(data2$id))
+subset(data2, id %in% 6:8, c(id, tstart, futime, fustat, egrp))
+```
+
+The updated data set has 51 subjects with only a single interval (less than or
+equal to 91 days of follow-up), 23 with two intervals, etc. 
+Now add a pair of convenience variables and fit the model.
+
+```{r, split2}
+data2$etime <- factor(data2$egrp, 1:4, c("0-3 m", "3-12 m", "1-2 y", "2-5 y"))
+data2$pyears <- (data2$futime - data2$tstart)/30.5
+gfit2b <- glm(fustat ~ year + etime + hla.a2 + offset(log(pyears)),
+              family= poisson, data= data2)
+all.equal(coef(gfit2), coef(gfit2b))
+
+nrow(data2)
+nrow(jfit2$data)
+```
+
+We get exactly the same fit as before, even though the data set has many more
+rows. 
+For a poisson GLM, the result for per-subject data (data2) is identical to the
+result for a collapsed data set which has one observation for each unique
+covariate pattern (jfit2$data). 
+When computer memory was much smaller, this identity was often used as a method
+to enable model fits for large epidemiologic cohorts with thousands of subjects.
+One constraint with this trick, which is also effectively a constraint with
+using the data.frame=TRUE in pyears, is that any continuous covariates such as
+weight must be categorized.
+
+As a more complicated example, create
+the data set for a poisson GLM with a time dependent covariate (treatment),
+and with both time since enrollment and age as time-dependent categories.
+The time-dependent covariate is easiest using tmerge, then use survSplit for
+the rest.
+
+```{r, split3}
+data1$ageday <- as.numeric(data1$accept.dt - data1$birth.dt)
+data3a <- tmerge(data1[,c("id", "hla.a2", "age", "ageday","year")], data1, 
+                 id=id, 
+                 death = event(futime, fustat),
+                 transplant = tdc(tx.date - accept.dt))
+
+# now add time since enrollment
+data3b <- survSplit(Surv(tstart, tstop, death) ~ .,  data3a,
+                   cut=c(91, 365, 730), episode= "egrp")
+
+# Add current age
+data3c <- data3b
+data3c$age1 <- data3c$ageday + data3c$tstart
+data3c$age2 <- data3c$ageday + data3c$tstop
+data3c <- survSplit(Surv(age1, age2, death) ~ ., data3c,
+                   cut= round(2:65 * 365.25), episode= "iage")
+print(data3c[7:15, -c(2,4)])
+
+c(data1= nrow(data1), data3a = nrow(data3a), data3b= nrow(data3b), 
+  data3c= nrow(data3c))
+```
+
+We see the growth: data3a added rows for a change in treatment arm from 
+pre to post transplant, for those who received a transplant;
+data3b broke subjects up by time since enrollment, and data3c further by
+their current age.
+The printout above is instructive.  Subject 6 dies on day 2 without transplant,
+they have a single row.
+Subject 7 changes age 48 days after enrollment, is transplanted 50 days after
+enrollment, changes to egrp 2 91 days after enrollment, to egrp 3 365 days
+after enrollment, becomes 52 years old 413 days after enrollment, and dies
+at 674 days after enrollment.
+In particular note that each survSplit call does *not* update prior (time1, time2) variable pairs.  (This is a planned enhancement, some day real soon now ...)
+The tmerge routine is designed to add data lines based on per-subject event or
+measurement times, and the survSplit routine for globally applied cutpoints.
+
+We were a bit clever with the iage variable; there is no one who is less
+than 8 years old at enrollment, but we made the second category be equal to 
+age 2.  (A trick like this, without any attached comment, is almost certain to
+mystify a future reader of the code, however.)
+Finally, we can fit a poisson models.
+
+```{r, split4}
+data3c$days <- with(data3c, age2 - age1)  # time in days
+gfit2c <- glm(death ~ year + factor(egrp) + hla.a2 + offset(log(days)),
+              family= poisson, data= data3c)
+
+round(rbind(coef(gfit2), coef(gfit2c)), 4)
+
+gfit3 <- glm(death ~ transplant + factor(egrp) + iage + offset(log(days)),
+             family= poisson, data= data3c)
+```
+
+As a data check we refit the prior model to this expanded data set.  Using
+days instead of months as the time interval affects the intercept term, but
+none of the others.
+The second fit shows that
+heart transplant was not effective in this study, as has been noted by several
+others, while increased age and time since enrollment important factors.
+
+# Population expected survival
+
+One of the important features of the pyears and survexp routines is the 
+ability to interface with population rate tables.
+This was, in fact, one of the primary reason for creation of the routines.
+One technical issue is that we  have two sets of variable, those
+that control creation of the table, found in the model formula,
+and those that map to the dimensions of the rate table.
+Here is the updated pyears call for the jasa data.  We don't have the sex
+variable, and assume that all or nearly all the subjects were male.
+
+```{r, expect1}
+names(dimnames(survexp.us))
+jfit3 <- pyears(Surv(futime, fustat) ~ year + etime, data1,
+                ratetable = survexp.us,
+                rmap= list(age= age*365.25, sex='m', year=accept.dt))
+round(jfit3$expect, 4)
+
+smr <- jfit3$event/ jfit3$expect
+round(smr)
+```
+
+The United States death rates are included in the survival package, obtained from
+the US Centers for Disease Control and Prevention (CDC), it contains daily
+death rates, categorized by age, sex, and calendar year.
+This results in an additional table in the pyears output containing the expected
+number of events for each cell, from a hypothetical matched cohort from the US
+general population.  These value are independent of the scale option since they
+are totals over time.
+The rmap argument gives mappings between the variables in the data set, and the
+dimension names of the rate table, with all time values in days.
+
+The standardized mortality ratio is the observed number of events divided by
+the expected number of events, often written as O/E.
+This particular patient cohort is very ill, leading to extremely large SMR
+values.  Regression analysis of the excess death rate will be based on a
+poisson model, as before, but with the expected number of events rather than
+the total follow-up time as the offset term.
+These values can be obtained from either pyears or survexp, in the latter case
+we want the cumulative hazard per observation.
+
+```{r, smr2}
+# restore day1, day2 to data3c, and the date at the start of each interval
+data3c$day1 <- data3c$age1 - data3c$ageday
+data3c$day2 <- data3c$age2 - data3c$ageday
+data3c$date <- data3c$day1 + data1$accept.dt[match(data3c$id, data1$id)]
+
+data3c$expect <- survexp( (age2-age1) ~ 1, data = data3c,
+                         ratetable= survexp.us,
+                         rmap=list(age=age1, sex='m', year=date),
+                         method="individual.h")
+
+gsmr <- glm(death ~  transplant + factor(egrp) + iage + offset(log(expect)),
+            family= poisson, data=data3c)
+
+round(rbind(gfit3= coef(gfit3), gsmr= coef(gsmr)), 3)
+```
+
+* The intercept for gfit3 estimates the overall death rate in terms of 
+events/day; that for gsmr estimates the overall excess risk, exp(8) is nearly
+3000 fold.
+* The coefficients for transplant and time since enrollment are quite similar,
+heart transplant is again not statistically significant.
+* The coefficient for current age is positive for gfit3, death rates rise with
+age.  For gsmr it is negative, death rates for study subjects do not rise as
+as quickly with age as population rates and so that the relative excess declines
+with age.
+
+
+
+
+
