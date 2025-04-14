@@ -48,9 +48,6 @@ load("../data/amyloid.rda")
 palette("Okabe-Ito") # color blind friendly
 @
 
-\begin{document}
-\SweaveOpts{concordance=TRUE}
-\maketitle
 
 \section{Overview}
 This vignette is concerned with the question of whether a particular
@@ -287,7 +284,9 @@ and have been widely used, both are included in the survival package.
 Figure \ref{fig:gbsg1} shows overall survival for the two groups.
 The Rotterdam study has longer follow-up.
 
-<<gbsg1, fig.cap="Rotterdam and GBSG data">>=
+\begin{figure}
+
+<<gbsg1>>=
 gsurv <- survfit(Surv(rfstime/365.25, status) ~1, gbsg)
 rott2 <- rotterdam
 rott2$rfs <- with(rott2, pmax(recur, death))
@@ -300,6 +299,9 @@ lines(gsurv,  lwd=2, lty=1, fun="event", conf.int=FALSE)
 legend(10, .4, c("GBSG", "Rotterdam node positive", "Rotterdam node negtive"),
        lty=1:3, lwd=2, bty='n')
 @
+\caption{Rotterdam and GBSG data}
+\label{gbsg1}
+\end{figure}
 
 The usual approach has been to fit a prediction model to the Rotterdam data,
 and assess model predictions using the GBSG data.
@@ -307,7 +309,8 @@ I will use 3 models: the first using menopausal status, size, nodes,
 and grade, a second adds nonlinear age, and a third using age as the time
 scale.
 
-<<gbsg2, fig.cap="Spline fit for number of nodes, Rotterdam">>=
+\begin{figure}
+<<gbsg2>>=
 rfit <- coxph(Surv(ryear, rfs) ~ meno + size + grade + pspline(nodes), rott2)
 print(rfit, digits=1)
 
@@ -316,6 +319,9 @@ termplot2 <- function(fit, ...) termplot(fit, col.term=1, col.se=1, ...)
 termplot2(rfit, term=4, se=TRUE)
 abline(v=9, col="gray")
 @
+\caption{Spline fit for number of nodes, Rotterdam}
+\label{gbsg2}
+\end{figure}
 
 The printout shows that the nodes effect has an important non-linear
 component. A plot of the estimated shape is shown in figure \ref{fig:gbsg2}. 
@@ -807,7 +813,8 @@ bfit <- brier(rfit1, newdata=gbsg2, times=tau2)
 Cstat[,1,6] <- (1+ sqrt(bfit$rsquare))/2
 @ 
 
-<<gbsg5b, echo=FALSE, fig.cap="C statistics versus truncation time using predictions from the Rotterdam model, for Rotterdam and GBSG data sets.">>=
+\begin{figure}
+<<gbsg5b, echo=FALSE>>=
 matplot(tau2, Cstat[,1, c(1,2,3,4)], lwd=c(2,2,2,1), lty=c(1,1,1,2), 
         col=c(1:3, 1), type='l', ylim=c(.6, .8),
         xlab="Cutoff time tau", ylab="C")
@@ -816,6 +823,10 @@ legend(3, .8, c("n(t) weight, GBSG", "S/G weight, GBSG", "Dichotomized C, GBSG",
        lwd=2, lty=c(1,1,1,2), col=c(1,2,3,1), bty='n')#, cex=.8)
 #matlines(tau2, Cstat2[,1,c(1,2,4)], lwd=2, lty=2, col=1:3)
 @ 
+\caption{C statistics versus truncation time using predictions from the Rotterdam model, for Rotterdam and GBSG data sets.}
+\label{gbsg5b}
+\end{figure}
+
 
 \begin{itemize}
   \item For this particular data set pair, the discrimination of the model
@@ -855,8 +866,9 @@ quadrant of figure \ref{gbsg5c-1} (time 1 and time 2 both $\ge 5$ years)
 while DC omits both the upper right and lower left quadrants
 (time 1 $<5$ and time 2 $>5$ or vice versa).
 
- 
-<<gbsg5c, echo=FALSE, fig.cap="Image plot of the concordance for pairs of observed time values in the Rotterdam data set.  The dashed contour lines are at  .5 (diagonal), .55, .6, .65, .7 and .75.">>=
+
+\begin{figure}
+<<gbsg5c, echo=FALSE>>=
 # Create a data set of all pairs for the gbsg data.
 dtime <- rott2$ryear[rott2$rfs==1] # death times
 lp <- predict(rfit2)
@@ -897,6 +909,9 @@ abline(h= sqrt(5))
 abline(v= sqrt(5))
 abline(0,1, lty=2)
 @ 
+\caption{Image plot of the concordance for pairs of observed time values in the Rotterdam data set.  The dashed contour lines are at  .5 (diagonal), .55, .6, .65, .7 and .75.}
+\label{gbsg5c}
+\end{figure}
 
 Now add in the $R^2$ and pseudovalue measures,
 and also plot the estimated standard deviation.
@@ -1179,7 +1194,8 @@ The hint of a rise near the left is only a hint, at no point does the
 A scaled density of the eta values is has been added to the bottom.
 There are a 60 subjects with $\eta < -.5$ but only 12 events.
 
-<<gfit2, fig.cap="Calibration plot using observed/expected deaths">>= 
+\begin{figure}
+<<gfit2>>= 
 gfit2b <- update(gfit2, . ~ . + nsp(eta2, 4))
 xx <- seq(min(gbsg2$eta2), max(gbsg2$eta2), length=100)
 yhat <- predict(gfit2b, newdata= data.frame(eta2=xx, expect2=1), se=TRUE)
@@ -1195,6 +1211,9 @@ tfun <- function(y) .5 + (y-min(y))/(4*diff(range(y))) # 4 "looks good"
 lines(temp$x, tfun(temp$y), lty=3, col='gray')
 abline(h=.5, lty=2, col='gray')
 @
+\caption{Calibration plot using observed/expected deaths}
+\label{gfit2}
+\end{figure}
 
 We can also divide the predicted risk score \code{eta} into bins to create a
 tableau reminiscent of the Hosmer-Lemeshow approach in binomial data.
@@ -1524,7 +1543,8 @@ but similar in size.
 The more common approach is to fit a Cox model with eta as the only covariate,
 as a way to assess the linearity of the relationship.
 
-<<dcox, fig.cap="A check for systematic effect versus the risk score.">>=
+\begin{figure}
+<<dcox>>=
 cfit1 <- coxph(Surv(ryear, rfs) ~ eta2, gbsg2)
 cfit2 <- coxph(Surv(ryear, rfs) ~ eta2 + offset(eta2), gbsg2)
 cfit1
@@ -1534,6 +1554,10 @@ cfit3 <- coxph(Surv(ryear, rfs) ~ nsp(eta2, 4) + offset(eta2), gbsg2)
 termplot2(cfit3, term=1, se=TRUE, ylab="Estimated effect of risk score")
 abline(0,0, lty=2, col=2)
 @
+\caption{A check for systematic effect versus the risk score.}
+\label{gcox}
+\end{figure}
+
 Fit cfit1 is often called regression calibration, a good model should have
 a coefficient of 1. If there was overfitting during creation of the prediction
 model then we might expect the actual risk to rise and fall less sharply than the
@@ -1643,7 +1667,7 @@ Nevertheless, we can see that the greatest gains in survival were for stages
 asurv12 <- survfit(Surv(month, status) ~ r2012, amyloid)
 plot(asurv15, col=1:4, lwd=2, xlab="Months", ylab="Survival")
 for (i in 0:3) {
-    temp <- subset(amyloid.surv, stage==i & study== 2012)
+    temp <- subset(amyloidmodel, stage==i & study== 2012)
     lines(temp$month, temp$survival, lwd=2, col=i+1, lty=2)
 }
 legend("topright", paste("Stage", 0:3), lty=1, col=1:4, bty='n')
