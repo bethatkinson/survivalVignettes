@@ -6,7 +6,7 @@
 Survival with amyloidosis
 }
 \description{
-  This pair of datasets is used in the external validation vignette. The
+  This pair of data sets is used in the external validation vignette. The
   \code{amyloidmodel} dataset contains survival curves from four
   studies, the \code{amyloid} data survival times and risk scores for
   1005 subjects.

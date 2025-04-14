@@ -8,7 +8,10 @@ vignettes/*.tex
 vignettes/*.toc
 vignettes/*.bbl
 vignettes/*.synctex.gz
+vignettes/figures
+vignettes/pseudo_files
 .hg
 vignettes/*.html
 /doc/
 /Meta/
+temp
