@@ -841,10 +841,10 @@ grid, and the contour lines are predicted values from a glm fit.
 Correct prediction is harder for two outcomes that are nearly identical (the
 diagonal) and for outcomes further from the origin.
 If we focus on the concordance values at $\tau=5$ in figure \ref{gbsg5b-1},
-the concordance $C$ at that point is an average over all the points in the lower
-left quadrant of figure \ref{gbsg5c-1} (time 1 and time 2 both $\le 5$ years) 
-while DC is an average over all point in the upper left and lower right
-quadrants (time 1 $<5$ and time 2 $>5$ or vice versa).
+the concordance $C$ at that point is an average that omits the upper right
+quadrant of figure \ref{gbsg5c-1} (time 1 and time 2 both $\ge 5$ years) 
+while DC omits both the upper right and lower left quadrants
+(time 1 $<5$ and time 2 $>5$ or vice versa).
 
  
 <<gbsg5c, echo=FALSE, fig.cap="Image plot of the concordance for pairs of observed time values in the Rotterdam data set.  The dashed contour lines are at  .5 (diagonal), .55, .6, .65, .7 and .75.">>=
