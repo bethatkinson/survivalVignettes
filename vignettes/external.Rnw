@@ -3,7 +3,10 @@
 \addtolength{\textwidth}{1in}
 \addtolength{\oddsidemargin}{-.5in}
 \setlength{\evensidemargin}{\oddsidemargin}
+
 %\VignetteIndexEntry{External Validation}
+%\VignetteEngine{knitr::knitr}
+%\VignetteEncoding{UTF-8}
 
 \newcommand{\code}[1]{\texttt{#1}}
 \newcommand{\Lhat}{\hat\Lambda}
@@ -18,14 +21,19 @@
 
 \title{External Validation of Survival Models}
 \author{Terry Therneau}
-\date{Nov 2024}
+\date{April 2025}
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+\maketitle
+\tableofcontents
 
 <<setup, echo=FALSE>>=
 library(survival)
 library(knitr)
 library(splines)
 suppressMessages(library(splines2))
-supperssMessages(library(survey))
+suppressMessages(library(survey))
 
 opts_chunk$set(comment=NA, tidy=FALSE, highlight=FALSE, echo=TRUE,
                fig.width=6.5, fig.height=4, fig.path="figures/",
@@ -41,6 +49,7 @@ palette("Okabe-Ito") # color blind friendly
 @
 
 \begin{document}
+\SweaveOpts{concordance=TRUE}
 \maketitle
 
 \section{Overview}
