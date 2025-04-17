@@ -23,9 +23,6 @@ editor_options:
 library(survival)
 library(tidyverse)
 
-## turn off certain options
-options(stringsAsFactors=FALSE, show.signif.stars=FALSE)
-
 ## ggplot options
 theme_set(theme_classic())
 
@@ -45,18 +42,18 @@ In medical research we are often faced with the question of whether, in a
 specified cohort, the observed number of events (such as death or fracture) is
 more than we would expect in the general population. If there is an excess risk,
 we then wish to determine whether the excess varies based on factors such as
-age, sex, and time since disease onset. Another question often asked is how do
-two different time scales, such as calendar year and time since disease onset,
-both contribute to the rate of an event or the excess risk.
+age, sex, and time since disease onset. Another issue we often face is how deal
+with two different time scales, such as calendar year and time since disease
+onset, which may both contribute to the rate of an event or the excess risk.
 
 Statistical approaches to this problem have been studied for a long time
 and there is a well-described set of methods available (see, for
 instance, overviews in the Encyclopedia of Biostatistics @Inskip98). An
 interesting aspect of the methods, and the primary subject of this
 report, is that many of the computations are very closely related to
-Poisson regression models. Powerful modern software, such as the
-generalized linear models functions of R, allow us to do 
-these "specialized" computations quite simply
+Poisson regression models. Functions such as 
+generalized linear models in R allow us to do 
+these computations quite simply
 via creation of datasets in the appropriate format. This report
 summarizes several of these computations, and is also a compendium of
 various tricks and techniques that the authors have accumulated over the
@@ -84,7 +81,7 @@ population with the condition of interest who have not been identified.
 The methods discussed here only apply to the prospective case. We might
 think of prospective risk as the therapist's question, as they advise
 the patient currently in front of them about his/her future. Interesting
-questions include
+questions include:
 
 -   Short term. What is the risk for the short term, say 30 days? This
     question is important, but we must be quite careful about implying
@@ -97,22 +94,21 @@ questions include
     examples of questions are:
 
     -   Do patients with diabetes have a higher death rate than the
-        general population? Has this relationship changed over time? Are
-        there different relationships for younger versus older subjects?
-        Does this relationship change with disease duration? Has this relationship
-        changed over calendar periods (such as during 2020)?
+    general population? Has this relationship changed over time? How do the
+    death rates change immediately after diagnosis versus 10 years after
+    diagnosis?  Are there different relationships for younger versus older
+    subjects? Does age at diagnosis matter? Does this relationship change with
+    disease duration? Has this relationship changed over calendar periods?
     –   Has the rheumatoid arthritis population experienced the same survival
-        benefits as the general population? 
-    –   Multiple myeloma subjects
-        are known to experience a large number of fractures. Does this
-        excess fracture rate occur before or after the diagnosis of
-        multiple myeloma? Is this excess fracture rate constant after
-        diagnosis? 
-    –   Do patients with MGUS (monoclonal gammopathy of
-        undetermined significance) have higher death rates than
-        expected? Is the excess mortality rate constant, or does it rise
-        with age? How is the amount of excess related to gender,
-        obesity, or other factors?
+    benefits as the general population?
+    –   Multiple myeloma subjects are known to experience a large number of
+    fractures. Does this excess fracture rate occur before or after the
+    diagnosis of multiple myeloma? Is this excess fracture rate constant after
+    diagnosis?
+    –   Do patients with MGUS (monoclonal gammopathy of undetermined
+    significance) have higher death rates than expected? Is the excess mortality
+    rate constant, or does it rise with age? How is the amount of excess related
+    to gender, obesity, or other factors?
 
 Each of these items are actual medical questions that have been
 addressed in studies at Mayo, worked on by the authors.  For purposes of
@@ -127,30 +123,29 @@ Tabular analyses of observed versus expected events, often called
 "person-years" summaries, are very familiar in epidemiological studies.
 Table \@ref(tab:table1) is an example, and shows how a subject may contribute to
 multiple cells within a person-years table. In this case, the results
-have been stratified both by patient age and by the time interval that
+have been stratified both by current patient age and by the time interval that
 has transpired since detection of MGUS. This table includes the
-follow-up for a female who is age 64 at diagnosis of MGUS and is
-followed for approximately 4.5 years. She contributes 0.082 years (1
-month) to the "0-1 month" cell as a 55-65 year old. During the "6-12
-month" cell she contributes person-years to two different age groups.
+follow-up for a female who is age 64.1 at diagnosis of MGUS and is
+followed for almost 5 years. She contributes 0.082 years (1
+month) to the "0-1 month" cell as a 55-65 year old. During the "6-12 month" cell she 
+contributes 0.402 years to the 55-65 age group and 0.10 years to the 65+ age group.
 
 
 Table: (\#tab:table1) Person-years analysis for one person who entered the study at
-age 64 and died at age 68.9. Each cell contains the number of
+age 64.1 and died at age 68.9. Each cell contains the number of
 person-years spent in that category.
 
 ```{r}
-library(survival)
-tmpdata <- mgus[mgus$id==185,]
+tmpdata <- data.frame(age=64.1, futime=1783, death=1)
 
-cuttime1 <- tcut(rep(0, nrow(tmpdata)), c(0, 30, 182, 365.25*c(1, 2, 5, 10, 100)),
-              labels=c('0-1 mon', '1-6 mon', '6-12 mon', '1-2 yr',
-                       '2-5 yr', '5-10 yr', '10+ yr'))
+cuttime <- tcut(rep(0, nrow(tmpdata)), c(0, 30, 182, 365.25*c(1, 5, 10, 100)),
+              labels=c('0-1 mon', '1-6 mon', '6-12 mon', '1-5 yr',
+                       '5-10 yr', '10+ yr'))
               
-cutage1  <- tcut(tmpdata$age*365.25, c(0, 35,45,55,65,75, 110)*365.25, 
-              labels=c('<35', '35-45', '45-55', '55-65', '65-75', '75+'))
+cutage  <- tcut(tmpdata$age*365.25, c(0, 35,45,55,65, 110)*365.25, 
+              labels=c('<35', '35-45', '45-55', '55-65', '65+'))
 
-tmp2 <- pyears(Surv(futime, death) ~ cuttime1 + cutage1, data=tmpdata, data.frame=T)
+tmp2 <- pyears(Surv(futime, death) ~ cuttime + cutage, data=tmpdata, data.frame=T)
 summary(tmp2, header=F, n=F, event=F, digits=2)
 ```
 
@@ -164,14 +159,14 @@ Table: (\#tab:table2) Rates analysis for patients with MGUS. Each cell
 contains five values: 1) the number of subjects contributing to the
 cell, 2) the number of deaths, 3)
 the total number of person-years of observation in the cell, 
-4) the expected number of deaths based on the
-Minnesota population, and 5) a risk ratio. A given patient will
+A given patient will
 contribute to multiple cells during their follow-up.
 
 ```{r}
 ## Create desired grouping of the follow-up person-years
-cuttime <- tcut(rep(0, nrow(mgus)), c(0, 182, c(1, 5, 100)*365.25),
-                labels=c('0-6 mon', '6-12 mon', '1-5 yr', '5+ yr'))
+cuttime <- tcut(rep(0, nrow(mgus)), breaks=c(0, 1, 5, 100)*365.25,
+                labels=c('0-1 yr', '1-5 yr', '5+ yr'))
+
 ## Create desired grouping of age
 ## Note - the first argument defines the age at which people enter the study.
 ## The tcut function then categorizes person-years according to the
@@ -180,74 +175,69 @@ cuttime <- tcut(rep(0, nrow(mgus)), c(0, 182, c(1, 5, 100)*365.25),
 cutage <- tcut(mgus$age*365.25, c(0, 35,45,55,65,75, 110)*365.25,
                labels=c('<35', '35-45', '45-55', '55-65', '65-75', '75+'))
 
-## create date that is 7/1/year to pull off the appropriate expected rates
-mgus$dtdiag <- as.Date(paste(rep(7,nrow(mgus)),rep(1,nrow(mgus)),1900+mgus$dxyr,sep='/'),
-                     format='%m/%d/%Y')
-
 ## Divide follow-up by age and time categories
 pyrs.mgus <- pyears(Surv(futime, death) ~ cuttime + cutage,
-                    rmap=list(age=age*365.25, year=dtdiag, sex=sex),
-                    data=mgus, ratetable=survexp.mn, data.frame=T)
+                    data=mgus, data.frame=T)
 
 ## create full summary
-summary(pyrs.mgus, total=T, digits=1, nsmall=1)
+summary(pyrs.mgus, total=T, digits=1)
 ```
+
+
+It is also possible to output the summary counts as a dataframe. The rate (events/pyears) is 
+expressed per 100 person-years.  The following
+output shows the first 10 lines of that data.
+
+```{r}
+## dataframe summary
+dat <- pyrs.mgus$data
+dat$rate <- 100*dat$event/dat$pyears
+
+dat <- dat[order(dat$cuttime, dat$cutage),]
+print(dat[1:10,], digits=3, row.names=F)
+```
+
+The call to `pyears` above uses the `tcut` command which creates time-dependent categories
+especially designed to use with the pyears function. Its first argument is the starting point
+for each person; for the cuttime variable (time since diagnosis of MGUS) each
+person starts at 0 days. As a person is followed through time, they dynamically
+move to another category of follow-up time at 182, 365, etc. days. The `pyears`
+function breaks the accumulated person-years into cells based on cutage and
+cuttime. The created intervals are of the form (t1, t2], meaning that the
+cutpoints are included on the right end of each interval. The example below
+shows how 1 subject who is 47.8 at study onset (8/24/1967) transitions between
+age and year categories.
+
+```{r}
+## create date that is 7/1/year 
+mgus$dtdiag <- as.Date(paste(rep(7,nrow(mgus)), rep(1,nrow(mgus)), 1900+mgus$dxyr, sep='/'),
+                     format='%m/%d/%Y')
+
+tyear <- tcut(as.Date("1967-08-24"), breaks=as.Date(paste0(1964:1974, "-12-31")),
+              labels=1965:1974)
+tage <- tcut(47.8*365.25, breaks=floor(44:60 * 365.25 -1), labels=45:60)
+pfit2 <- pyears(Surv(2338, 1) ~ tage + tyear, scale=1)
+pfit2$pyears[3:12,2:10]
+```
+
+
+By default, the `pyears` function assumes that variables are on the right scale 
+(e.g. days versus years). For checking purposes, `pyears` returns the summary
+`offtable` which shows the amount of follow-up time that did not fall into any 
+of the categories specified by the formula. If, for instance, the
+cut statement above had started at age 40, then the 9 subjects in the mgus data
+set with ages between 30 and 40 have nowhere to go in the main tables; their
+time would be counted counted in the `offtable`. One should always check that this is 0.
 
 ```{r}
 ## Make sure variables are summarized correctly
 ## Person-years 'off table' 0 generally indicates a problem
 print(pyrs.mgus)
-
-## Look at the dimensions of the expected data
-summary(survexp.mn)
-
-## dataframe summary
-dat <- pyrs.mgus$data
-dat$obs_exp <- dat$event/dat$expected
-dat <- dat[order(dat$cuttime, dat$cutage),]
-print(dat[1:10,], digits=3)
 ```
 
-The `tcut` command creates time-dependent categories especially for the
-pyears computation. Its first argument is the starting point for each
-person; for the cuttime variable (time since diagnosis of MGUS) each
-person starts at 0 days. As a person is followed through time, they
-dynamically move to another category of follow-up time at 182, 365, etc.
-days. The `pyears` function breaks the accumulated person-years into
-cells based on cutage and cuttime. The created intervals are of the form
-(t1, t2], meaning that the cutpoints are included on the right end of
-each interval. The `survexp.mn` rate table is a special object
-containing the daily death rates for Minnesota residents by age, sex,
-and calendar year; the variable names of 'age', 'sex', and 'year' can be
-found by summary(survexp.mn). Other rate tables may include different
-dimensions. For instance, the `survexp.usr` rate table is also divided
-by race. By default, the `pyears` function assumes that your dataset,
-mgus in the above example, contains both the variables found in the
-model statement and the variables found in the rate table, and that the
-latter are on the right scale (e.g. days versus years). If the
-variable names are not in your dataset you can still do the analysis by
-calling the ratetable function as part of your formula. In this
-particular dataset 'year' is named 'dtdiag'. Since the Minnesota rate
-table contains daily hazards, this means that age should be in days, and
-that the 5 'year' argument should be a Julian date (number of days since
-1/1/1960) at which the subject began their follow-up. The variable sex
-should be coded as ("male", "female"). Any unique abbreviation of the
-character string, ignoring case, is acceptable, as is a numeric code of
-(1, 2). Correctly matching the variables of the rate table is one of the
-more fussy aspects of the pyears and survexp routines, and it is easy to
-make an error. Be very careful as well to use only the starting values
-of your variables (follow-up time at baseline, baseline age, etc.) when
-using tcut. The pyears function returns two components whose primary
-purpose is data checking: 
+**REMINDER:**
 
-* The summary component shows how subjects mapped into the rate table at the
-start of their follow-up
-* The offtable shows the amount of follow-up time that did not fall into any 
-of the categories specified by the formula.
-
-**CAUTION - COMMON MISTAKES:**
-
-1)  When using tcut, make sure that the input value reflects the
+1)  When using `tcut`, make sure that the input value reflects the
     beginning of your time period or age period. For follow-up, you
     usually start at time 0. DO NOT use your final follow-up time in
     tcut. If you have variables that reflect the start and stop time for
@@ -255,14 +245,24 @@ of the categories specified by the formula.
     time.
 2)  All time and age variables MUST be in the same units (in the
     previous example, days).
+3)  Be careful will how many cells are created. 
+    One aspect to be aware of is that even though the data frame omits those rows,
+    the computation within the pyears routine uses the entire matrix.
+    For instance if the tcut above had used cutpoints of months for age the 
+    intermediate matrix would be quite large, almost all
+    of which with zero follow-up. 
+    An incautious use of multiple tcut terms can exhaust available computer memory.
+4)  Remember that `cut` creates a category that persists over time while
+    `tcut` categories allow subjects to transition from one to the next. 
+    Both variables may be of interest.
 
 ## Examining population event rates
 
-Often it is useful to first examine the event rate data before comparing it to
-expected rates. Using the `jasa` data, we'll look at the observed death rates
-stratified by time since enrollment and baseline age group (created using `cut`
-not `tcut`). Note that in this example the ratetable option is not used so there
-are no expected rates in the output.
+Even if the ultimate research questions are a comparison of the observed event
+counts to the expected number of events, it is still a good idea to first
+examine the event rate data. Using the `jasa` data, we'll first look at the
+observed death rates stratified by time since enrollment and baseline age group
+(created using `cut` not `tcut`).
 
 ```{r}
 data1 <- subset(jasa, futime >0) #drop 1 person with no follow-up
@@ -286,88 +286,334 @@ pyrs.j2 <- pyears(Surv(futime, fustat) ~ td.agegp + etime, data=data1, scale=30.
 pyrs.j2$offtable
 ```
 
-The left panel shows the rates from the output table (pyrs.j) over follow-up time
-stratified by baseline age while the right panel shows the rates stratified by the current age. 
+The left panel shows the rates from the output table (pyrs.j) over follow-up
+time stratified by baseline age while the right panel shows the rates stratified
+by the current age.
 
 ```{r}
 f1 <- ggplot(pyrs.j$data, aes(etime, event/pyears, 
                               color=base.agegp, group=base.agegp)) +
       geom_point() + geom_line() + theme(legend.position="top") +
-      ylim(0,.4)
+      ylim(0,.4) + xlab('Time since study entry') + ylab("Death rate")
 
 f2 <- ggplot(pyrs.j2$data, aes(etime, event/pyears, 
                               color=td.agegp, group=td.agegp)) +
       geom_point() + geom_line() + theme(legend.position="top") +
-      ylim(0,.4)
+      ylim(0,.4) + xlab('Time since study entry') + ylab("Death rate")
 
 ggpubr::ggarrange(f1,f2)
 ```
 
+Now we'll repeat this analysis using expected death rates. This is done by using
+rate tables. The United States death rates are included in the survival package,
+obtained from the US Centers for Disease Control and Prevention (CDC), it
+contains daily death rates, categorized by age, sex, and calendar year. The
+`survexp.us` rate table is a special object containing these rates; the variable
+names of 'age', 'sex', and 'year' can be found by summary(survexp.us). Other
+rate tables may include different dimensions. For instance, the `survexp.usr`
+rate table is also divided by race. The `rmap` argument gives mappings between
+the variables in the dataset, and the dimension names of the rate table, with
+all time values in days.
+
+
+```{r}
+summary(survexp.us)
+```
+
+By default, the `pyears` function assumes that your dataset, contains both the
+variables found in the model statement and the variables found in the rate
+table. Using the print function on a pyears object shows how subjects mapped
+into the rate table at the start of their follow-up Specifying a ratetable in
+pyears results in an additional component in the pyears output containing the
+expected number of events for each cell, from a hypothetical matched cohort from
+the US general population.  These value are independent of the scale option
+since they are totals over time.
+
+Since the US rate table contains daily hazards, this means that age should be in
+days, and that the 5 'year' argument should be a Julian date (number of days
+since 1/1/1960) at which the subject began their follow-up. The variable sex
+should be coded as ("male", "female"). Any unique abbreviation of the character
+string, ignoring case, is acceptable, as is a numeric code of (1, 2). Correctly
+matching the variables of the rate table is one of the more fussy aspects of the
+pyears and survexp routines, and it is easy to make an error.
+
+The standardized mortality ratio (SMR) is the observed number of events divided
+by the expected number of events, often written as O/E. This particular patient
+cohort is very ill, leading to extremely large SMR values.  Regression analysis
+of the excess death rate will be based on a poisson model, as before, but with
+the expected number of events rather than the total follow-up time as the offset
+term.
+
+
+```{r}
+## scale the person-years in terms of months instead of the default of years
+pyrs.j <- pyears(Surv(futime, fustat) ~ base.agegp + etime, data=data1, scale=30.5,
+                 data.frame=T, ratetable = survexp.us,
+                 rmap= list(age= age*365.25, sex='m', year=accept.dt))
+print(pyrs.j)
+
+pyrs.j2 <- pyears(Surv(futime, fustat) ~ td.agegp + etime, data=data1, scale=30.5,
+                 data.frame=T, ratetable = survexp.us,
+                 rmap= list(age= age*365.25, sex='m', year=accept.dt))
+print(pyrs.j2)
+```
+
+By adding the ratetable to `pyears`, an extra variable has been added to the dataset (`expected`).
+
+```{r}
+head(pyrs.j$data)
+```
+
+The left panel shows the rates from the output table (pyrs.j) over follow-up time
+stratified by baseline age while the right panel shows the rates stratified by the current age. 
+
+
+```{r}
+f1 <- ggplot(pyrs.j$data, aes(etime, event/expected, 
+                              color=base.agegp, group=base.agegp)) +
+      geom_point() + geom_line() + theme(legend.position="top") +
+      xlab('Time since study entry') + ylab("Obs/Exp Deaths")
+
+f2 <- ggplot(pyrs.j2$data, aes(etime, event/expected, 
+                              color=td.agegp, group=td.agegp)) +
+      geom_point() + geom_line() + theme(legend.position="top") +
+      xlab('Time since study entry') + ylab("Obs/Exp Deaths")
+
+ggpubr::ggarrange(f1,f2)
+```
 
 ## Using Poisson regression to model rates
 
-To display the raw data, the person-years were lumped
-together in follow-up groupings as a way to control the noise. Finer divisions of 
-time, such as
-single year of age and follow-up, work better for modeling. Poisson models are
-commonly used to model incidence or person-year rates. As is pointed out
-by Berry [4], incidence data do not strictly follow the assumptions of a
-Poisson probability model. Using the example of the probability of death
-with 150 years of follow-up - the y variable, "number of events", is in
-this case deterministically 1. He then shows that Poisson based
-statistical modeling is still correct, a forerunner of the modern and
-more general argument for this fact which is based on counting processes
-and martingales [1]. Thus, modeling of rates along with hypothesis tests
-and confidence intervals can be based in generalized linear models [9].
-Figure 3 shows the raw data from Figure 2 along with predicted death
-rates from Poisson regression models with quadratic age terms. The
-predicted death rates are obtained for a range of ages and for a dummy
-person-years value of 1, and are much smoother than the raw values. The
-dummy value of 1 "fools" the predict function into returning event rates
-rather than the number of events (which is the y variable for the
-Poisson model). This works because `E(number of events) = rate*time`.
-Note that the same results could be obtained by fitting one model with
-the appropriate set of interactions, but fitting 4 separate models is
-often easier to plot. In this example log(pyears) is used as the offset
-term, as will be described in the next section.
+To display the raw data, the person-years were lumped together in follow-up
+groupings as a way to control the noise. Finer divisions of time, such as single
+year of age and follow-up, work better for modeling. Poisson models are commonly
+used to model incidence or person-year rates. 
 
-```{r}
-##### CODE TO CREATE FIGURE 3 #####
-## Finely divide age for the fit (single year intervals)
-cutage4 <- tcut(data.spe$age, 365.25*c(0,seq(35,100),110), labels=c('<35', 35:99, '100+'))
-pyrs.spe4 <- pyears(Surv(futime, status) ~ cutage4 + sex + mgus + cuttime3,
-data=data.spe, data.frame=T)$data
-pyrs.spe4 <- pyrs.spe4[pyrs.spe4$cuttime3 == '2+',] # keep follow-up of 2+ years
-## assign a numeric value to each age group for plotting and modeling
-pyrs.spe4$age <- (34:100)[as.numeric(pyrs.spe4$cutage4)]
-## fit Poisson models
-pfit4a <- glm(event ~ offset(log(pyears)) + age + age^2, data=pyrs.spe4, family=poisson)
+An important insight into the model is that we are interested in modeling the
+event *rate* but the poisson density predicts the total *number* of events.
+In GLM notation
+
+$$ \begin{aligned}
+  E(d) &= \lambda t \\
+	   &= e^{X\beta + \log(t)}
+\end{aligned}
+$$ ` 
+
+
+The rate is modeled as $\exp(X \beta)$ for the usual reason, i.e., to avoid
+negative rates (such as the dead coming back to life), and on this scale the log
+follow-up time appears as a covariate with a known coefficient of 1. This is
+known as an offset in glm models.
+
+A second insight is that the number of events is not actually Poisson.  In fact,
+if all the subjects had been followed to death $y_i$ would be 1 for all subjects
+while the offset $\log(t_i)$ would be the random variable. The true likelihood
+for the data, however, turns out to be identical to the Poisson density, up to a
+constant (Berry 1978). Using the example of the probability of death with 150
+years of follow-up - the y variable, "number of events", is in this case
+deterministically 1. He then shows that Poisson based statistical modeling is
+still correct, a forerunner of the modern and more general argument for this
+fact which is based on counting processes and martingales [1]. Thus, modeling of
+rates along with hypothesis tests and confidence intervals can be based in
+generalized linear models [9]. A standard statistical tool just happens to be
+exactly the right thing. A more modern proof of the same result can be based on
+counting processes.
+
+As a simple example, assume that we want a confidence interval for the rates in
+the table below. One approach would be to use the `cipoisson` function which
+provides a confidence interval for the rates in each combination of agegp and sex.
+
+```{r, pyears2}
+mgus$agegp <- cut(mgus$age, c(30, 50, 70, 100))
+pfit1 <- pyears(Surv(futime, death) ~ sex + agegp, 
+                data = mgus, data.frame = TRUE)
+summary(pfit1)
+
+dat <- pfit1$data
+dat$rr <- dat$event/dat$pyears
+dat$ci <- cipoisson(dat$event, dat$pyears)
+print(dat, digits=2)
 ```
 
-Figure 3: Predicted death rates (solid line) and 95% confidence
-intervals (dashed lines) for each of the four groups, along with the
-observed death rates (circles) in each cell of the table.
-family=poisson, subset= (sex=='female' & mgus==0))
+Another option is to evaluate the effect of sex and agegp overall using a Poisson 
+regression model.
 
 ```{r}
-pfit4b <- glm(event ~ offset(log(pyears)) + age + age^2, data=pyrs.spe4,
-family=poisson, subset= (sex=='male' & mgus==0))
-pfit4c <- glm(event ~ offset(log(pyears)) + age + age^2, data=pyrs.spe4,
-family=poisson, subset= (sex=='female' & mgus==1))
-pfit4d <- glm(event ~ offset(log(pyears)) + age + age^2, data=pyrs.spe4,
-family=poisson, subset= (sex=='male' & mgus==1))
-# First panel of the plot
-tempx <- 40:99 #desired age range for the plot
-pred <- predict(pfit4a, newdata= data.frame(age=tempx, pyears=1), se.fit=T)
-matplot(tempx, exp(cbind(pred$fit,
-pred$fit - 1.96* pred$se,
-pred$fit + 1.96* pred$se)),
-type='l', lty=c(1,2,2), col=1)
-## Add points to the figure from the coarser fit, as shown in Figure 1
-points(tmp.age, tmp.y[,1], pch=1)
+temp <- glm(event ~ agegp + sex + offset(log(pyears)), family = poisson, data=dat)
+summary(temp)$coefficients
+
+## CI for the agegp 70-100 vs 30-50
+exp(c(rate= 1.2490, lower= 1.2490 - 1.96*.2307, upper= 1.2490 + 1.96* .2307))
 ```
 
-## Relating Cox and rate regression models
+You can also use the `broom` package to extract confidence intervals.  The
+`broom` package calls the `confint` function which is a part of the `MASS`
+package and calculates the confidence intervals by interpolation in the profile
+traces. The slight difference in confidence intervals is often a source of confusion.
+
+```{r}
+temp2 <- broom::tidy(temp, conf.int=T, exponentiate=T) %>% rename(rate=estimate)
+print(data.frame(temp2[-1,c('term','rate','conf.low','conf.high')]))
+```
+
+
+## Multiple ways to slice data
+
+The following examples utilize the dataset `data1` based on jasa dataset that we 
+created earlier.
+
+```{r}
+# etime = time since enrollment, year = year of enrollment
+jfit1 <- pyears(Surv(futime, fustat) ~ year + etime, data1, scale=30.5)
+jfit1
+round(jfit1$pyears)  # total months of FU
+```
+
+In this data set there are many early deaths, and few with long follow up.
+If we want to fit a model to the data, say with these two variables and
+hla.a2, we can rerun pyears with the data.frame argument.  This returns
+the event, n, and pyears matrices as a data.frame.
+
+```{r, pyears6}
+jfit2 <-  pyears(Surv(futime, fustat) ~ year + etime + hla.a2, data1,
+                 scale= 30.5, data.frame=TRUE)
+dim(jfit2$data)
+jfit2$data[1:5,]
+gfit2 <- glm(event ~ year + etime + hla.a2 + offset(log(pyears)),
+             family=poisson, data= jfit2$data)
+summary(gfit2)
+```
+
+As expected from the tabular data, the death rates are highest during the first
+3 months (the default reference level) than in later periods. Notice that the
+data frame has less than `dim(jfit1$pyears)*2 = 64` rows, as any cell with
+pyears = 0 is eliminated from the data frame. This is necessary for the glm fit.
+The poisson likelihood for a cell with 0 events and 0 time is 0 log(0), which is
+equal to 0 by L'Hospital's rule, but the glm algorithm does not know calculus
+and will generate an NA. One aspect to be aware of is that even though the data
+frame omits those rows, the computation within the pyears routine uses the
+entire matrix. For instance if the tcut above had used cutpoints of (0, .25,
+1:100) the intermediate matrix for jfit2 would have dimensions of (8, 101, 2),
+almost all of which is 0. An incautious use of multiple tcut terms can exhaust
+available computer memory.
+
+The result of a tcut term will appear as a factor in the data frame. Suppose
+that you wanted to treat this as continuous in the model, e.g. the tabulation
+was in terms of current age rather than enrollment age (as was done above), and
+one wanted to fit a spline. For instance, say that there single year age
+categories from 30 to 90, the latter being the maximal age at last follow-up for
+any subject and 30 the minimum age at enrollment, in a variable `age_grp`  Then
+
+```{r, eval=FALSE, echo=TRUE}
+tdata <- fit$data
+tdata$iage <- 29 * as.integer(tdata$age_grp)
+```
+
+could be used to create the integer age, prior to fitting a model with tdata.
+In some cases we may want to use the center of a category as the numeric value.
+
+An alternative way to split up time is to create the partitioned data set prior
+to the pyears call. If the purpose is to fit a glm model without the parallel
+table of counts, then the pyears call can be omitted all together. The above
+example using time on study is simple.
+
+```{r, split1}
+data2 <- survSplit(Surv(futime, fustat) ~., data1,
+                   cut= floor(c(.25, 1, 2,5)* 365.25), episode= "egrp")
+table(table(data2$id))
+subset(data2, id %in% 6:8, c(id, tstart, futime, fustat, egrp))
+```
+
+The updated data set has 51 subjects with only a single interval (less than or
+equal to 91 days of follow-up), 23 with two intervals, etc. Now add a pair of
+convenience variables and fit the model.
+
+```{r, split2}
+data2$etime <- factor(data2$egrp, 1:4, c("0-3 m", "3-12 m", "1-2 y", "2-5 y"))
+data2$pyears <- (data2$futime - data2$tstart)/30.5
+gfit2b <- glm(fustat ~ year + etime + hla.a2 + offset(log(pyears)),
+              family= poisson, data= data2)
+all.equal(coef(gfit2), coef(gfit2b))
+
+nrow(data2)
+nrow(jfit2$data)
+```
+
+We get exactly the same fit as before, even though the data set has many more
+rows. For a poisson GLM, the result for per-subject data (data2) is identical to
+the result for a collapsed data set which has one observation for each unique
+covariate pattern (jfit2$data). When computer memory was much smaller, this
+identity was often used as a method to enable model fits for large epidemiologic
+cohorts with thousands of subjects. One constraint with this trick, which is
+also effectively a constraint with using the data.frame=TRUE in pyears, is that
+any continuous covariates such as weight must be categorized.
+
+As a more complicated example, create the data set for a poisson GLM with a time
+dependent covariate (treatment), and with both time since enrollment and age as
+time-dependent categories. The time-dependent covariate is easiest using tmerge,
+then use survSplit for the rest.
+
+```{r, split3}
+data1$ageday <- as.numeric(data1$accept.dt - data1$birth.dt)
+data3a <- tmerge(data1[,c("id", "hla.a2", "age", "ageday","year")], data1, 
+                 id=id, 
+                 death = event(futime, fustat),
+                 transplant = tdc(tx.date - accept.dt))
+
+# now add time since enrollment
+data3b <- survSplit(Surv(tstart, tstop, death) ~ .,  data3a,
+                   cut=c(91, 365, 730), episode= "egrp")
+
+# Add current age
+data3c <- data3b
+data3c$age1 <- data3c$ageday + data3c$tstart
+data3c$age2 <- data3c$ageday + data3c$tstop
+data3c <- survSplit(Surv(age1, age2, death) ~ ., data3c,
+                   cut= round(2:65 * 365.25), episode= "iage")
+print(data3c[7:15, -c(2,4)])
+
+c(data1= nrow(data1), data3a = nrow(data3a), data3b= nrow(data3b), 
+  data3c= nrow(data3c))
+```
+
+We see the growth: data3a added rows for a change in treatment arm from pre- to
+post-transplant, for those who received a transplant; data3b broke subjects up
+by time since enrollment, and data3c further by their current age. The printout
+above is instructive.  Subject 6 dies on day 2 without transplant, they have a
+single row. Subject 7 changes age 48 days after enrollment, is transplanted 50
+days after enrollment, changes to egrp 2 91 days after enrollment, to egrp 3 365
+days after enrollment, becomes 52 years old 413 days after enrollment, and dies
+at 674 days after enrollment. In particular note that each survSplit call does
+*not* update prior (time1, time2) variable pairs.  (This is a planned
+enhancement, some day real soon now ...) The tmerge routine is designed to add
+data lines based on per-subject event or measurement times, and the survSplit
+routine for globally applied cutpoints.
+
+We were a bit clever with the iage variable; there is no one who is less
+than 8 years old at enrollment, but we made the second category be equal to 
+age 2.  (A trick like this, without any attached comment, is almost certain to
+mystify a future reader of the code, however.)
+Finally, we can fit a poisson models.
+
+```{r, split4}
+data3c$days <- with(data3c, age2 - age1)  # time in days
+gfit2c <- glm(death ~ year + factor(egrp) + hla.a2 + offset(log(days)),
+              family= poisson, data= data3c)
+
+round(rbind(coef(gfit2), coef(gfit2c)), 4)
+
+gfit3 <- glm(death ~ transplant + factor(egrp) + iage + offset(log(days)),
+             family= poisson, data= data3c)
+```
+
+As a data check we refit the prior model to this expanded data set.  Using days
+instead of months as the time interval affects the intercept term, but none of
+the others. The second fit shows that heart transplant was not effective in this
+study, as has been noted by several others, while increased age and time since
+enrollment important factors.
+
+
+### Relating Cox and rate regression models
 
 Cox regression is a familiar statistical tool often used to model event
 data. The lung dataset is used to demonstrate the similarities of the
@@ -376,9 +622,10 @@ the endpoint be coded as (0,1) whereas coxph can handle endpoints coded
 either as (0,1) or (1,2).
 
 ```{r}
-mylung <- lung ## creates local version of the lung dataset
-mylung$event <- mylung$status - 1 ## so that it is coded as 0=censor/1=event
-coxph(Surv(time, event) ~ age + ph.ecog, data=mylung)
+lung1 <- lung ## creates local version of the lung dataset
+lung1$event <- lung1$status - 1 ## so that it is coded as 0=censor/1=event
+broom::tidy(coxph(Surv(time, event) ~ age + ph.ecog, data=lung1))
+broom::tidy(glm(event ~ age + ph.ecog + offset(log(time)), data=lung1, family=poisson))[-1,]
 ```
 
 Notice how closely the coefficients and standard errors for the Poisson
@@ -432,24 +679,17 @@ annual event rates in the two arms were 0.38% and 0.30%, respectively,
 leading to an increased case incidence of only 8 per 10,000 patients per
 year. Given other benefits of the 10 treatment, such as a reduction in
 hip fracture, a patient might take a very different view of "26% excess"
-and "\< 1/1000 excess". 
+and "< 1/1000 excess". 
 
-Consequently, this report explores the fit of
-excess risk (additive) models as well as relative risk (multiplicative)
-models. In many cases, excess risk models may provide information that
-is comple- mentary to the relative risk models, in others they may
-provide a more succinct and superior summary. Both types of models can
-be fit using Poisson regression, but the data setup and fitting process
-for excess risk models is somewhat more involved and certainly far less
-well known.
 
-# Relative Risk Regression (multiplicative model)
+
+# Relative Risk Regression 
 
 ## Basic models
 
 Relative risk regression is simply modeling the observed events,
 adjusting for the appropriate expected event rates. In this case, we'll
-use Poisson regression to further explore the MGUS data. In its simplest
+use Poisson regression to explore the Free Lightchain data. In its simplest
 form, this can be written as
 
 $$
@@ -462,63 +702,68 @@ $$
 \end{eqnarray*}
 $$
 
-In the above formula, λage,sex is the appropriate population hazard rate
-for a particular age and sex combination (that of the ith subject), and
-ei is the expected number of events over the time period of observation
-for the subject, or, more accurately, the cumulative hazard $\Lambda_i(t_i)$ for
-the person. In reality, the baseline hazard changes over the follow-up
-time for a subject, as they move from one age group to another, and
-computing it directly from the rate tables is a major bookkeeping chore.
-However, keeping track of these changes and computing a correct total
-expected number of events for each person is precisely what is done by
-the pyears and survexp functions in R. 
+In the above formula, $\lambda_{\rm age, sex}$ is the appropriate population
+hazard rate for a particular age and sex combination (that of the ith subject),
+and $e_i$ is the expected number of events over the time period of observation for
+the subject, or, more accurately, the cumulative hazard $\Lambda_i(t_i)$ for the
+person. In reality, the baseline hazard changes over the follow-up time for a
+subject, as they move from one age group to another, and computing it directly
+from the rate tables is a major bookkeeping chore. However, keeping track of
+these changes and computing a correct total expected number of events for each
+person is precisely what is done by the pyears and survexp functions in R.
 
-Per the above formulation, the
-coefficients $\beta$ in this model describe the risk for each subject relative
-to that for the standard population. Programming wise, the only change
-from the usual Poisson regression is the use of log(expected) instead of
-log(time) as the offset. The use of an offset treats the log of the
-expected as another covariate, with a known coefficient of 1. For
+Per the above formulation, the coefficients $\beta$ in this model describe the
+risk for each subject relative to that for the standard population. Programming
+wise, the only change from the usual Poisson regression is the use of
+log(expected) instead of log(time) as the offset. The use of an offset treats
+the log of the expected as another covariate, with a known coefficient of 1. For
 uncomplicated data, the function `survexp` is the easiest to use. Each of these
 returns the survival probability $S_i(t) = \exp[-\Lambda_i(t)]$, from which the
 expected number of events $\Lambda_i$ can easily be extracted. We will base our
 expected calculations on the Minnesota life tables.
 
 ```{r}
-expected <- -log(survexp(futime ~ 1, data=mgus, ratetable=survexp.mn, cohort=F))
-pfit <- glm(status ~ sex + offset(log(expected)), data=mgus, family=poisson)
+table(flchain$futime==0)
+flchain2 <- flchain %>% filter(futime>0)
+flchain2$dtsample <- as.Date(paste0(flchain2$sample.yr,'-07-01'))
 
-range(expected)
+table(flchain2$futime<7)
 
-## Try again, this time subsetting the data with futime>0
-## Also remove the intercept to print separate estimates for males & females
-pfit <- glm(status ~ -1 + sex + offset(log(expected)), data=mgus,
-family=poisson, subset=(futime>0))
+# group FLC into 3 groups - top 10%, 70-89%ile and the rest
+flchain2$group <- factor(1+ 1*(flchain2$flc.grp > 7) + 1*(flchain2$flc.grp > 9),
+                      levels=1:3, 
+                      labels=c("Low FLC", "Med FLC", "High FLC"))
+
+expected <- survexp(futime ~ 1, data=flchain2, ratetable=survexp.mn, 
+                         method="individual.h",
+                         rmap= list(age= age*365.25, sex=sex, year = dtsample))
+
+## Remove the intercept to print separate estimates for males & females
+pfit <- glm(death ~ -1 + group + offset(log(expected)), data=flchain2,
+            family=poisson)
+broom::tidy(pfit, exponentiate=T, conf.int=T) %>% rename(RR=estimate) %>%
+  select(term, RR, p.value, conf.low, conf.high)
 ```
 
-In this analysis we needed to confront an issue that is not uncommon in
-these studies: two of the subjects have an expected number of events of
-0. Upon further examination, these are two people who were diagnosed
-with MGUS on the day of their death. Simple relative survival is not a
-valid technique when such cases are included. The model is attempting to
+The model is attempting to
 compare the mortality experience of the enrolled subjects to that of a
 hypothetical control population, matched by age and sex, drawn randomly
 from the total population of Minnesota. It recognizes, correctly, that
 the probability of such a control's demise at the instant of enrollment
 is zero, i.e., infinitely unlikely, which leads to infinite values in
 the likelihood. The problem extends beyond day 0. In this dataset there
-are 16 subjects who die within 1 week of MGUS detection; for all of
-these it is almost certain that MGUS was detected because the patients
+are 20 subjects who die within 1 week of the FLC test; for all of
+these it is almost certain had lab tests conducted because the patients
 were at an extreme risk of death. We must exclude those with futime=0,
 but perhaps we should also exclude those with very small follow-up
 times. The analysis above shows that for both males and females, the
 death rate is significantly worse than that for an age-, sex- and
-calendar-year matched population. Rates are 55% greater than the
-Minnesota population at large (exp(0.44) = 1.55). Note that because we
+calendar-year matched population. Rates are 43% greater than the
+Minnesota population at large (exp(0.36) = 1.43). Note that because we
 have removed the intercept (using the -1 coding), we have coefficients
 for both males and females. This allows us to visually compare the
 coefficients and also to obtain the correct standard error term for each
-gender. In the age range of this study (mean age = 71) the population
+gender. In the age range of this study (mean age = 63) the population
 death rate for males is substantially higher than that for females; it
 is interesting that the excess death rate associated with a MGUS
 diagnosis is almost identical for the two groups. To explore this
@@ -550,13 +795,11 @@ for a Cox model. A second is to use the person-years routines to do the
 division for us and this approach is shown below. As pointed out
 earlier, the very early deaths in the MGUS data present us with a
 chicken-and-egg problem: did the MGUS have an impact on the death rate,
-or did a state of severe disease cause detection ofMGUS? Monoclonal
+or did a state of severe disease cause detection of MGUS? Monoclonal
 gammopathy is detected from the serum protein electrophoresis (SPE)
 test, which is ordered by a physician for a number of reasons. It is
 often an exploratory test when the root cause for a patient's condition
-is unclear. We'll now use the data.spe dataset that includes all
-subjects for whom SPE was ordered, both those with a positive result
-(MGUS) and those with a negative test. For this discussion we will
+is unclear.  For this discussion we will
 ignore the possibility of a calendar year effect – a more complete
 analysis did not find one – and use all the available data. If there is
 a short term medical impact of MGUS over and above a mere selection
@@ -567,14 +810,14 @@ and positive SPE results.
 ```{r}
 ### First we create the pyrs.spe dataset
 cuttime <- tcut(rep(0, nrow(data.spe)), c(0:23 *30.5, 365.25*2:10, 36525),
-labels=c(paste(0:23, '-', 1:24, ' mon', sep=''),
-paste(2:9, '-', 3:10, ' yr', sep=''), '10+ yr'))
+                labels=c(paste(0:23, '-', 1:24, ' mon', sep=''),
+                         paste(2:9, '-', 3:10, ' yr', sep=''), '10+ yr'))
 cutage <- tcut(data.spe$age, 365.25*c(0,40:95,110),
-labels= c("<40", paste(40:94, '-', 41:95, sep=''), "95+"))
+               labels= c("<40", paste(40:94, '-', 41:95, sep=''), "95+"))
 ## Save the dataset for further analysis
 tmpfit <- pyears(Surv(futime, status) ~ cuttime + cutage + sex
-+ mgus + ratetable(age=age, sex=sex, year=dtdiag),
-data=data.spe, ratetable=survexp.mn, data.frame=T)
+                 + mgus + ratetable(age=age, sex=sex, year=dtdiag),
+                 data=data.spe, ratetable=survexp.mn, data.frame=T)
 ## Double check that the pyears, ages, sex distribution, and dates all look ok.
 summary(tmpfit)
 
@@ -626,17 +869,17 @@ MGUS/Negative.
 
 ```{r}
 fit3.1 <- gam(event ~ offset(log(expected)) + s(age) + s(dxtime),
-data=pyrs.spe, family=poisson,
-subset=(sex=='female' & mgus==0))
+              data=pyrs.spe, family=poisson,
+              subset=(sex=='female' & mgus==0))
 fit3.2 <- gam(event ~ offset(log(expected)) + s(age) + s(dxtime),
-data=pyrs.spe, family=poisson,
-subset=(sex=='male' & mgus==0))
+              data=pyrs.spe, family=poisson,
+              subset=(sex=='male' & mgus==0))
 fit3.3 <- gam(event ~ offset(log(expected)) + s(age) + s(dxtime),
-data=pyrs.spe, family=poisson,
-subset=(sex=='female' & mgus==1))
+              data=pyrs.spe, family=poisson,
+              subset=(sex=='female' & mgus==1))
 fit3.4 <- gam(event ~ offset(log(expected)) + s(age) + s(dxtime),
-data=pyrs.spe, family=poisson,
-subset=(sex=='male' & mgus==1))
+              data=pyrs.spe, family=poisson,
+              subset=(sex=='male' & mgus==1))
 ```
 
 ### Graphical displays
@@ -717,11 +960,11 @@ the SPE test).
 ```{r}
 ### FIT OVERALL AND SUBSETTED MODELS TO CHECK FOR SEX AND MGUS SIGNIFICANCE
 fit3.overall <- gam(event ~ offset(log(expected)) + s(age) + s(dxtime) + sex + mgus,
-data=pyrs.spe, family=poisson)
+                    data=pyrs.spe, family=poisson)
 fit3.drop1 <- gam(event ~ offset(log(expected)) + s(age) + s(dxtime) + mgus,
-data=pyrs.spe, family=poisson)
+                  data=pyrs.spe, family=poisson)
 fit3.drop2 <- gam(event ~ offset(log(expected)) + s(age) + s(dxtime),
-data=pyrs.spe, family=poisson)
+                  data=pyrs.spe, family=poisson)
 anova(fit3.overall, fit3.drop1, fit3.drop2, test='Chi')
 ```
 
@@ -751,32 +994,28 @@ anova(fit3.drop1, fit3.lin, test='Chi')
 
 ## Direct standardization 
 
-The observed/expected ratios shown in Table 2 are
-referred to as indirect standardization or, more commonly, standardized
-mortality ratios (SMR). Another statistic of interest, although less
-used, is referred to as direct standardization. A good tutorial on both
-of these and other suggestions along with an extensive bibliography can
-be found in Inskip [6]. Whereas the indirect method asks what the event
-count would be in the study population (i.e. the event rates in the
-reference population are applied to the study population), if it had the
-rates of the parent or reference group, the direct method asks what the
-event count would be in the parent population, if it had the rates of
-the sample (i.e. the event rates in the study population are applied to
-the reference population). For the former we needed the age/sex
-stratified rates for the reference population of interest. For the
-latter we need the age/sex stratified reference population sizes (Table
-3). 
+The observed/expected ratios shown in Table 2 are referred to as indirect
+standardization or, more commonly, standardized mortality ratios (SMR). Another
+statistic of interest, although less used, is referred to as direct
+standardization. A good tutorial on both of these and other suggestions along
+with an extensive bibliography can be found in Inskip [6]. Whereas the indirect
+method asks what the event count would be in the study population (i.e. the
+event rates in the reference population are applied to the study population), if
+it had the rates of the parent or reference group, the direct method asks what
+the event count would be in the parent population, if it had the rates of the
+sample (i.e. the event rates in the study population are applied to the
+reference population). For the former we needed the age/sex stratified rates for
+the reference population of interest. For the latter we need the age/sex
+stratified reference population sizes (Table 3).
 
-Direct standardization is often used to compare the average event
-rates for two or more studies, particularly when they were assessed on
-different populations, e.g. white/black, or different geographic
-regions, e.g. Olmsted county/Sweden. Because the underlying populations
-may not have the same age/sex structure, it is not fair to directly
-compare the overall study average rates from one to the other. For
-instance, if one study had significantly younger enrollees, then we
-would expect that the 17 overall death rate would be lower. By
-normalizing them to a common population structure, the rates become
-comparable. 
+Direct standardization is often used to compare the average event rates for two
+or more studies, particularly when they were assessed on different populations,
+e.g. white/black, or different geographic regions, e.g. Olmsted county/Sweden.
+Because the underlying populations may not have the same age/sex structure, it
+is not fair to directly compare the overall study average rates from one to the
+other. For instance, if one study had significantly younger enrollees, then we
+would expect that the 17 overall death rate would be lower. By normalizing them
+to a common population structure, the rates become comparable.
 
 In direct standardization it is important to recognize the
 implication of using different standard populations. For instance, if
@@ -813,58 +1052,55 @@ role. An advantage to direct standardization is that it can often be
 calculated from a published paper, without access to the raw data,
 allowing us to compare our work to other results. 
 
-When doing direct
-standardization, there are three advantages to using a model for the
-predicted death rates rather than the table values: 
+When doing direct standardization, there are three advantages to using a model
+for the predicted death rates rather than the table values:
 
-* The values for
-certain age groups may be erratic due to small sample size. The
-smoothing provided by the model stabilizes them. 
+* The values for certain age groups may be erratic due to small sample size. The 
+  smoothing provided by the model stabilizes them.
 
-* We can use finer age
-groupings. To see why coarse age groupings could be a problem, consider,
-for example, that we had two samples to be compared, with 10 year age
-groupings. In one sample the mean age within the 45-55 year age group
-might be 48, and in the other 52. This could bias the comparison of the
-studies. 
+* We can use finer age groupings. To see why coarse age groupings could be a problem, 
+consider, for example, that we had two samples to be compared, with 10 year age groupings.
+In one sample the mean age within the 45-55 year age group might be 48, and in
+the other 52. This could bias the comparison of the studies.
 
 * Estimates of the direct age-adjusted value and its variance
 can be obtained from the fitted model, as shown below. 
 
-There is also one
-major disadvantage to using a Poisson fit: the chosen model has to fit
-the data well. The estimates in our example would not be particularly
-good if we had used only a linear term for age, particularly in the
-tails. Figure 3, which is purposely plotted on arithmetic rather than
-logarithmic scale, clearly shows that the direct adjusted value depends
-very heavily on the predictions in the right hand tail. 
+There is also one major disadvantage to using a Poisson fit: the chosen model
+has to fit the data well. The estimates in our example would not be particularly
+good if we had used only a linear term for age, particularly in the tails.
+Figure 3, which is purposely plotted on arithmetic rather than logarithmic
+scale, clearly shows that the direct adjusted value depends very heavily on the
+predictions in the right hand tail.
 
-The direct age
-adjusted value and its variance can be computed as follows. Assume that
-we want to standardize the rates for females with MGUS to the age 35 to
-100 US population using a model that includes age and age2. From the
-Poisson regression fit (using glm) we have the coefficient $\hat \beta$ and
+The direct age adjusted value and its variance can be computed as follows.
+Assume that we want to standardize the rates for females with MGUS to the age 35
+to 100 US population using a model that includes age and age2. From the Poisson
+regression fit (using glm) we have the coefficient $\hat \beta$ and
 variance-covariance matrix $\Sigma$  (i.e. `coef(pfit4c)` and
-`summary(pfit4c)$cov`, respectively). If we let $X$
-be the predictor matrix for the integer ages at which we need the prediction, each row of $X$ being
-the vector $(1, age, age^2)$, then $\hat r =\exp(X\hat\beta)$  is the vector of predicted rates, and $T=\sum w_i \hat r_i$ is the
-expected number of total events where $w_i$  is the vector of population weights, and $T/N$ will be the
-direct-adjusted estimate, where $N$  is the total population. (Alternatively, use the proportions wi/N
-as the weights.) The variance matrix of $X\hat\beta$ is $X \Sigma X'$, and the first-order Taylor series approximation
-gives $RX\Sigma X'R$  as the variance for $\hat r$, where $R$ is a diagonal matrix with $R_{ii} = \hat r_i$.
-The variance of $T$ is then $w'RX\Sigma X'R w$. 
+`summary(pfit4c)$cov`, respectively). If we let $X$ be the predictor matrix for
+the integer ages at which we need the prediction, each row of $X$ being the
+vector $(1, age, age^2)$, then $\hat r =\exp(X\hat\beta)$  is the vector of
+predicted rates, and $T=\sum w_i \hat r_i$ is the expected number of total
+events where $w_i$  is the vector of population weights, and $T/N$ will be the
+direct-adjusted estimate, where $N$  is the total population. (Alternatively,
+use the proportions wi/N as the weights.) The variance matrix of $X\hat\beta$ is
+$X \Sigma X'$, and the first-order Taylor series approximation gives $RX\Sigma
+X'R$  as the variance for $\hat r$, where $R$ is a diagonal matrix with $R_{ii}
+= \hat r_i$. The variance of $T$ is then $w'RX\Sigma X'R w$.
 
-The code below will calculate the direct age-adjusted estimate and its standard error, for the female
-MGUS group. Note that this approach will not work using gam models, since in that case we do not
-have an explicit variance matrix. See the appendix (section 5.4) for more details.
+The code below will calculate the direct age-adjusted estimate and its standard
+error, for the female MGUS group. Note that this approach will not work using
+gam models, since in that case we do not have an explicit variance matrix. See
+the appendix (section 5.4) for more details.
 
 ```{r}
 ## As calculated earlier in section 1.5:
 pfit4c <- glm(event ~ offset(log(pyears)) + age + age^2, data=pyrs.spe4,
-family=poisson, subset= (sex=='female' & mgus==1))
+              family=poisson, subset= (sex=='female' & mgus==1))
 us.white <- sas.get('/usr/local/sasdata','us_white')
 us2000 <- us.white$p2000[us.white$sex=='F' & us.white$age>=35 &
-us.white$age <= 100]
+                           us.white$age <= 100]
 USweights <- us2000*100000/sum(us2000)
 ages <- 35:100
 tempx <- cbind(1, ages, ages^2)
@@ -878,11 +1114,11 @@ cat('The direct adjusted estimate is:',round(fest), 'deaths per 100,000 +/-',rou
 ## SIMILAR RESULTS USING ns() INSTEAD OF age, age^2
 ## create datasets subsetted to female MGUS patients
 pyrs.femaleMGUS <- pyrs.spe4[pyrs.spe4$sex=='female' &
-pyrs.spe4$mgus==1,]
+                               pyrs.spe4$mgus==1,]
 ## define knots for the ns() function
 age.range <- c(35,100)
 ns.age <- ns(pyrs.femaleMGUS$age, knots=c(55,65,75),
-Boundary.knots=age.range) 
+             Boundary.knots=age.range) 
 ## fit model
 agefit3.3 <- glm(event ~offset(log(pyears)) + ns.age, family=poisson, data=pyrs.femaleMGUS) 
 ##create age variable to include at each time point (with ns) 
@@ -894,7 +1130,7 @@ Rvar <- newdata %*% summary(agefit3.3)$cov.unscaled %*% t(newdata)
 FinalEstimate <- sum(weighted.Rhat)
 FinalStd <- sqrt(weighted.Rhat %*% Rvar %*% t(weighted.Rhat))
 cat('The direct adjusted estimate is:',round(FinalEstimate),
-'deaths per 100,000 +/-', round(FinalStd),fill=T)
+    'deaths per 100,000 +/-', round(FinalStd),fill=T)
 ```
 
 We could get the vector piˆri directly as a prediction from the model, along with the standard error
@@ -921,12 +1157,14 @@ group.
 
 ### Direct standardization to a cohort
 
-In addition to standardizing to an external population such as the US population, it is possible to
-standardize to the study population. For instance, standardizing to a cohort's baseline age distribution
-can be done by averaging the curves of all the subjects in the cohort. Figure 4 shows the predicted
-curve for a given age and Figure 6 shows the age-adjusted average predicted curve for the cohort of
-subjects who had an SPE test ordered. As expected, the curves have the same shape as before, but
-the adjusted curves have slightly different intercepts.
+In addition to standardizing to an external population such as the US
+population, it is possible to standardize to the study population. For instance,
+standardizing to a cohort's baseline age distribution can be done by averaging
+the curves of all the subjects in the cohort. Figure 4 shows the predicted curve
+for a given age and Figure 6 shows the age-adjusted average predicted curve for
+the cohort of subjects who had an SPE test ordered. As expected, the curves have
+the same shape as before, but the adjusted curves have slightly different
+intercepts.
 
 ```{r}
 ##### CODE TO CREATE FIGURE 6 #####
@@ -987,22 +1225,20 @@ predicted values.
 
 ## for subjects in the original dataset and in the person-years data, which may have 
 ## older ages since it accounts for age at follow-up 21 
-age.range <-
-range(c(pyrs.spe$age, data.spe$age/365.25)) 
-dx.range <-range(pyrs.spe$dxtime)
+age.range <- range(c(pyrs.spe$age, data.spe$age/365.25)) 
+dx.range <- range(pyrs.spe$dxtime)
 ## create ns for fitting the original model
 ns.age <- ns(pyrs.spe$age, knots=c(55,65, 75), Boundary.knots=age.range)
 ns.dxtime <- ns(pyrs.spe$dxtime, knots=c(.25, 1,2, 5), Boundary.knots=dx.range)
 glmfit3.1 <- glm(event ~ ns.age + ns.dxtime + offset(log(expected)), family=poisson,
-data=pyrs.spe, subset= (sex == "female" & mgus==0))
+                 data=pyrs.spe, subset= (sex == "female" & mgus==0))
 
 ##### PREDICTION SET-UP #####
 ## look at each unique dxtime in the pyrs dataset
 UniqueNsDxtime <- ns(unique(pyrs.spe$dxtime),knots=c(.25,1,2,5),
-Boundary.knots=dx.range) N.dxtime <- nrow(UniqueNsDxtime) 
+                     Boundary.knots=dx.range) N.dxtime <- nrow(UniqueNsDxtime) 
 
-## figure out baseline age distribution of cohort and the proportion in each age
-group 
+## figure out baseline age distribution of cohort and the proportion in each age group 
 
 AgeWeights <- table(cut(data.spe$age/365, breaks=seq(20,105,5), left.include=T))/N
 N.age <- length(AgeWeights)
@@ -1014,14 +1250,15 @@ finalStd.vector <- rep(NA, N.dxtime)
 
 ##### CALCULATE FOR EACH DXTIME #####
 for(i in 1:N.dxtime) {
-newdata.temp <- as.matrix(data.frame(expected=rep(1,N.age), ns.age=PopAge,
-ns.dxtime=UniqueNsDxtime[rep( i,N.age),]))
-Rhat.temp <- c(exp(newdata.temp %*% coef(glmfit3.1)))
-weightedRhat.temp <- matrix(Rhat.temp*AgeWeights,nrow=1)
-Rvar.temp <- newdata.temp %*% summary(glmfit3.1)$cov.unscaled %*%
-t(newdata.temp) finalRhat.vector[i] <- sum(weightedRhat.temp)
-finalStd.vector[i] <- sqrt(weightedRhat.temp %*% Rvar.temp %*%
-t(weightedRhat.temp)) } 
+  newdata.temp <- as.matrix(data.frame(expected=rep(1,N.age), ns.age=PopAge,
+                                       ns.dxtime=UniqueNsDxtime[rep( i,N.age),]))
+  Rhat.temp <- c(exp(newdata.temp %*% coef(glmfit3.1)))
+  weightedRhat.temp <- matrix(Rhat.temp*AgeWeights,nrow=1)
+  Rvar.temp <- newdata.temp %*% summary(glmfit3.1)$cov.unscaled %*%
+    t(newdata.temp) 
+  finalRhat.vector[i] <- sum(weightedRhat.temp)
+  finalStd.vector[i] <- sqrt(weightedRhat.temp %*% Rvar.temp %*%
+                               t(weightedRhat.temp)) } 
 
 ##### PLOT RESULTS #####
 finalResults <- cbind(finalRhat.vector, finalRhat.vector + 1.96*finalStd.vector,
@@ -1029,3 +1266,151 @@ finalResults <- cbind(finalRhat.vector, finalRhat.vector + 1.96*finalStd.vector,
 matplot(unique(pyrs.spe$dxtime), finalResults, type='l', col=c(1,2,2))
 ```
 
+# Creating expected rate tables
+
+
+In R the call to `survexp` or `pyears` involves both a dataset
+and a population rate table.
+Population rate tables can be stratified in an arbitrary way;
+before using a rate table one must verify its structure.
+
+```{r}
+print(survexp.mn)
+```
+
+This shows that the survival table for Minnesota is stratified by
+age, sex, and calendar year.
+The table is based on decennial census data for 1970-2000, but
+is expanded to individual calendar years by linear interpolation.
+When invoking one of the routines, it is assumed that the user's
+dataset contains these three variables,
+with *exactly* these names, and the correct definitions.
+In this case, age must be in days and year must be a date coded as the number of days
+since 1/1/1960 (which is what SAS automatically does).
+The variable sex must be a character string or factor with the
+specified levels ("male", "female").
+
+Most of this report uses the US or Minnesota survival rates.  This is a set
+of detailed instructions on how to build a rate table in
+R for those instances where your event of interest is not death.  In
+this particular example, we look at the incidence rates of clinically diagnosed vertebral
+compression fractures @cooper92.
+
+The rates per 100,000 person-years are shown in Table \ref{tab:vert}
+separately for men and women.
+
+The daily hazard table for the computer program could, presumably, be created using either
+one of these two formulae applied to a rate (r) per 100,000 person-years:
+
+$$        -log(1- 10^{-5}r)/ 365.24$$
+or
+
+$$        10^{-5}r/365.24 $$
+
+For rare events, these two forms will give nearly identical answers.  For larger
+rates, the proper choice depends on whether the rate is computed over a
+population that is static and therefore depleted by the events in question, or a
+population that is dynamic and therefore remains approximately the same size
+over the interval.  The first formula applies to the standard population rate
+tables, the second formula may more often apply in epidemiology.  In this
+particular example we will use the second formula.
+
+Table: (\#tab:vert) Incidence of clinically diagnosed vertebral compression fractures
+among Rochester, MN residents, 1985-1989.  The age- and sex-specific
+rates are expressed per 100,000 person-years.
+
+```{r}
+inc.rates <- data.frame(age.gp=c('0-34','35-44','45-54','55-64','65-74','75-84','85+'),
+                         .mrate.=c(21, 4, 47, 64, 148, 449, 1327),
+                         .frate.=c(7, 21, 82, 265, 546, 1067, 1214))
+kable(inc.rates)
+```
+
+There are two reasons for using 365.24 instead of 365.25 in our
+calculations.  First, there are 24 leap years per century, not 25.  Second,
+the use of 0.25 led to some confusing R results when we did detailed
+testing of the functions, because the R `round` function uses a
+nearest even number rule, i.e., `round(1.5) = round(2.5) = 2`.  In
+actual data, of course, this small detail won't matter a bit.  Despite
+this, 365.25 is often used.
+
+```{r}
+## CREATE A DAILY HAZARD
+qvalue <-   c(inc.rates$.mrate., inc.rates$.frate.)/100000
+exp.vertfx <- qvalue/365.24
+```
+
+There are several other important pieces of information in a rate table,
+which are coded as a vector of attributes.  The most important are: 
+
+* factor: identifies whether a dimension is time-varying (such as age)
+  or fixed (such as sex or race)
+* dimid: the variable labels for each dimension
+* cutpoints: for the time-varying dimensions, the breakpoints between
+  the rows.
+
+
+The actual dimensions of a rate table are arbitrary, although age and sex
+are the most common.  Rate tables can have any number of dimensions: the
+`survexp.usr` table has age, sex, calendar year, and race. 
+
+In this particular example there are age-groups (7 levels) and sex (2 levels).
+People need to move through the age-groups throughout their follow-up
+whereas sex is fixed and people should not move through the sexes.
+Therefore, the factor is set to 0 for age and 1 for sex.  The
+cutpoints are in terms of days instead of years.  All dimensions that involve
+cutting need to be on the same scale (all in days or all in years).  The
+summary function for the `pyears` object is a quick way to
+see if age is coded correctly. The call to `is.ratetable` checks to see if the
+created object meets some basic checks and is considered a legal
+`ratetable` object. 
+
+```{r}
+attributes(exp.vertfx) <- list(                      
+    dim = c(7,2),
+    dimnames = list(inc.rates$age.gp, 
+                    c('male','female')),
+    dimid = c('age','sex'),
+    factor = c(0,1),
+    cutpoints=list(c(0,seq(35,85,10))*365.24,
+                   NULL),
+    summary = function(x) {
+        paste("age ranges from", format(round(min(x[,1])/365.24 ,1)),
+              "to", format(round(max(x[,1])/365.24 ,1)),
+              "   male:", sum(x[,2]==1), "   female:", sum(x[,2]==2)) },
+    class = 'ratetable'
+    )
+
+is.ratetable(exp.vertfx, v=T)
+```
+
+Sometimes it is good to check that everything is working correctly.  The
+following code creates some fake data, then checks to see if the results
+match what is expected for the rate table.  Note that the data.frame
+option returns the results in terms of a data frame, which may be easier to
+use in subsequent analyses.
+
+```{r}
+## Test rate table to make sure it is correct - create some fake data with 10 days of follow-up
+## Make sure that the variables age and sex are in the dataset
+fakedata <- data.frame(sex=c(1,1,2), days2event=c(10,10,10), 
+                         event=c(0,1,0), age=c(37,57,62)*365.24)
+
+fakedata$tage <- tcut(fakedata$age, 365.24*c(0,seq(35,85,10)))
+fakedata$tfutm <- tcut(rep(0, length(fakedata$days2event)), c(0,20,100))
+                           
+fit.test <- pyears(Surv(days2event, event) ~ tfutm + tage + sex,
+                   data=fakedata, ratetable=exp.vertfx, data.frame=T)
+
+## What is expected vs what is seen:
+## 1 male with 10 days in the 35-44 age category
+## 1 male with 10 days in the 55-64 age category
+## 1 female with 10 days in the 55-64 age category
+
+10*exp.vertfx[2,1] - fit.test$data$expected[1]
+10*exp.vertfx[4,1] - fit.test$data$expected[2]
+10*exp.vertfx[4,2] - fit.test$data$expected[3]
+
+## Make sure everything was originally coded in days
+print(fit.test)
+```
