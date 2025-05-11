@@ -1,0 +1,297 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\addtolength{\textwidth}{1in}
+\addtolength{\oddsidemargin}{-.5in}
+\setlength{\evensidemargin}{\oddsidemargin}
+%\VignetteIndexEntry{Shared coefficients and shared baseline}
+
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\Lhat}{\hat\Lambda}
+\newcommand{\lhat}{\hat\lambda}
+\newcommand{\yhat}{\hat y}
+\newcommand{\phat}{\hat p}
+
+\title{Shared coefficients and shared baselines in multistate models}
+\author{Terry Therneau}
+\date{May 2025}
+
+<<setup, echo=FALSE>>=
+library(survival)
+library(knitr)
+library(splines)
+opts_chunk$set(comment=NA, tidy=FALSE, highlight=FALSE, echo=TRUE,
+               fig.width=6.5, fig.height=4, fig.path="figures/",
+               device="pdf", dev.args=list(pointsize=8),
+               cache=TRUE,   background="#ffffff",
+               prompt=TRUE, 
+               strip.white=FALSE)
+options(contrasts= c("contr.treatment", "contr.poly"),
+        show.signif.stars = FALSE, continue=" ", width=70)
+#palette("Okabe-Ito") # color blind friendly
+@
+
+\begin{document}
+\maketitle
+
+\section{Background}
+A multi-state hazards (MSH) model will model the transitions between multiple
+states.  One example is analysis of the NAFLD data, whose transition diagram
+is shown in figure \ref{nafld1}; living patients will have 0--3 of the
+following metabolic comorbidities: diabetes, hypertension, and
+hyperlipidemia.
+In this figure there are 10 transitions (arrows).
+For any given pair of transitions a:b and c:d there are 6 different choices
+to organize the coefficients and  baseline hazards,
+shown in figure \ref{ch8choice}. This document explores both the
+technical and statistical aspects of those choices.
+
+\begin{table} \centering
+  \begin{tabular}{cccc}
+    &\multicolumn{3}{c}{Baseline hazard} \\
+    & Separate & Proportional & Identical  \\ \hline
+    Separate coefficients & 1& 2 & 3\\
+    Shared coefficients & 4 & 5 & 6 \\
+  \end{tabular}
+\caption{Choices for any pair of transitions in a multistate
+  model.}
+ \label{ch8choice}
+\end{table}
+
+\section{Data}
+We will use two running examples in this document.
+The first is data on non-alcoholic liver disease (NAFLD); the state space
+is shown in figure \ref{nafld1}.
+Living subjects can have one or more of three metabolic comorbidities of
+diabetes, hypertension and hyperlipidemia, interest lies in the impact of
+a NAFLD diagnosis on the rate at which subjects progress through the 
+three states.
+
+\begin{figure}
+<<nafld1>>=
+mstate <- c("0mc", "1mc", "2mc", "3mc", "Death")
+mmat <- matrix(0, 5, 5, dimnames=list(mstate, mstate))
+mmat[1,2] <- mmat[2,3] <- mmat[3,4] <- 1
+mmat[1:4, 5] <- 1
+mmat[1,3] <- mmat[1,4] <- mmat[2,4] <- .5
+statefig(rbind(4,1), mmat, alty=c(1,2,1,2,2,1,1,1,1,1))
+@ 
+  \caption{State space for the NAFLD data.}
+ \label{nafld1}
+\end{figure}
+
+<<ndata, echo=FALSE>>=
+ndata <- tmerge(nafld1[,1:8], nafld1, id=id, death= event(futime, status))
+ndata <- tmerge(ndata, subset(nafld3, event=="nafld"), id, 
+                nafld= tdc(days))
+ndata <- tmerge(ndata, subset(nafld3, event=="diabetes"), id = id,
+                diabetes = tdc(days), e1= cumevent(days))
+ndata <- tmerge(ndata, subset(nafld3, event=="htn"),  id = id,
+                htn = tdc(days), e2 = cumevent(days))
+ndata <- tmerge(ndata, subset(nafld3, event=="dyslipidemia"), id=id,
+                lipid = tdc(days), e3= cumevent(days))
+ndata <- tmerge(ndata, subset(nafld3, event %in% c("diabetes", "htn", 
+                                                   "dyslipidemia")), 
+                id=id, comorbid= cumevent(days))
+# summary(ndata)
+with(ndata, if (any(e1>1 | e2>1 | e3>1)) stop("multiple events"))
+ndata$cstate <- with(ndata, factor(diabetes + htn + lipid, 0:3, 
+                                   c("0mc", "1mc", "2mc", "3mc")))
+temp <- with(ndata, ifelse(death, 4, comorbid))
+ndata$event <- factor(temp, 0:4, 
+         c("censored", "1mc", "2mc", "3mc", "death"))
+ndata$age1 <- ndata$age + ndata$tstart/365.25   # analysis on age scale
+ndata$age2 <- ndata$age + ndata$tstop/365.25
+
+scount <- table(ndata$cstate) # used in text later
+@
+
+Below is the transition table for the data set.  Biologically, a transition
+directly from 0 to 3 of the comorbidities can not occur;
+we observe 4 such transitions because our observation of any subject is
+intermittent.
+These ``jump'' transitions, the dotted lines in figure \ref{nafld1},
+are a motivation for shared coefficient models.
+
+<<ndata2>>= 
+check1 <- survcheck(Surv(age1, age2, event) ~ nafld + male, data=ndata, 
+                   id=id, istate=cstate)
+
+check1$transitions
+@ 
+
+As a footnote, results for a MSH fit are in column major order,
+as is usual for R matrices.  The output will have the Omc:1mc transition,
+then 0mc:2mc, then 1mc:2mc, ..., 3mc:death.  
+
+The primary biliary cholangitis state space is shown in figure \ref{pbc1}.
+The states in this example are created by categorization of the continuous
+bilirubin variable. 
+\begin{figure}
+<<pbc1>>=
+pstate <- c("bili <=1", "bili 1-4", "bili > 4", "Death")
+pmat <- matrix(0, 4, 4, dimnames= list(pstate, pstate))
+pmat[1,2] <- pmat[2,3] <- 1
+pmat[2,1] <- pmat[3,2] <- 1.5
+pmat[1:3, 4] <- 1
+statefig(rbind(3,1), pmat, alty=c(2,1,2,1,1,1,1))
+@ 
+  \caption{State space for the PBC example.}
+  \label{pbc1}
+\end{figure}
+
+Primary biliary cholangitis is an inflammatory disease, thought to be of
+auto-immune origin, characterized by a slow but inexhortable loss of the small
+bile ducts in the liver, as scar replaces functional tissue. 
+Bilirubin and other markers of
+liver compromise rise slowly over time, then more quickly once excess
+capacity has been exhausted. 
+Figure \ref{pbc1} shows a multi-state model that includes bilirubin
+progression.  Many of the reverse
+transitions (dotted lines in the figure) will be subject's whose true 
+bilirubin value is currently near one of the cut points.
+
+<<pdata, echo=FALSE>>=
+pdat0 <- subset(pbcseq, !duplicated(id))
+pdat0$bili3 <- cut(pdat0$bili, c(0,1,5,100), c("normal", "1-4", ">4"))
+pdat0$agrp  <-  cut(-pdat0$albumin, c(-100, -3.5, -3, 0),
+                   c("normal", "3-3.5", "<3"))
+pdat0$death <- 1*(pdat0$status ==2)
+pdat0$year  <- pdat0$futime/365.25   # so I can skip "xscale=365.25" below
+pdata <- tmerge(pdat0[,c(1,4:6)], pdat0, id=id,
+                 death = event(futime, death),
+                 options= list(tstart="day1", tstop="day2"))
+# I have arbitrarily decided not to make use of any new lab within 30
+#  days of death.  This loses 33 bilirubin values.
+ptemp <- subset(pbcseq, !(status ==2 & (futime <= (day + 7))))
+ptemp$bili3 <- cut(ptemp$bili, c(0, 1, 4, 100), c("normal", "1-4", ">4"))
+ptemp$agrp  <- cut(-ptemp$albumin, c(-100, -3.5, -3, 0),
+                   c("normal", "3-3.5", "<3"))
+pdata <- tmerge(pdata, ptemp, id=id, edema = tdc(day, edema),
+                bili= tdc(day, bili), albumin = tdc(day, albumin),
+                protime = tdc(day, protime),
+                bili3 = tdc(day, bili3), b3= event(day, as.numeric(bili3)),
+                agrp  = tdc(day, agrp))
+# To use bili3, a factor, as an event I'd first need to add censor as a 
+#  first level.  But for a numeric tmerge knows to use 0=censor.
+
+# Now create the multistate dataset using bilirubin groups
+# 1. By definition, bilirubin can only change on 'pbcseq' days
+# 2. Don't count two visits in the same state as a transition
+temp <- with(pdata, ifelse(death, 4,
+                           ifelse(as.numeric(bili3)==b3, 0, b3)))
+pdata$bstate <- factor(temp, 0:4, c("none", "normal", "1-4", ">4", "death"))
+pdata$age1 <- with(pdata, age + day1/365.25)
+pdata$age2 <- with(pdata, age + day2/365.25)
+pdata$year1 <- pdata$day1/365.25
+pdata$year2 <- pdata$day2/365.25
+check <- survcheck(Surv(year1, year2, bstate) ~ 1, pdata, id=id, istate=bili3)
+@ 
+
+\section{Separarte hazards}
+\subsection{Separate coefficients}
+Separate coefficients and separate hazards for each transition is the 
+default for a multi-state hazards (MSH) model using \code{coxph}.
+
+<<nfit1>>=
+nfit1 <- coxph(Surv(age1, age2, event) ~ nafld + male, ndata,
+               id = id, istate= cstate)
+nfit1$cmap
+nfit1$smap
+table(ndata$cstate)
+
+round(coef(nfit1, matrix=TRUE), 2)
+@ 
+
+Two internal matrices \code{cmap} and \code{smap} direct the setup of the
+computation.
+The first shows the mapping of coefficients to the transitions, the second
+strata.  In this case, there are separate nafld and male coefficients for
+each transition, and a separate stratum for each.
+These are used by the internal \code{stacker} routine to create expanded
+data used for the partial likelihood solution.
+The expanded data has an expanded \code{X}, \code{Y} and \code{transition} 
+variables which contain first all the data rows for transition 1 
+(0mc:1mc, \Sexpr{scount[1]} rows), 
+then for transition 2 (0mc:2mc, \Sexpr{scount[1]} rows, 
+etc. up to transtion 10 (3mc:death, \Sexpr{scount[4]} rows).
+The transition variable has repeated values of 1, 2, ... 10.
+The first block of the expanded \code{Y} has a simple 0/1 status with 1 for
+a transition from 0mc to 1mc at this point.
+The expanded \code{X} matrix is block diagonal for this fit, as shown in
+equation \ref{blockdiag}.
+Here $X^{(1)}$ is all the rows of the data that are at risk for the first
+transtion (\Sexpr{scount} rows, 2 columns), and etc. to $X^{(10)}$ for the
+tenth transition.
+The final matrix has 20 columns, one for each coefficient, and
+\Sexpr{sum(4:1 * scount)} rows.
+The 20 coefficients for the 10 transitons are now fit all at once using
+a single call to the standard Cox model fitting routine \code{agreg.fit},
+with the transition as a strata.
+
+\begin{equation}
+ \left( \begin{array}{cccc} X^{(1)} &0 & \ldots & 0 \\
+   0 & X^{(2)} & \ldots & 0 \\
+   0 & \vdots & \ddots & \vdots \\
+   0 &  0  &     0     & X^{(10)} \end{array} \right) \label{blockdiag}
+\end{equation}
+
+\subsection{Shared coefficients}
+You will have noticed that \code{nfit1} gave a warning message the coefficient
+8 appears to be infinite, which is the estimated male effect for the 1:4
+transition. The estimated risk of exp(12.8) = 362,000 fold for males clearly 
+sticks out.
+ There are only 4 0mc to 3mc transitions in the data, and all of
+them are males, so indeed the MLE solution is $\bhat= \infty$;
+there simply are not enough events in this stratum to estimate 2 coefficients.
+The other two jumps of Omc:2mc and 1mc:3mc are also quite small.
+
+Biologically, we know that aquistition of 2 new comorbidities on the same
+exact day does not actually happen. An alternative model is to have coefficients
+for an increase from 0mc to ``one or more'' and from 1mc to ``two or more''.
+This is shown below.
+
+<<nfit2>>=
+nfit2 <- coxph(list(Surv(age1, age2, event) ~ nafld + male,
+                    1:2 + 1:3 + 1:4 ~ nafld + male / common,
+                    2:3 + 2:4 ~ nafld + male/common),
+               data=ndata, id= id, istate= cstate)
+nfit2$cmap
+
+round(coef(nfit2, matrix=TRUE), 2)
+@ 
+The final model has 14 coefficients instead of 20, and
+the overall risk of exp(.18) = 1.2 for males for the 0:mc to 1+ transition
+is much more sensible.
+The expanded X matrix in this model will have the same number of rows, but
+14 rather than 20 columns.
+It is no longer block diagonal, column 1 for instance now has non-zero entries
+in 3 different strata blocks.
+
+The coefficient vector found in the fit object has 14 unique entries and the
+estimated variance/covariance matrix is 14 by 14, these are what are returned
+by the \code{coef} and \code{vcov} functions.
+These choices make the MSH model results better fit in to the standard Cox
+model framework. 
+
+\subsection{Predicted values}
+For predicted values from a MSH model, we will more often want to have 
+separate predictions for each transtion.
+For linear predictors, this is facilitated by the \code{matrix} argument
+to \code{coef.coxphms} and \code{vcov.coxphms}, the MSH methods for the
+coef and vcov methods.
+For example
+
+<<predict1>>=
+eta2 <- model.matrix(nfit1) %*% coef(nfit2, matrix=TRUE)
+dim(eta2)
+nrow(ndata)
+
+v2 <- vcov(nfit2, matrix=TRUE)
+dim(v2)
+@  
+
+The \code{model.matrix} function for the fit returns the standard X matrix, 
+which is the correct object for this taks, not the expanded one which was
+needed (temporarily) for computing the fit. 
+
+\end{document}

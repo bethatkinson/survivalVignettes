@@ -25,7 +25,7 @@ library(survival)
 library(knitr)
 library(splines)
 suppressMessages(library(splines2))
-supperssMessages(library(survey))
+suppressMessages(library(survey))
 
 opts_chunk$set(comment=NA, tidy=FALSE, highlight=FALSE, echo=TRUE,
                fig.width=6.5, fig.height=4, fig.path="figures/",
