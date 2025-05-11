@@ -3,7 +3,10 @@
 \addtolength{\textwidth}{1in}
 \addtolength{\oddsidemargin}{-.5in}
 \setlength{\evensidemargin}{\oddsidemargin}
+
 %\VignetteIndexEntry{External Validation}
+%\VignetteEngine{knitr::knitr}
+%\VignetteEncoding{UTF-8}
 
 \newcommand{\code}[1]{\texttt{#1}}
 \newcommand{\Lhat}{\hat\Lambda}
@@ -18,7 +21,12 @@
 
 \title{External Validation of Survival Models}
 \author{Terry Therneau}
-\date{Nov 2024}
+\date{April 2025}
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+\maketitle
+\tableofcontents
 
 <<setup, echo=FALSE>>=
 library(survival)
@@ -40,8 +48,6 @@ load("../data/amyloid.rda")
 palette("Okabe-Ito") # color blind friendly
 @
 
-\begin{document}
-\maketitle
 
 \section{Overview}
 This vignette is concerned with the question of whether a particular
@@ -80,7 +86,7 @@ Technically, the computation themselves have three important facets.
     \end{itemize}
 \end{enumerate}
 
-This overall framework accomdates a large fraction of the methods that have
+This overall framework accommodates a large fraction of the methods that have
 been proposed.  It also gives a basis for applying these ideas to both single
 state and multistate models, and dealing with multiple time scales. 
 The methods are illustrated with several fit/validation data set pairs.
@@ -162,7 +168,7 @@ This will particularly be true in multi-state models, where it may well be true
 that one transition is poorly predicted while the others are successful.
 In this case there will be a collection of validation results, which can
 help guide users with respect to their particular needs. 
-Now, because published validatation data sets are very rare, successful
+Now, because published validation data sets are very rare, successful
 validation of a model for one particular case is often taken as evidence that
 it ``will work in other contexts too''.  Meaningful external validation in
 this broader sense requires that the validation data have
@@ -203,7 +209,7 @@ Our computational approach for the two targets is however quite different.
 Measure 2 has been the most used, and 1 the least.
 Which of the measures is most appropriate, and even more so which time
 points $\tau$ might be a rational focus, will depend on the application,
-i.e., on the situation specific defintion of successful prediction.
+i.e., on the situation specific definition of successful prediction.
 
 A further choice that needs to be made is whether to use a summary 
 based on relative prediction or absolute prediction,
@@ -278,7 +284,9 @@ and have been widely used, both are included in the survival package.
 Figure \ref{fig:gbsg1} shows overall survival for the two groups.
 The Rotterdam study has longer follow-up.
 
-<<gbsg1, fig.cap="Rotterdam and GBSG data">>=
+\begin{figure}
+
+<<gbsg1>>=
 gsurv <- survfit(Surv(rfstime/365.25, status) ~1, gbsg)
 rott2 <- rotterdam
 rott2$rfs <- with(rott2, pmax(recur, death))
@@ -291,6 +299,9 @@ lines(gsurv,  lwd=2, lty=1, fun="event", conf.int=FALSE)
 legend(10, .4, c("GBSG", "Rotterdam node positive", "Rotterdam node negtive"),
        lty=1:3, lwd=2, bty='n')
 @
+\caption{Rotterdam and GBSG data}
+\label{gbsg1}
+\end{figure}
 
 The usual approach has been to fit a prediction model to the Rotterdam data,
 and assess model predictions using the GBSG data.
@@ -298,7 +309,8 @@ I will use 3 models: the first using menopausal status, size, nodes,
 and grade, a second adds nonlinear age, and a third using age as the time
 scale.
 
-<<gbsg2, fig.cap="Spline fit for number of nodes, Rotterdam">>=
+\begin{figure}
+<<gbsg2>>=
 rfit <- coxph(Surv(ryear, rfs) ~ meno + size + grade + pspline(nodes), rott2)
 print(rfit, digits=1)
 
@@ -307,6 +319,9 @@ termplot2 <- function(fit, ...) termplot(fit, col.term=1, col.se=1, ...)
 termplot2(rfit, term=4, se=TRUE)
 abline(v=9, col="gray")
 @
+\caption{Spline fit for number of nodes, Rotterdam}
+\label{gbsg2}
+\end{figure}
 
 The printout shows that the nodes effect has an important non-linear
 component. A plot of the estimated shape is shown in figure \ref{fig:gbsg2}. 
@@ -349,14 +364,14 @@ a time-dependent covariate, and will need to be added to the data set.
 In any study which includes informed consent, we often find the death rate in
 the first year after enrollment is only half that at later times.
 One possible reason for this is that subjects
-who are in extemis often do not enroll in a research study, and some
+who are in extremis often do not enroll in a research study, and some
 trials actually include ``expected survival of at least 6 months'' in their
 eligibility criteria.
 Updating the on study time and current age each day would be overly extreme
 and lead to a very large dataset, as
 the longest followup in the Rotterdam cohort is just over 19 years.  
 Below we opt to update at half year intervals.
-We can then fit a spline on \code{tstart}, the time since enrolloment.
+We can then fit a spline on \code{tstart}, the time since enrollment.
 
 <<tdage>>=
 rott3 <- survSplit(Surv(ryear, rfs) ~ ., rott2, cut= seq(.5,19, .5))
@@ -417,7 +432,7 @@ par(opar)
 The estimated effects of size and node drop off sharply in the first 3 years
 after enrollment, while the age effect is smallest in that period.
 Time-since-enrollment has the largest effect on younger ages.
-Nevetheless, these are the imperfect models we will validate.
+Nevertheless, these are the imperfect models we will validate.
 
 We have been aggressive in the fit, finding an ``optimal'' transformation
 for number of nodes, and allowing for a general age effect.
@@ -570,7 +585,7 @@ acid (UDCA) versus placebo for treatment of PBC,
 ``early'' in the sense that 3 years' enrollment plus 5 years of follow-up had
 produced only 16 deaths. 
 Estimating the coefficients for the 5 risk score variables, de novo within this
-study, while also getting an estimate of treament effect is simply not feasible.
+study, while also getting an estimate of treatment effect is simply not feasible.
 However, we can use the PBC fit as a direct estimate of the expected death 
 rate.  The \code{udca} data includes the Mayo risk score, using the coefficients
 from the 312 subset.
@@ -798,7 +813,8 @@ bfit <- brier(rfit1, newdata=gbsg2, times=tau2)
 Cstat[,1,6] <- (1+ sqrt(bfit$rsquare))/2
 @ 
 
-<<gbsg5b, echo=FALSE, fig.cap="C statistics versus truncation time using predictions from the Rotterdam model, for Rotterdam and GBSG data sets.">>=
+\begin{figure}
+<<gbsg5b, echo=FALSE>>=
 matplot(tau2, Cstat[,1, c(1,2,3,4)], lwd=c(2,2,2,1), lty=c(1,1,1,2), 
         col=c(1:3, 1), type='l', ylim=c(.6, .8),
         xlab="Cutoff time tau", ylab="C")
@@ -807,6 +823,10 @@ legend(3, .8, c("n(t) weight, GBSG", "S/G weight, GBSG", "Dichotomized C, GBSG",
        lwd=2, lty=c(1,1,1,2), col=c(1,2,3,1), bty='n')#, cex=.8)
 #matlines(tau2, Cstat2[,1,c(1,2,4)], lwd=2, lty=2, col=1:3)
 @ 
+\caption{C statistics versus truncation time using predictions from the Rotterdam model, for Rotterdam and GBSG data sets.}
+\label{gbsg5b}
+\end{figure}
+
 
 \begin{itemize}
   \item For this particular data set pair, the discrimination of the model
@@ -820,7 +840,7 @@ legend(3, .8, c("n(t) weight, GBSG", "S/G weight, GBSG", "Dichotomized C, GBSG",
     Outcomes that are farther in the future are harder to predict in
     essentially all areas of life, from the weather to the stock market to the
     final height of a child.  Survival time is no exception.
-  \item The $S/G$ weighting gives proportionatly larger weights than 
+  \item The $S/G$ weighting gives proportionately larger weights than 
     $n(t)$ weighting to points later
     in time, and consequently leads to a lower estimate of $C$.  But the two
     remain close with a difference of approximately .01 at 4 years and .02 at
@@ -833,7 +853,7 @@ legend(3, .8, c("n(t) weight, GBSG", "S/G weight, GBSG", "Dichotomized C, GBSG",
     in weight from $>1$ to 0 when a censored observation is reassigned.
 \end{itemize}
 
-Figure \ref{gbsg5c-1} gives furthur insight to why $DC > C$.
+Figure \ref{gbsg5c-1} gives further insight to why $DC > C$.
 The plot starts with all 6.7 million time pairs used to calculate concordance
 for the full Rotterdam data, with a value of 0 (not concordant), 1 (concordant)
 or .5 for each pair. The image colors come from a discrete average over a 40 x 40
@@ -846,8 +866,9 @@ quadrant of figure \ref{gbsg5c-1} (time 1 and time 2 both $\ge 5$ years)
 while DC omits both the upper right and lower left quadrants
 (time 1 $<5$ and time 2 $>5$ or vice versa).
 
- 
-<<gbsg5c, echo=FALSE, fig.cap="Image plot of the concordance for pairs of observed time values in the Rotterdam data set.  The dashed contour lines are at  .5 (diagonal), .55, .6, .65, .7 and .75.">>=
+
+\begin{figure}
+<<gbsg5c, echo=FALSE>>=
 # Create a data set of all pairs for the gbsg data.
 dtime <- rott2$ryear[rott2$rfs==1] # death times
 lp <- predict(rfit2)
@@ -888,9 +909,12 @@ abline(h= sqrt(5))
 abline(v= sqrt(5))
 abline(0,1, lty=2)
 @ 
+\caption{Image plot of the concordance for pairs of observed time values in the Rotterdam data set.  The dashed contour lines are at  .5 (diagonal), .55, .6, .65, .7 and .75.}
+\label{gbsg5c}
+\end{figure}
 
 Now add in the $R^2$ and pseudovalue measures,
-and also plot the extimated standard deviation.
+and also plot the estimated standard deviation.
 For R-squared, we note that $R=0$ for
 no association while $C= 1/2$ for no association;
 plotting $(R+1)/2$ places them on similar scales.
@@ -921,7 +945,7 @@ censored
 at different times will have different pseudovalues (if at least one event
 occurs in the interim).  We posit that the resultant increase in the number of 
 comparable pairs may be responsible for a lower estimated variance.
-We do not recommend the  pseudovalue $C$ at this time, as its behavoir and
+We do not recommend the  pseudovalue $C$ at this time, as its behavior and
 properties have not been fully investigated.
 
 The IJ variance used by the \code{concordance} function also allows computation
@@ -1053,7 +1077,7 @@ the observed and expected number of events.
 It is based on the fact that, if the model is correct, then
 $\int Y_i(t) \left[dN_i(t) - \lhat_i(t) \right]$
 is a martingale, where $lhat$ is the prediction from the model; labels are
-the observed cumlative hazard, the compensator of the martingale, or
+the observed cumulative hazard, the compensator of the martingale, or
 expected number of events.
 This holds whatever the model might be: a simple constant death rate, 
 a Cox model, machine learning, etc. 
@@ -1132,7 +1156,7 @@ are observations in the validation data set that are censored before the
 first event in the training data (there are 7 such in the GBSG data), then
 the Poisson log-likelihood has a term of $0\log(0)$.
 Using L'H{\^o}pital's rule we know that $\lim_{x \rightarrow 0}x \log(x) =0$; 
-thus these observations contriubute 0 to the loglik and can be omitted.
+thus these observations contribute 0 to the loglik and can be omitted.
 The \code{glm} function does not know calculus, however, and will generate NA
 if these observations are retained.
 
@@ -1141,7 +1165,7 @@ for the study as a whole, as a function of the risk score, or for specific
 covariate combinations.
 These increasingly strict checks are known as mean calibration (also calibration
 in the large), weak, moderate, and strong calibration.
-Weak calibration, sometimes known as the calibration slope, is an asssessment 
+Weak calibration, sometimes known as the calibration slope, is an assessment 
 that the risk in the validation data rises at the same rate as the predictions.
 Below are two simple assessments, the first prefigures material from section
 \ref{sect:remodel}.  In both cases a slope of 1.0 lies well within the
@@ -1170,7 +1194,8 @@ The hint of a rise near the left is only a hint, at no point does the
 A scaled density of the eta values is has been added to the bottom.
 There are a 60 subjects with $\eta < -.5$ but only 12 events.
 
-<<gfit2, fig.cap="Calibration plot using observed/expected deaths">>= 
+\begin{figure}
+<<gfit2>>= 
 gfit2b <- update(gfit2, . ~ . + nsp(eta2, 4))
 xx <- seq(min(gbsg2$eta2), max(gbsg2$eta2), length=100)
 yhat <- predict(gfit2b, newdata= data.frame(eta2=xx, expect2=1), se=TRUE)
@@ -1186,9 +1211,12 @@ tfun <- function(y) .5 + (y-min(y))/(4*diff(range(y))) # 4 "looks good"
 lines(temp$x, tfun(temp$y), lty=3, col='gray')
 abline(h=.5, lty=2, col='gray')
 @
+\caption{Calibration plot using observed/expected deaths}
+\label{gfit2}
+\end{figure}
 
 We can also divide the predicted risk score \code{eta} into bins to create a
-tableau reminiscent of the Hosmer-Lemishow approach in binomial data.
+tableau reminiscent of the Hosmer-Lemeshow approach in binomial data.
 (When a similar categorization is applied to the original data and with a
 binomial outcome, the final row would be the components of the HL test. In this
 case the glm fit provides formal tests.) 
@@ -1233,7 +1261,7 @@ A next step is to look at components of the risk score.
     group, which has 66\% of the cases, is almost identical to the overall:
     exp(.186)= 1.204.  There is a hint of a trend, but neither the ANOVA or
     a trend test are significant.
-  \item For nodes, we have broken the distribution into four approximatley
+  \item For nodes, we have broken the distribution into four approximately
     even groups and look at the excess per group.  There is not a consistent
     pattern of excess: the largest excess is for 1 node, smallest for 2--3, 
     and intermediate for 4--7 and 8+. 
@@ -1441,7 +1469,7 @@ temp <- cbind(observed= tapply(amyloid2$status60, yrgroup, sum),
 
 A formal test using glm runs into an issue, however, in that the 2015 reference
 has 0 deaths in stage 0, while the amyloid data has 51/199 deaths in that stage.
-This leads to 1*log(0) in the Poisson loglikelihood for such subjects: observed
+This leads to 1*log(0) in the Poisson log-likelihood for such subjects: observed
 deaths are (statistically) impossible when the true rate is 0.
 
 \subsection{UDCA}
@@ -1515,7 +1543,8 @@ but similar in size.
 The more common approach is to fit a Cox model with eta as the only covariate,
 as a way to assess the linearity of the relationship.
 
-<<dcox, fig.cap="A check for systematic effect versus the risk score.">>=
+\begin{figure}
+<<dcox>>=
 cfit1 <- coxph(Surv(ryear, rfs) ~ eta2, gbsg2)
 cfit2 <- coxph(Surv(ryear, rfs) ~ eta2 + offset(eta2), gbsg2)
 cfit1
@@ -1525,6 +1554,10 @@ cfit3 <- coxph(Surv(ryear, rfs) ~ nsp(eta2, 4) + offset(eta2), gbsg2)
 termplot2(cfit3, term=1, se=TRUE, ylab="Estimated effect of risk score")
 abline(0,0, lty=2, col=2)
 @
+\caption{A check for systematic effect versus the risk score.}
+\label{gcox}
+\end{figure}
+
 Fit cfit1 is often called regression calibration, a good model should have
 a coefficient of 1. If there was overfitting during creation of the prediction
 model then we might expect the actual risk to rise and fall less sharply than the
@@ -1622,7 +1655,7 @@ legend("topright", paste("Stage", 0:3), lty=1, col=1:4, bty='n')
 @ 
 
 The above shows clear flaws with our prior calculation of observed versus
-expected, which implictitly extended all of the model curves to the right.
+expected, which implicitly extended all of the model curves to the right.
 For stages 0 and 1 this expected will be seriously biased small, for stage
 3 it will be biased large.  The plot for 2012 shows that our counts seriously
 biases there as well, perhaps more so.  When using predictions with a limited
@@ -1634,7 +1667,7 @@ Nevertheless, we can see that the greatest gains in survival were for stages
 asurv12 <- survfit(Surv(month, status) ~ r2012, amyloid)
 plot(asurv15, col=1:4, lwd=2, xlab="Months", ylab="Survival")
 for (i in 0:3) {
-    temp <- subset(amyloid.surv, stage==i & study== 2012)
+    temp <- subset(amyloidmodel, stage==i & study== 2012)
     lines(temp$month, temp$survival, lwd=2, col=i+1, lty=2)
 }
 legend("topright", paste("Stage", 0:3), lty=1, col=1:4, bty='n')
@@ -1665,7 +1698,7 @@ round(temp,3)
 
 Since the study was randomized, one could argue that no adjustment for covariates
 is required.  However, the first fit clearly shows a different treatment effect.
-The second fit adjusts for bilirubin, the most impactfull portion of the risk
+The second fit adjusts for bilirubin, the most impactful portion of the risk
 score, and the third directly uses the coefficients from the PBC risk score.
 We can see that option 3 does, as we expected, somewhat decrease the
 std of the treatment coefficient, though still not quite significant.
@@ -1760,7 +1793,7 @@ Statisticians often pick a scale where effects will be additive and approximatel
 chosen purely for convenience).
 Both the complimentary log-log and logit have some success with respect
 to this metric
-over the inteval from 2.5 to 5 years, though the discontinuous weighting
+over the interval from 2.5 to 5 years, though the discontinuous weighting
 process adds a lot of noise: 
 as $\tau$ moves from left to right a censored observation's weight slowly 
 increases and then abruptly drops to zero.
@@ -1844,7 +1877,7 @@ censored before $\tau$, then compute weighted sums.
 \section{Synthetic estimates}
 Not yet complete  
 
-The R squared measures of Nagelkirke, Kent and O'quigley,
+The R squared measures of Nagelkerke, Kent and O'Quigley,
 Royston and Sauerbrei, and the C statistic of Goen and Heller are computed
 by the \code{royston} function.
 There are measures that do not make any direct use of the response value.
@@ -1889,7 +1922,7 @@ using the rescaled data. This is essentially the same idea as the regression
 slope.
 
 \section{Royston's $D$}
-The Royston and Saurbrei statistics $D$ and $R_D$ are also based on a particular
+The Royston and Sauerbrei statistics $D$ and $R_D$ are also based on a particular
  measure of variation in the risk scores.  First convert the $\hat\eta$
 values into normal scores
 \begin{equation*}
@@ -1898,7 +1931,7 @@ values into normal scores
 If there are tied $\hat\eta$ values replace those $z$ values with their average.
 Third, fit a new Cox model with $z$ as the only covariate, and use the resulting
 coefficient as a measure of the variation in risk scores.
-Last, compute the three estimates.  (Since $z$ has standard devation 1, 
+Last, compute the three estimates.  (Since $z$ has standard deviation 1, 
 $\beta z$ will have standard deviation $\beta$.)
 
 \begin{align*}
@@ -1909,7 +1942,7 @@ $\beta z$ will have standard deviation $\beta$.)
 
 Translation of this to the validation context is challenging. The first step
 is easy, i.e., to form reference $\hat\eta^*$ using the prior coefficients and
-the validiation data. But a z-transform of these new values will not be the same
+the validation data. But a z-transform of these new values will not be the same
 transformation function as was used in the original data. 
 The distribution of risk scores is quite different for the Rotterdam and
 GBSG data sets, for example, as shown below.
@@ -1931,7 +1964,7 @@ is extremely rare in practice.  Errors may be approximately Gaussian, but raw
 medical data is emphatically not.
 
 \section{Synthetic R-squared}
-Nalgelkirke, Kent and O'Quigley; yet to do.
+Nagelkerke, Kent and O'Quigley; yet to do.
 
 \section{Summary}
  Binomial estimates are familiar but have higher variance (sometimes a lot).

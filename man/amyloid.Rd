@@ -5,18 +5,21 @@
 \title{
 Survival with amyloidosis
 }
+
 \description{
   This pair of data sets is used in the external validation vignette. The
   \code{amyloidmodel} dataset contains survival curves from four
   studies, the \code{amyloid} data survival times and risk scores for
   1005 subjects.
 }
+
 \usage{
-amloid
+amyloid
 amyloidmodel
 }
+
 \format{
-  A data frame with 1005 observations on the following 8 variables.
+  The \code{amyloid} object is a data frame with 1005 observations on the following 8 variables.
   \describe{
     \item{\code{age}}{age in years}
     \item{\code{month}}{survival time in months}
@@ -28,8 +31,9 @@ amyloidmodel
     \item{\code{r2015}}{patient stage based on the 2015 model}
     \item{\code{year}}{diagnosis year}
   }
-\format{
-  A data frame with 832 observations on the following 4 variables.
+
+
+  The \code{amyloidmodel} object is a data frame with 832 observations on the following 4 variables.
   \describe{
     \item{\code{study}}{which study: 2004, 2012, 2013 or 2015}
     \item{\code{stage}}{disease stage}
@@ -37,6 +41,7 @@ amyloidmodel
     \item{\code{survival}}{predicted survival}
   }
 }
+
 \details{
   The model assement is found in Muchtar (2019), and used as an example
   in a package vignette.  Patients with biopsy proven systemic light chain
@@ -54,6 +59,7 @@ amyloidmodel
   stages as I, II, IIIa and IIIb where we have used 0-3 for consistency
   with the original 2004 system.
 }
+
 \references{
 E Muchtar, T Therneau, D Larson, M Gertz, M Lacy, F buadi, D Dingli, S
 Hayman, P Kapoor, W Gonsalves, T Kourelis, R Warsame, A Fonder, M Hobbs,
@@ -67,8 +73,9 @@ S Kumar 2012, doi:10.1200/JCO.2011.38.5724
 A Wechalekar 2013, doi:10.1182/blood-2012-12-473066
 M Palladini 2015, doi: 10.1182/blood-2015-01-620302
 }
+
 \examples{
-sfit <- survfit(Surv(months, status) ~ r2012, amyloid)
+sfit <- survfit(Surv(month, status) ~ r2012, data = amyloid)
 plot(sfit, lty=1:4, col=1:4, lwd=2, log=TRUE,
      xlab="Months from diagnosis", ylab="Survival")
 }

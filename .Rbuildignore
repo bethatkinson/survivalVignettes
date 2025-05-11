@@ -3,6 +3,8 @@
 ^vignettes/sweave$
 ^vignettes/sascode$
 ^vignettes/sas_runbyhand\.Rnw$
+^vignettes/external\.Rnw$
+^vignettes/poisson.Rmd$
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^\.gitignore$
