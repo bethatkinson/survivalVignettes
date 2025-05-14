@@ -135,8 +135,9 @@ pstate <- c("bili <=1", "bili 1-4", "bili > 4", "Death")
 pmat <- matrix(0, 4, 4, dimnames= list(pstate, pstate))
 pmat[1,2] <- pmat[2,3] <- 1
 pmat[2,1] <- pmat[3,2] <- 1.5
+pmat[1,3] <- .5; pmat[3,1] <- 1.5
 pmat[1:3, 4] <- 1
-statefig(rbind(3,1), pmat, alty=c(2,1,2,1,1,1,1))
+statefig(rbind(3,1), pmat) #, alty=c(1,2,1,1, 2,1,1,1,1))
 @ 
   \caption{State space for the PBC example.}
   \label{pbc1}
@@ -151,7 +152,9 @@ capacity has been exhausted.
 Figure \ref{pbc1} shows a multi-state model that includes bilirubin
 progression.  Many of the reverse
 transitions (dotted lines in the figure) will be subjects whose true 
-bilirubin value is currently near one of the cut points.
+bilirubin value is currently near one of the cut points. There are
+very few observed jumps from normal bilirubin to $>4 or vice-versa
+(3 and 1, respectively).
 
 <<pdata, echo=FALSE>>=
 pdat0 <- subset(pbcseq, !duplicated(id))
@@ -187,7 +190,7 @@ pdata$age1 <- with(pdata, age + day1/365.25)
 pdata$age2 <- with(pdata, age + day2/365.25)
 pdata$year1 <- pdata$day1/365.25
 pdata$year2 <- pdata$day2/365.25
-check <- survcheck(Surv(year1, year2, bstate) ~ 1, pdata, id=id, istate=bili3)
+pcheck <- survcheck(Surv(year1, year2, bstate) ~ 1, pdata, id=id, istate=bili3)
 @ 
 
 \section{Separate hazards}
@@ -279,7 +282,7 @@ These choices make the MSH model results better fit in to the standard Cox
 model framework. 
 
 \subsection{Predicted values}
-For predicted values from a MSH model, we will more often want to have 
+For predicted values from a MSH model, we will more often want to show 
 separate predictions for each transition.
 For linear predictors, this is facilitated by the \code{matrix} argument
 to \code{coef.coxphms} and \code{vcov.coxphms}, the MSH methods for the
@@ -314,9 +317,9 @@ compute absolute risks.
 #  starts with none of the comorbidities
 dummy <- data.frame(nafld= 0:1, male=0)
 pstate2 <- survfit(nfit2, newdata=dummy, start.time=50, p0=c(1,0,0,0,0))
-#pstate2$pstate <- apply(pstate2$pstate, 1:2, cumsum)
 plot(pstate2, col=rep(1:5, each=2), lty=1:2, lwd=2) #, cumprob=TRUE)
-# I don't like this plot 
+# I don't like this plot, but I'm not sure the alternative below is better
+# plot(pstate2, cumprob=1:4, col=rep(1:4, each=2), lty=1:2, lwd=2)
 @ 
   
 (Yet to do: show examples with predict())
