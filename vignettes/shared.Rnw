@@ -3,7 +3,10 @@
 \addtolength{\textwidth}{1in}
 \addtolength{\oddsidemargin}{-.5in}
 \setlength{\evensidemargin}{\oddsidemargin}
+
 %\VignetteIndexEntry{Shared coefficients and shared baseline}
+%\VignetteEngine{knitr::knitr}
+%\VignetteEncoding{UTF-8}
 
 \newcommand{\code}[1]{\texttt{#1}}
 \newcommand{\Lhat}{\hat\Lambda}
@@ -32,6 +35,7 @@ options(contrasts= c("contr.treatment", "contr.poly"),
 @
 
 \begin{document}
+\SweaveOpts{concordance=TRUE}
 \maketitle
 
 \section{Background}
@@ -68,7 +72,7 @@ a NAFLD diagnosis on the rate at which subjects progress through the
 three states.
 
 \begin{figure}
-<<nafld1>>=
+<<nafld1, echo=FALSE, fig=TRUE>>=
 mstate <- c("0mc", "1mc", "2mc", "3mc", "Death")
 mmat <- matrix(0, 5, 5, dimnames=list(mstate, mstate))
 mmat[1,2] <- mmat[2,3] <- mmat[3,4] <- 1
@@ -115,7 +119,7 @@ are a motivation for shared coefficient models.
 
 Note: Results for a MSH fit are in column major order,
 as is usual for R matrices.  The output will have the 0mc:1mc transition,
-then 0mc:2mc, then 1mc:2mc, ..., 3mc:death. 
+then 0mc:2mc, ..., then 1mc:2mc, ..., 3mc:death. 
 
 <<ndata2>>= 
 check1 <- survcheck(Surv(age1, age2, event) ~ nafld + male, data=ndata, 
@@ -130,7 +134,7 @@ The states in this example are created by categorization of the continuous
 bilirubin variable and
 the state space is shown in Figure \ref{pbc1}.
 \begin{figure}
-<<pbc1>>=
+<<pbc1, echo=FALSE, fig=TRUE>>=
 pstate <- c("bili <=1", "bili 1-4", "bili > 4", "Death")
 pmat <- matrix(0, 4, 4, dimnames= list(pstate, pstate))
 pmat[1,2] <- pmat[2,3] <- 1
@@ -142,7 +146,6 @@ statefig(rbind(3,1), pmat) #, alty=c(1,2,1,1, 2,1,1,1,1))
   \caption{State space for the PBC example.}
   \label{pbc1}
 \end{figure}
-
 PBC is an inflammatory disease, thought to be of
 auto-immune origin, characterized by a slow but inexorable loss of the small
 bile ducts in the liver, as scar replaces functional tissue. 
@@ -153,7 +156,7 @@ Figure \ref{pbc1} shows a multi-state model that includes bilirubin
 progression.  Many of the reverse
 transitions (dotted lines in the figure) will be subjects whose true 
 bilirubin value is currently near one of the cut points. There are
-very few observed jumps from normal bilirubin to $>4 or vice-versa
+very few observed jumps from normal bilirubin to $>4$ or vice-versa
 (3 and 1, respectively).
 
 <<pdata, echo=FALSE>>=
@@ -193,13 +196,17 @@ pdata$year2 <- pdata$day2/365.25
 pcheck <- survcheck(Surv(year1, year2, bstate) ~ 1, pdata, id=id, istate=bili3)
 @ 
 
+<<>>=
+pcheck$transitions
+@
+
 \section{Separate hazards}
 \subsection{Separate coefficients}
 Separate coefficients and separate hazards for each transition is the 
 default for a multi-state hazards (MSH) model using \code{coxph}. The code
 below uses the NAFLD data.
 
-<<nfit1>>=
+<<nfit1, warning=TRUE, message=TRUE>>=
 nfit1 <- coxph(Surv(age1, age2, event) ~ nafld + male, data = ndata,
                id = id, istate = cstate)
 round(coef(nfit1, matrix=TRUE), 2)
@@ -207,6 +214,8 @@ round(coef(nfit1, matrix=TRUE), 2)
 ## internal mapping matrices
 nfit1$cmap
 nfit1$smap
+
+## number of current states (cstate) in data
 table(ndata$cstate)
 @ 
 
@@ -312,7 +321,7 @@ For predicted probability in state curves, however, we do want all the predicted
 hazards for a given hypothetical subject, since all the hazards are needed to
 compute absolute risks.
 
-<<predict1b>>=
+<<predict1b, fig=TRUE>>=
 # predicted curves for a 50 year old female with and without NAFLD, who
 #  starts with none of the comorbidities
 dummy <- data.frame(nafld= 0:1, male=0)
@@ -525,7 +534,7 @@ death have an identical hazard rather than a proportional one.
 The impact of changing the coding of male sex from 0/1 to 2/3 is profound,
 with a different log-likelihood and multiple coefficient changes.
 
-<<nfitid>>=
+<<nfitid, fig=TRUE>>=
 nfit4a <- coxph(list(Surv(age1, age2, event) ~ nafld + male, 
                      1:2 + 1:3 + 1:4 ~ nafld + male/common, 
                      2:3 + 2:4 ~ nafld + male/common, 
