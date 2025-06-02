@@ -3,7 +3,10 @@
 \addtolength{\textwidth}{1in}
 \addtolength{\oddsidemargin}{-.5in}
 \setlength{\evensidemargin}{\oddsidemargin}
+
 %\VignetteIndexEntry{Shared coefficients and shared baseline}
+%\VignetteEngine{knitr::knitr}
+%\VignetteEncoding{UTF-8}
 
 \newcommand{\code}[1]{\texttt{#1}}
 \newcommand{\Lhat}{\hat\Lambda}
@@ -32,18 +35,24 @@ options(contrasts= c("contr.treatment", "contr.poly"),
 @
 
 \begin{document}
+\SweaveOpts{concordance=TRUE}
 \maketitle
 
 \section{Background}
 A multi-state hazards (MSH) model will model the transitions between multiple
+<<<<<<< HEAD
 states.  An example is analysis of the NAFLD data, whose transition diagram
 is shown in figure \ref{nafld1}; living patients will have 0--3 of the
+=======
+states.  One example is analysis of the NAFLD data, whose transition diagram
+is shown in Figure \ref{nafld1}; living patients will have 0--3 of the
+>>>>>>> 8ff55de7e1f868ab1292de9af586483421aa04fa
 following metabolic comorbidities: diabetes, hypertension, and
 hyperlipidemia.
 In this figure there are 10 transitions (arrows).
 For any given pair of transitions a:b and c:d there are 6 different choices
 to organize the coefficients and  baseline hazards,
-shown in figure \ref{ch8choice}. This document explores both the
+shown in Table \ref{ch8choice}. This document explores both the
 technical and statistical aspects of those choices.
 
 \begin{table} \centering
@@ -60,15 +69,19 @@ technical and statistical aspects of those choices.
 
 \section{Data}
 We will use two running examples in this document.
-The first is data on non-alcoholic liver disease (NAFLD); the state space
-is shown in figure \ref{nafld1}.
+The first is data on non-alcoholic liver disease (NAFLD) which is represented
+by the state space shown in Figure \ref{nafld1}.
 Living subjects can have one or more of three metabolic comorbidities of
-diabetes, hypertension and hyperlipidemia, interest lies in the impact of
+diabetes, hypertension and hyperlipidemia. The study focuses on the impact of
 a NAFLD diagnosis on the rate at which subjects progress through the 
 three states.
 
 \begin{figure}
+<<<<<<< HEAD
 <<nafld1, echo=FALSE>>=
+=======
+<<nafld1, echo=FALSE, fig=TRUE>>=
+>>>>>>> 8ff55de7e1f868ab1292de9af586483421aa04fa
 mstate <- c("0mc", "1mc", "2mc", "3mc", "Death")
 mmat <- matrix(0, 5, 5, dimnames=list(mstate, mstate))
 mmat[1,2] <- mmat[2,3] <- mmat[3,4] <- 1
@@ -112,8 +125,12 @@ Below is the transition table for the data set.  Biologically, a transition
 directly from 0 to 3 of the comorbidities can not occur;
 we observe 4 such transitions because our observation of any subject is
 intermittent.
-These ``jump'' transitions, the dotted lines in figure \ref{nafld1},
+These ``jump'' transitions, the dotted lines in Figure \ref{nafld1},
 are a motivation for shared coefficient models.
+
+Note: Results for a MSH fit are in column major order,
+as is usual for R matrices.  The output will have the 0mc:1mc transition,
+then 0mc:2mc, ..., then 1mc:2mc, ..., 3mc:death. 
 
 <<ndata2>>= 
 check1 <- survcheck(Surv(age1, age2, event) ~ nafld + male, data=ndata, 
@@ -122,24 +139,31 @@ check1 <- survcheck(Surv(age1, age2, event) ~ nafld + male, data=ndata,
 check1$transitions
 @ 
 
-As a footnote, results for a MSH fit are in column major order,
-as is usual for R matrices.  The output will have the Omc:1mc transition,
-then 0mc:2mc, then 1mc:2mc, ..., 3mc:death.  
 
+<<<<<<< HEAD
 \begin{figure}
 <<pbc1, echo=FALSE>>=
+=======
+The second example uses the primary biliary cholangitis (PBC) data. 
+The states in this example are created by categorization of the continuous
+bilirubin variable and
+the state space is shown in Figure \ref{pbc1}.
+\begin{figure}
+<<pbc1, echo=FALSE, fig=TRUE>>=
+>>>>>>> 8ff55de7e1f868ab1292de9af586483421aa04fa
 pstate <- c("bili <=1", "bili 1-4", "bili > 4", "Death")
 pmat <- matrix(0, 4, 4, dimnames= list(pstate, pstate))
 pmat[1,2] <- pmat[2,3] <- 1
 pmat[2,1] <- pmat[3,2] <- 1.5
+pmat[1,3] <- .5; pmat[3,1] <- 1.5
 pmat[1:3, 4] <- 1
-statefig(rbind(3,1), pmat, alty=c(2,1,2,1,1,1,1))
+statefig(rbind(3,1), pmat) #, alty=c(1,2,1,1, 2,1,1,1,1))
 @ 
   \caption{State space for the PBC example.}
   \label{pbc1}
 \end{figure}
 
-The primary biliary cholangitis state space is shown in figure \ref{pbc1}.
+The primary biliary cholangitis state space is shown in Figure \ref{pbc1}.
 The states in this example are created by categorization of the continuous
 bilirubin variable. 
 Primary biliary cholangitis is an inflammatory disease, thought to be of
@@ -150,8 +174,10 @@ liver compromise rise slowly over time, then more quickly once excess
 capacity has been exhausted. 
 Figure \ref{pbc1} shows a multi-state model that includes bilirubin
 progression.  Many of the reverse
-transitions (dotted lines in the figure) will be subject's whose true 
-bilirubin value is currently near one of the cut points.
+transitions (dotted lines in the figure) will be subjects whose true 
+bilirubin value is currently near one of the cut points. There are
+very few observed jumps from normal bilirubin to $>4$ or vice-versa
+(3 and 1, respectively).
 
 <<pdata, echo=FALSE>>=
 pdat0 <- subset(pbcseq, !duplicated(id))
@@ -187,7 +213,7 @@ pdata$age1 <- with(pdata, age + day1/365.25)
 pdata$age2 <- with(pdata, age + day2/365.25)
 pdata$year1 <- pdata$day1/365.25
 pdata$year2 <- pdata$day2/365.25
-check <- survcheck(Surv(year1, year2, bstate) ~ 1, pdata, id=id, istate=bili3)
+pcheck <- survcheck(Surv(year1, year2, bstate) ~ 1, pdata, id=id, istate=bili3)
 @ 
 
 \section{Separate hazards}
@@ -196,21 +222,34 @@ Separate coefficients and separate hazards for each transition,
 case 1 in Table \ref{ch8choice}, is the 
 default for a multi-state hazards (MSH) model using \code{coxph}.
 Thus the model formula is particularly simple.
+<<>>=
+pcheck$transitions
+@
 
-<<nfit1>>=
-nfit1 <- coxph(Surv(age1, age2, event) ~ nafld + male, ndata,
-               id = id, istate= cstate)
+\section{Separate hazards}
+\subsection{Separate coefficients}
+Separate coefficients and separate hazards for each transition is the 
+default for a multi-state hazards (MSH) model using \code{coxph}. The code
+below uses the NAFLD data.
+>>>>>>> 8ff55de7e1f868ab1292de9af586483421aa04fa
+
+<<nfit1, warning=TRUE, message=TRUE>>=
+nfit1 <- coxph(Surv(age1, age2, event) ~ nafld + male, data = ndata,
+               id = id, istate = cstate)
+round(coef(nfit1, matrix=TRUE), 2)
+
+## internal mapping matrices
 nfit1$cmap
 nfit1$smap
-table(ndata$cstate)
 
-round(coef(nfit1, matrix=TRUE), 2)
+## number of current states (cstate) in data
+table(ndata$cstate)
 @ 
 
 Two internal matrices \code{cmap} and \code{smap} direct the
 computation.
-The first shows the mapping of coefficients to the transitions, the second
-strata.  In this case, there are separate nafld and male coefficients for
+The first matrix shows the mapping of coefficients to the transitions and 
+the second matrix shows the strata.  In this case, there are separate nafld and male coefficients for
 each transition, and a separate stratum for each.
 The male coefficient for the 1:4 transition did not converge, more on this
 below.
@@ -234,7 +273,7 @@ transtion (\Sexpr{scount[1]} rows, 2 columns), and etc. to $X^{(10)}$ for the
 tenth transition.
 The final matrix has 20 columns, one for each coefficient, and
 \Sexpr{sum(4:1 * scount)} rows.
-The 20 coefficients for the 10 transitons are now fit all at once using
+The 20 coefficients for the 10 transitions are now fit all at once using
 a single call to the standard Cox model fitting routine \code{agreg.fit},
 with the transition as a strata.
 
@@ -255,7 +294,7 @@ them are males, so indeed the MLE solution is $\bhat= \infty$;
 there simply are not enough events in this stratum to estimate 2 coefficients.
 The other two jumps of Omc:2mc and 1mc:3mc also have small counts.
 
-Biologically, we know that aquistition of 2 new comorbidities on the same
+Biologically, we know that acquisition of 2 new comorbidities on the same
 exact day does not actually happen. An alternative model is to have coefficients
 for an increase from 0mc to ``one or more'' and from 1mc to ``two or more''.
 This is shown below.
@@ -292,8 +331,8 @@ These choices make the MSH model results better fit in to the standard Cox
 model framework. 
 
 \subsection{Predicted values}
-For predicted values from a MSH model, we will more often want to have 
-separate predictions for each transtion.
+For predicted values from a MSH model, we will more often want to show 
+separate predictions for each transition.
 For linear predictors, this is facilitated by the \code{matrix} argument
 to \code{coef.coxphms} and \code{vcov.coxphms}, the MSH methods for the
 coef and vcov methods.
@@ -329,14 +368,14 @@ examination room'', i.e., absolute prediction is always specific.
 For an ordinary alive/dead KM where everyone starts at time 0 we don't have
 to think about these things, but here we do.
 
-<<predict1b>>=
+<<predict1b, fig=TRUE>>=
 # predicted curves for a 50 year old female with and without NAFLD, who
 #  starts with none of the comorbidities
 dummy <- data.frame(nafld= 0:1, male=0)
 pstate2 <- survfit(nfit2, newdata=dummy, start.time=50, p0=c(1,0,0,0,0))
-#pstate2$pstate <- apply(pstate2$pstate, 1:2, cumsum)
 plot(pstate2, col=rep(1:5, each=2), lty=1:2, lwd=2) #, cumprob=TRUE)
-# I don't like this plot 
+# I don't like this plot, but I'm not sure the alternative below is better
+# plot(pstate2, cumprob=1:4, col=rep(1:4, each=2), lty=1:2, lwd=2)
 @ 
   
 (Yet to do: show examples with predict())
@@ -373,7 +412,7 @@ both of them using the \code{agreg.fit} routine.
 We take advantage of the use of ``1'' as the representation of an
 intercept in the formula modeling language of R,
 along with the fact that the basline hazard can be thought of
-as the ``intercept'' term of a MSH model.
+as the ``intercept'' term of a MSH model, to create a compact notation.
 
 <<nfit3>>=
 nfit3 <- coxph(list(Surv(age1, age2, event) ~ nafld + male,
@@ -393,7 +432,7 @@ further below.
 
 One aspect of the printout which is potentially misleading is that all 3
 cstate coefficients appear for all 4 transitions.
-However, for the 1:5 transtion (0mc:death) the three 0/1 dummy variables
+However, for the 1:5 transition (0mc:death) the three 0/1 dummy variables
 \code{cstate1mc}, \code{cstate2mc} and \code{cstate3mc} will all be 0. The
 coefficients that appear in the 1:5 printout above will never be used. 
 For the 2:5 transition only \code{cstate1mc} is non-zero so the 
@@ -492,7 +531,7 @@ To do: example using nfit3b, once I have the NA code debugged.
 To do: add the PBC example.
 
 \subsection*{Summary}
-One aspect of this that we have not mentioned is that with a set of transtions 
+One aspect of this that we have not mentioned is that with a set of transitions 
 A:D + B:D + C:D to a common final state, the risk sets also make sense.
 Since no subject can be two places at once (in two states at the same time),
 the risk set for the shared hazard at time $t$ = (in state A at $t$) 
@@ -550,7 +589,7 @@ death have an identical hazard rather than a proportional one.
 The impact of changing the coding of male sex from 0/1 to 2/3 is profound,
 with a different log-likelihood and multiple coefficient changes.
 
-<<nfitid>>=
+<<nfitid, fig=TRUE>>=
 nfit4a <- coxph(list(Surv(age1, age2, event) ~ nafld + male, 
                      1:2 + 1:3 + 1:4 ~ nafld + male/common, 
                      2:3 + 2:4 ~ nafld + male/common, 
