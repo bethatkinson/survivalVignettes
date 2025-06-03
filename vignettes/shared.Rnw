@@ -26,7 +26,7 @@ library(splines)
 opts_chunk$set(comment=NA, tidy=FALSE, highlight=FALSE, echo=TRUE,
                fig.width=6.5, fig.height=4, fig.path="figures/",
                device="pdf", dev.args=list(pointsize=8),
-               cache=TRUE,   background="#ffffff",
+               cache=FALSE,   background="#ffffff",
                prompt=TRUE, 
                strip.white=FALSE)
 options(contrasts= c("contr.treatment", "contr.poly"),
@@ -37,15 +37,12 @@ options(contrasts= c("contr.treatment", "contr.poly"),
 \begin{document}
 \maketitle
 
+This vignette is still an early draft.  
+
 \section{Background}
 A multi-state hazards (MSH) model will model the transitions between multiple
-<<<<<<< HEAD
 states.  An example is analysis of the NAFLD data, whose transition diagram
 is shown in figure \ref{nafld1}; living patients will have 0--3 of the
-=======
-states.  One example is analysis of the NAFLD data, whose transition diagram
-is shown in Figure \ref{nafld1}; living patients will have 0--3 of the
->>>>>>> 8ff55de7e1f868ab1292de9af586483421aa04fa
 following metabolic comorbidities: diabetes, hypertension, and
 hyperlipidemia.
 In this figure there are 10 transitions (arrows).
@@ -76,15 +73,7 @@ a NAFLD diagnosis on the rate at which subjects progress through the
 three states.
 
 \begin{figure}
-<<<<<<< HEAD
 <<nafld1, echo=FALSE>>=
-=======
-<<<<<<< HEAD
-<<nafld1, echo=FALSE>>=
-=======
-<<nafld1, echo=FALSE, fig=TRUE>>=
->>>>>>> 8ff55de7e1f868ab1292de9af586483421aa04fa
->>>>>>> fd7afb6784dee866debc05ad71b184da3bdd84aa
 mstate <- c("0mc", "1mc", "2mc", "3mc", "Death")
 mmat <- matrix(0, 5, 5, dimnames=list(mstate, mstate))
 mmat[1,2] <- mmat[2,3] <- mmat[3,4] <- 1
@@ -140,22 +129,8 @@ check1 <- survcheck(Surv(age1, age2, event) ~ nafld + male, data=ndata,
 check1$transitions
 @ 
 
-
-<<<<<<< HEAD
 \begin{figure}
 <<pbc1, echo=FALSE>>=
-=======
-The second example uses the primary biliary cholangitis (PBC) data. 
-The states in this example are created by categorization of the continuous
-bilirubin variable and
-the state space is shown in Figure \ref{pbc1}.
-\begin{figure}
-<<<<<<< HEAD
-<<pbc1, echo=FALSE>>=
-=======
-<<pbc1, echo=FALSE, fig=TRUE>>=
->>>>>>> 8ff55de7e1f868ab1292de9af586483421aa04fa
->>>>>>> fd7afb6784dee866debc05ad71b184da3bdd84aa
 pstate <- c("bili <=1", "bili 1-4", "bili > 4", "Death")
 pmat <- matrix(0, 4, 4, dimnames= list(pstate, pstate))
 pmat[1,2] <- pmat[2,3] <- 1
@@ -175,8 +150,8 @@ Primary biliary cholangitis is an inflammatory disease, thought to be of
 auto-immune origin, characterized by a slow but inexhortable loss of the small
 bile ducts in the liver, as scar replaces functional tissue. 
 Bilirubin and other markers of
-liver compromise rise slowly over time, then more quickly once excess
-capacity has been exhausted. 
+liver compromise rise slowly over time, then more quickly once the liver's
+excess capacity has been exhausted. 
 Figure \ref{pbc1} shows a multi-state model that includes bilirubin
 progression.  Many of the reverse
 transitions (dotted lines in the figure) will be subjects whose true 
@@ -221,22 +196,12 @@ pdata$year2 <- pdata$day2/365.25
 pcheck <- survcheck(Surv(year1, year2, bstate) ~ 1, pdata, id=id, istate=bili3)
 @ 
 
-\section{Separate hazards}
-\subsection{Separate coefficients}
-Separate coefficients and separate hazards for each transition,
-case 1 in Table \ref{ch8choice}, is the 
-default for a multi-state hazards (MSH) model using \code{coxph}.
-Thus the model formula is particularly simple.
-<<>>=
-pcheck$transitions
-@
 
 \section{Separate hazards}
 \subsection{Separate coefficients}
 Separate coefficients and separate hazards for each transition is the 
 default for a multi-state hazards (MSH) model using \code{coxph}. The code
 below uses the NAFLD data.
->>>>>>> 8ff55de7e1f868ab1292de9af586483421aa04fa
 
 <<nfit1, warning=TRUE, message=TRUE>>=
 nfit1 <- coxph(Surv(age1, age2, event) ~ nafld + male, data = ndata,
@@ -249,9 +214,9 @@ Indeed, a look at the coefficient matrix shows a value of 12.8 for male
 sex, for the 1:4 (0MC to 3MC) transition, exp(12.8) $> 362000$ which is
 effectively infinite for a sample of 17 thousand subjects, and the log
 partial likelihood had not yet reached its maximum.
-Further checking shown below shows that 0/4246 female and 4/3675 males who
+Further checking shown below identifies that 0/4246 female and 4/3675 males who
 were ``at risk'' for a 0mc:3mc jump had such an event, the hazard ratio
-for male sex \emph{is} infinite.  We will address this issue in
+for male sex is $.001/0 = \infty$.  We will address this issue in
 section \ref{sect2}.
 
 <<nfcheck1>>=
@@ -261,8 +226,9 @@ temp
 @ 
 
 
-The underlying code fits all 10 of the transitions in model \code{nfit1}
-simultaneously by creating a stacked data sets.
+The underlying \code{coxph} code fits all 10 of the transitions in 
+model \code{nfit1}
+simultaneously by creating a stacked data set.
 Two internal matrices \code{cmap} and \code{smap} direct the setup of the
 computation.
 
@@ -271,46 +237,22 @@ computation.
 nfit1$cmap
 nfit1$smap
 
-## number of current states (cstate) in data
+## number of data rows in each state
 table(ndata$cstate)
 @ 
 
-<<<<<<< HEAD
-The first matrix shows the mapping of coefficients to the transitions and 
-the second matrix shows the strata.  In this case, there are separate nafld 
-and male coefficients for
-each transition, and a separate stratum for each transition.
-These are used by the internal \code{stacker} routine to create expanded
-=======
-Two internal matrices \code{cmap} and \code{smap} direct the
-computation.
-The first matrix shows the mapping of coefficients to the transitions and 
-the second matrix shows the strata.  In this case, there are separate nafld and male coefficients for
-each transition, and a separate stratum for each.
-The male coefficient for the 1:4 transition did not converge, more on this
-below.
-
 The \code{cmap} and \code{smap} matrices are used by the internal 
 \code{stacker} routine to create expanded
->>>>>>> fd7afb6784dee866debc05ad71b184da3bdd84aa
 data used for the partial likelihood solution.
 The result has an expanded \code{X}, \code{Y} and \code{transition} 
 variables which contain first all the data rows for transition 1 
 (0mc:1mc, \Sexpr{scount[1]} rows), 
 then for transition 2 (0mc:2mc, \Sexpr{scount[1]} rows, 
-<<<<<<< HEAD
 etc. up to transition 10 (3mc:death, \Sexpr{scount[4]} rows).
 The transition variable has repeated values of 1, 1, \ldots, 1, 2, \ldots,
 2, 3, \ldots  10.
 The first block of the expanded \code{Y} has a simple 0/1 status with 1 for
-a transition from 0mc to 1mc for the observation.
-=======
-etc. up to transtion 10 (3mc:death, \Sexpr{scount[4]} rows).
-The transition variable has repeated values of 1, 1, 1, \ldots, 2, 2, 2, etc.
-and marks out the blocks.
-The first block of the expanded \code{Y} has a simple 0/1 status with 1 for
-a transition from 0mc to 1mc, 0 otherwise.
->>>>>>> fd7afb6784dee866debc05ad71b184da3bdd84aa
+a transition from 0mc to 1mc for the observations in that block.
 The expanded \code{X} matrix is block diagonal for this fit, as shown in
 equation \eqref{blockdiag}.
 Here $X^{(1)}$ is all the rows of the data that are at risk for the first
@@ -319,7 +261,7 @@ tenth transition.
 The final matrix has 20 columns, one for each coefficient, and
 \Sexpr{sum(4:1 * scount)} rows.
 The 20 coefficients for the 10 transitions are now fit all at once using
-a single call to the standard Cox model fitting routine \code{agreg.fit},
+a single call to the internal Cox model fitting routine \code{agreg.fit},
 with the transition as a strata.
 
 \begin{equation}
@@ -330,14 +272,10 @@ with the transition as a strata.
 \end{equation}
 
 \subsection{Shared coefficients}
-You will have noticed that \code{nfit1} gave a warning message the coefficient
+  \label{sect2}
+You will have noticed that \code{nfit1} gave a warning message that coefficient
 8 appears to be infinite, which is the estimated male effect for the 1:4
-<<<<<<< HEAD
 transition. 
-=======
-transition. The estimated risk of exp(12.8) = 362,000 fold for males clearly 
-sticks out from the other coefficients.
->>>>>>> fd7afb6784dee866debc05ad71b184da3bdd84aa
  There are only 4 0mc to 3mc transitions in the data, and all of
 them are males, so indeed the MLE solution is $\bhat= \infty$;
 there simply are not enough events in this stratum to estimate 2 coefficients.
@@ -359,22 +297,17 @@ round(coef(nfit2, matrix=TRUE), 2)
 @ 
 
 When the model formula is a list of formulas, the first formula is the
-default for all transtions and subsequent line amend that formula for
+default for all transtions and subsequent lines amend that formula for
 selected transtions.  Variables can be add or removed in the same way
-as \code{update.formula}, or their contribution modified as shown here.
+as \code{update.formula}.
 The \code{common} modifier signals common coefficients for these variables
 and transitions.
 
 The final model has 14 coefficients instead of 20, and
 the overall risk of exp(.18) = 1.2 for males for the 0:mc to 1+ transition
 is much more sensible.
-<<<<<<< HEAD
 The expanded X matrix in this model will have the same number of rows
 as before, but 14 rather than 20 columns.
-=======
-The expanded X matrix in this model will have the same number of rows 
-as \code{nfit1}, but 14 rather than 20 columns.
->>>>>>> fd7afb6784dee866debc05ad71b184da3bdd84aa
 It is no longer block diagonal, column 1 for instance now has non-zero entries
 in 3 different transition blocks.
 
@@ -382,10 +315,11 @@ The coefficient vector found in the fit object has 14 unique entries and the
 estimated variance/covariance matrix is 14 by 14, these are what are returned
 by the \code{coef} and \code{vcov} functions.
 These choices make the MSH model results better fit in to the standard Cox
-model framework. 
+model framework. The \code{matrix=TRUE} modifier for \code{coef} gives a more
+user friendly printout.
 
 \subsection{Predicted values}
-For predicted values from a MSH model, we will more often want to show 
+For predicted values from a MSH model, we will normally want to show 
 separate predictions for each transition.
 For linear predictors, this is facilitated by the \code{matrix} argument
 to \code{coef.coxphms} and \code{vcov.coxphms}, the MSH methods for the
@@ -411,40 +345,42 @@ is a row with current state of \code{cstate = 0mc}, for instance, so one could
 argue that the 2mc:death entry of row 1 is not ``relevant'' to that row of 
 the data.
 
-For predicted probability in state curves, however, we do want all the predicted
-hazards for a given hypothetical subject, since all the hazards are needed to
-compute absolute risks. Remember that a
+Predicted probability in state curves, however, are always for a hypothetical
+subject, in which case we do want all the predicted hazards,
+since all the hazards are needed to compute absolute risks. Remember that a
 predicted curve is for a particular subject (covariate values) at a particular
 time (age) in a particular starting state.
 We find it helpful to use the mental picture
 of ``prediction for the patient currently sitting across from me in the
 examination room'', i.e., absolute prediction is always specific.
 For an ordinary alive/dead KM where everyone starts at time 0 we don't have
-to think about these things, but here we do.
+to think about starting state and starting time, but for multistate they
+are necessary.
 
 <<predict1b>>=
 # predicted curves for a 50 year old female with and without NAFLD, who
-#  starts with none of the comorbidities
+#  starts with none of the comorbidities.  Solid= NAFLD.
 dummy <- data.frame(nafld= 0:1, male=0)
 pstate2 <- survfit(nfit2, newdata=dummy, start.time=50, p0=c(1,0,0,0,0))
-plot(pstate2, col=rep(1:5, each=2), lty=1:2, lwd=2) #, cumprob=TRUE)
+plot(pstate2, col=rep(1:5, each=2), lty=1:2, lwd=2,
+     xlab="Age", ylab="Probability in state")
+legend(70, 1, c("0mc", "1mc", "2mc", "3mc", "death"), col=1:5, lty=1, lwd=2,
+       bty='n')
 # I don't like this plot, but I'm not sure the alternative below is better
-# plot(pstate2, cumprob=1:4, col=rep(1:4, each=2), lty=1:2, lwd=2)
+plot(pstate2, cumprob=1:4, col=rep(1:4, each=2), lty=1:2, lwd=2,
+     xlab="Age", ylab="Cumulative probability")
+legend(50, .2, c("0mc", "0-1mc", "0-2 mc", "0-3mc", "death"), col=1:4, 
+       lty=1, lwd=2, bty='n')
+text(90, .8, "Death")
 @ 
   
 (Yet to do: show examples with predict())
 
 \section{Shared proportional hazards}
 An alternative to separate hazards is shared proportional hazards.
-<<<<<<< HEAD
 We will separate this into three cases: ``common endpoint'' will be pairs
 of transitions such as A:C and B:C that lead to a common state, ``disjoint''
 a pair like A:C and B:D, and ``common origin'' A:B and A:C.
-=======
-We will separate this into three cases: common endpoint will be pairs
-of transitions such as A:C and B:C end in a common state, disjoint
-a pair like A:C and B:D, and common origin A:B and A:C.
->>>>>>> fd7afb6784dee866debc05ad71b184da3bdd84aa
 
 \subsection{Common endpoint}
 This has been by far the most prevalent example in our work.
@@ -461,22 +397,18 @@ That is
 \end{align}
 where $\lambda_{kd}$ is the hazard for $k$ comorbidities to death, and we
 have selected the appropriate column of the coefficient matrix $\beta$.
-For both \code{nfit1} and \code{nfit2} the matrix form has has 10 columns,
-1 per transition, with the last 4 being the transitions to death.
+(For both \code{nfit1} and \code{nfit2} the matrix form has has 10 columns,
+1 per transition, with the last 4 being the transitions to death.)
 
 Here is sample code to fit this model, retaining the shared coefficients for
-<<<<<<< HEAD
 mc:mc transition used in \code{nfit2}.  Behind the scenes, the code bundles the
-=======
-select mc:mc transitions introduced above for model \code{nfit2}.  
-Behind the scenes, the code bundles the
->>>>>>> fd7afb6784dee866debc05ad71b184da3bdd84aa
 $\gamma$ and $\beta$ coefficients together, in order to jointly estimate
 both of them using the \code{agreg.fit} routine.
 We take advantage of the use of ``1'' as the representation of an
 intercept in the formula modeling language of R,
 along with the fact that the basline hazard can be thought of
 as the ``intercept'' term of a MSH model, to create a compact notation.
+Our call has only one more line than \code{nfit2}.
 
 <<nfit3>>=
 nfit3 <- coxph(list(Surv(age1, age2, event) ~ nafld + male,
@@ -504,8 +436,6 @@ For the 2:5 transition only \code{cstate1mc} is non-zero so the
 similar comments for the 3:5 and 4:5 transtions.
 We can fit an equivalent model with somewhat simpler printout by creating
 a single 0/1 dummy variable which is 0 only for the 0mc state.
-The labels in this result more clearly differentiate the $\gamma$ and
-$\beta$ coefficients.
 
 <<nfit3b>>=
 ndata$notzero <- 1*(ndata$cstate != "0mc")
@@ -515,7 +445,7 @@ nfit3b <- coxph(list(Surv(age1, age2, event) ~ nafld + male,
                     c(2,3,4):5 ~ notzero,
                     0:5  ~ 1 / common), 
                data=ndata, id= id, istate= cstate)
-print(nfit3b, digits=2)
+round(coef(nfit3b, matrix=TRUE), digits=2)
 
 all.equal(nfit3$loglik, nfit3b$loglik)
 @ 
@@ -534,34 +464,20 @@ round(coef(nfit3c, matrix=TRUE), 2)
 all.equal(nfit3c$loglik, nfit3$loglik)
 @  
 
-We stated that the baseline hazard plays the role of an intercept, and it
-does so in another way that is less often noticed.
-In a linear model, the intercept term makes the fit invariant to simple changes
-<<<<<<< HEAD
-in a covariate, e.g., replace some covariate $x$ in model with $z= x+2$,
-and the predicted $\hat y$ for each observation will remain unchanged,
+We stated earlier that the baseline hazard plays the role of an intercept, 
+and it does so in another way that is less often noticed.
+In a linear model, the intercept term makes a fit invariant to simple changes
+in the covariates, e.g., replace some covariate $x$ in model with $z= x+2$,
+and the predicted values $\hat y$ from the fit will remain unchanged,
  as do all of
 the non-intercept coefficients and their estimated standard errors.
 A much more common case is replacement of a 0/1 covariate with 1/0, e.g., 
 one fit coded 1=male and another 1=female. 
-=======
-in a covariate, e.g., if we replace some covariate $x$ in model with $z= x+2$,
-then the predicted values $\hat y_i$ for each observation remain unchanged,
-as do all of the coefficients and their estimate standard errors, with the
-exception of the intercept.
-A more common case with the same behavior is replacement of a 0/1 covariate 
-with 1/0, e.g., one fit coded 0/1= female/male and another 0/1= male/female. 
->>>>>>> fd7afb6784dee866debc05ad71b184da3bdd84aa
 Compare the coefficients of the modified model below.  Nothing changes 
 \emph{except} the ph(1:5) coefficients, and they do they shift by a constant.
 This means that we must be cautious about interpreting the absolute values
-<<<<<<< HEAD
-of these coefficients, and perhaps even more any p-values, just as would be
+of these coefficients, and perhaps even more so any p-values, just as would be
 the case for intercepts in a linear model.
-=======
-of these coefficients, and even more associated p-values, just as would be
-the case for intercepts a linear ANCOVA model.
->>>>>>> fd7afb6784dee866debc05ad71b184da3bdd84aa
 
 <<nfit3d>>=
 ndata$male23 <- ndata$male + 2  # code male as 2/3
@@ -577,9 +493,8 @@ round(coef(nfit3d, matrix=TRUE), 2)
 @ 
 
 However, just as in a linear model, this shift does not affect absolute 
-<<<<<<< HEAD
 predictions.
-We point out the following about these predicted survival curves:
+We point out the following about the predicted survival curves:
 \begin{enumerate}
  \item A predicted curve needs to have a starting time, a starting state,
    and the covariate values of the hypothetical subject.
@@ -587,12 +502,6 @@ We point out the following about these predicted survival curves:
    of newdata.  This is because those coefficients belong to the \emph{state}, 
    not to the covariates of the hypothetical subject.
 \end{enumerate}
-=======
-predictions, which are created using \code{survfit}.
-Notice that the covariates associated with the $\gamma$ coefficients are
-not a part of newdata, these coefficients belong to the \emph{state} and
-not to the subject.
->>>>>>> fd7afb6784dee866debc05ad71b184da3bdd84aa
 
 <<pstate2>>=
 dummy$male23 <- dummy$male + 2
@@ -601,18 +510,10 @@ pstate3d <- survfit(nfit3d, newdata=dummy, start.time=50, p0=c(1,0,0,0,0))
 all.equal(pstate3c$pstate, pstate3d$pstate)
 @ 
 
-<<<<<<< HEAD
-The code above recognizes $\gamma$ coefficients via their
-special variable name \code{ph(1:5)}. 
-(I have little doubt that someone, somewhere will eventually create a strange 
-variable whose name is enough like this to fool my code, and then post it 
-as a bug.)
-=======
 The survfit routine recognizes $\gamma$ coefficients in the model by their 
-association with the special variable name \code{ph(1:5)}. 
+special variable name \code{ph(1:5)}. 
 (I have little doubt that someone, somewhere will eventually create a variable 
 name enough like this to fool my code, and then post it as a bug.)
->>>>>>> fd7afb6784dee866debc05ad71b184da3bdd84aa
 For probability in state curves based on model \code{nfit3b} a bit more is
 needed: the variable \code{notzero} looks, to the survfit code, no different
 than any other; the routine needs the user's help to identify that this 
@@ -625,10 +526,9 @@ variable found in the model formula is missing from newdata. I don't yet have
 a way to work around that.
 
 To do: example using nfit3b, once I have the NA code debugged.
-
 To do: add the PBC example.
 
-\subsection*{Summary}
+\subsection*{Risk sets}
 One aspect of this that we have not mentioned is that with a set of transitions 
 A:D + B:D + C:D to a common final state, the risk sets also make sense.
 Since no subject can be two places at once (in two states at the same time),
@@ -637,6 +537,8 @@ the risk set for the shared hazard at time $t$ = (in state A at $t$)
 The Cox partial likelihood term for an event at $t$ will thus have a proper
 denominator, i.e., a weighted sum over all those at risk, where
 $\exp(X\bhat)$ are the risk weights.
+This identity of risk sets is what makes it particularly easy to jointly
+estimate $\gamma$ and $\beta$.
 
 \subsection{Shared hazards, common starting state}
 This is the case where a pair of transitions A:B and A:C are considered to have
@@ -648,7 +550,7 @@ a common hazard shape.  At this point:
   \item The current code will create risk sets with multiple copies of the
     same subject. We are not at all sure that this makes sense, in fact
     we rather doubt it. (Exception, no duplicates are created if A:B and A:C 
-    have common coefficients for a variables.)
+    have common coefficients for all variables.)
 \end{itemize}
 
 If any reader has such a use case we would be delighted to hear of it.
@@ -663,31 +565,14 @@ We have encountered one example, however, which has motivated the details
 in our code.  It can be
 seen as an extension of the PBC example.
 
-To do: the example for this is the MCSA data, where I have the CU:dementia
-transition, then break up CU into substates based on CMC score, a time-dependent
-covariate, and also break up dementia by CMC score.  Almost all the new
-CU:dementia transitions will be of the form CU+CMC1 to dementia+CMC1
-dementia based on CMC score.
-
-One of the important aspects of this example is that the \code{stacker} routine
-includes a step of removing any duplicate rows in the expanded $X^{(k)}$ matrices
-(duplicate subject and row) for each shared baseline $k$.  If the coefficients
-are shared, as in this case, that ensures no subject appears twice in the
-same risk set. (We do this because of the ``almost all'' statement in the prior
-paragraph. Because of a single CU+CMC2 to dementia+CMC3 and xx to dementia+CMC2,
-all of the CU+CMC2 subjects would appear twice, which is clearly not what
-we want.)
-
+To do: This is not yet reliably working in our code.
 
 \section{Identical hazards}
-<<<<<<< HEAD
-Identical hazards are a problem child. The issue is that such models can
-=======
-Identical hazards are a problem child. A major issue is that such models can
->>>>>>> fd7afb6784dee866debc05ad71b184da3bdd84aa
+Identical hazards are a problem child. The issue is that such models will
 be at the mercy of how covariates are coded. 
 As a simple case, consider the NAFLD data, and assume that the transitions to
-death have an identical hazard rather than a proportional one. Then,
+death have an identical hazard rather than a proportional one. 
+It turns out that 
 the impact of changing the coding of male sex from 0/1 to 2/3 is profound,
 with a different log-likelihood and multiple coefficient changes.
 
@@ -716,27 +601,18 @@ Many discussions mention a ``common hazard function'' as a modeling idea, but
 few have followed through on the consequences of assuming that $\gamma =1$ 
 uniformly.  
 If we also force common coefficients for all the covariates then the problem
-goes away, but that becomes, in essence, a single transition model.
+goes away, but that becomes, in essence, a single transition model 
+of ``either outcome''.
 
-<<<<<<< HEAD
-To do: I think that there is a connection to linear fits through the origin,
-where a change of covariate has similar consequences.  But we need to work out
-whether the analogy is indeed correct, and more importantly whether it will
-help with the explanation.
-
-
-=======
 Speculation:
 \begin{itemize}
  \item The same sort of confusions occur in linear models with regression 
-   through the origin.  I don't know if that association is helpful, however.
+   through the origin.  I don't know if that analogy is helpful, however.
  \item I think that part of the problem above is that the overall death rate
    for 3mc:death is substantially higher than 0mc:death, and so any other
    variable that is out of balance will get recruited as an alias for the
    missing $\gamma$ coefficient. NAFLD prevalence, for instance, is .89 for
    the 0mc stratum and .56 for the 3mc stratum.
 \end{itemize}
->>>>>>> fd7afb6784dee866debc05ad71b184da3bdd84aa
-
    
 \end{document}
