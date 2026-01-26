@@ -190,7 +190,7 @@ abline(v = quantile(PI2, c(.16, .5 , .84)), col=2)
 par(oldpar)
 ```
 
-And here is figure 2, comparing the KM curves, by PI group.
+And here is Figure 2, comparing the KM curves, by PI group.
 
 ```{r fig2}
 grp1 <- cut(PI1, quantile(PI1, c(0, .16, .5 , .84, 1)), include.lowest=TRUE)
