@@ -5,9 +5,14 @@
 ^vignettes/sas_runbyhand\.Rnw$
 ^vignettes/external\.Rnw$
 ^vignettes/poisson.Rmd$
+^extra_stuff$
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^\.gitignore$
 ^\.Rhistory$
 ^README\.md$
 ^Meta$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^\.github$

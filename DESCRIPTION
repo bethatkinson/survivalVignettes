@@ -1,8 +1,8 @@
 Package: survivalVignettes
-Version: 0.1.9
-Date: 2026-01-26
+Version: 0.2.0
+Date: 2026-02-10
 Title: Survival Analysis Vignettes and Optional Datasets
-Depends: R (>= 3.5.0), survival
+Depends: R (>= 4.4.1), survival
 Imports: graphics
 Suggests: knitr, rmarkdown, bookdown, broom, survey, geepack, mstate, R.rsp, splines2
 Authors@R: c(person(c("Terry", "M"), "Therneau",
@@ -11,7 +11,7 @@ Authors@R: c(person(c("Terry", "M"), "Therneau",
  	                  email="atkinson@mayo.edu",
  	                  role=c("cre","ctb")),
 	           person("Cynthia","Crowson", role="ctb"))
-URL: https://github.com/bethatkinson/survivalVignettes
+URL: https://github.com/bethatkinson/survivalVignettes, https://bethatkinson.github.io/survivalVignettes/
 BugReports: https://github.com/bethatkinson/survivalVignettes/issues 
 Description: Vignettes for the 'survival' package. Split from the 'survival' 
     package since the vignettes were getting large. Also, since 'survival' is a 
@@ -19,7 +19,4 @@ Description: Vignettes for the 'survival' package. Split from the 'survival'
     base+recommended (e.g. 'rmarkdown').
 License: LGPL (>=2)
 LazyData: Yes
-LazyDataCompression: xz
-Config/build/clean-inst-doc: FALSE
-VignetteBuilder: knitr
-
+VignetteBuilder: quarto
