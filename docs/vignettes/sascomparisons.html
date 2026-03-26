@@ -198,6 +198,26 @@ window.Quarto = {
     <a class="dropdown-item" href="../vignettes/ridge.html">
  <span class="dropdown-text">The ridge function, matrices, and prediction</span></a>
   </li>  
+        <li>
+    <a class="dropdown-item" href="../vignettes/sascomparisons.html">
+ <span class="dropdown-text">SAS comparisons</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../vignettes/timedep.html">
+ <span class="dropdown-text">Using Time-Dependent Covariates in the Cox Model</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../vignettes/tutorial.html">
+ <span class="dropdown-text">Competing Risks and Multistate Models</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../vignettes/royston.html">
+ <span class="dropdown-text">Recreating a Royston and Altman paper</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../vignettes/shared.html">
+ <span class="dropdown-text">Shared coefficients and shared baseline</span></a>
+  </li>  
     </ul>
   </li>
 </ul>
@@ -448,7 +468,7 @@ number of observations    610216 1221132 1831069
 number of events           10287   20432   30677
 unique event times          7255   10811   12733
 mean number at risk        22366   45328   68526
-coxph cpu time                30      62      96</code></pre>
+coxph cpu time                31      63      97</code></pre>
 </div>
 </div>
 <p>The resulting dataset has 1.8 million records for 122 thousand subjects, reflecting 24 years of biennial follow up in the NHS.<br>
@@ -523,15 +543,15 @@ observations    1021010 2042415 3062743
 death               831    1680    2533
 unique deaths       808    1581    2310
 mean risk set     41407   84651  125407
-coxph time 1         27      71     136
-coxph time 2         18      37      56</code></pre>
+coxph time 1         27      72     137
+coxph time 2         18      37      57</code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>ytemp <span class="ot">&lt;-</span> <span class="fu">cbind</span>(stats[<span class="dv">5</span>,], stat2[<span class="dv">5</span>,], stat2[<span class="dv">6</span>,])</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">matplot</span>(<span class="fu">cbind</span>(stats[<span class="dv">1</span>,], stat2[<span class="dv">1</span>,], stat2[<span class="dv">1</span>,])<span class="sc">/</span><span class="fl">1e6</span>,  ytemp,</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>        <span class="at">ylim=</span><span class="fu">c</span>(<span class="dv">0</span>, <span class="fu">max</span>(<span class="fu">as.vector</span>(ytemp))), <span class="at">pch=</span><span class="st">"1ab"</span>,</span>
 <span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">xlab=</span><span class="st">"dataset size (millions)"</span>, <span class="at">ylab=</span><span class="st">"Coxph run time"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>The figure shows that the run times from <code>fit1</code> on the original time scale as ‘1’, ‘a’ for the coarsened and expanded data using (time1, time2) form, and ‘b’ using strata. For the (time1, time2) forms of the data the compute time remains linear in the number of rows, coarsening the time scale has had only a small impact. The compute time for a model that takes advantage of the strata and a dummy time value is indeed smaller, about 1/3 of the (time1, time2) form. However, the overall effect is a net loss: 56 seconds to fit 1/12 of the data in the expanded form versus 96 seconds for the entire dataset in its original form.</p>
+<p>The figure shows that the run times from <code>fit1</code> on the original time scale as ‘1’, ‘a’ for the coarsened and expanded data using (time1, time2) form, and ‘b’ using strata. For the (time1, time2) forms of the data the compute time remains linear in the number of rows, coarsening the time scale has had only a small impact. The compute time for a model that takes advantage of the strata and a dummy time value is indeed smaller, about 1/3 of the (time1, time2) form. However, the overall effect is a net loss: 57 seconds to fit 1/12 of the data in the expanded form versus 97 seconds for the entire dataset in its original form.</p>
 <p>The row count grows faster than the number of subjects, since the number of cut points per subject also grows with <span class="math inline">\(n\)</span>, though that will eventually slow (there are only so many possible death times). The two fits in the loop, one using (age1, age2) and the other stratified on the age at death, give exactly the same likelihood since they have exactly the same risk sets at each event time.</p>
 <p>For SAS however, the two constructions differ substantially in compute time. A portion of the SAS code is shown below. Using (time1, time2) form on the expanded dataset the run time was a little over 22 minutes, continuing the quadratic behavior we saw earlier, while the stratified form with a dummy time value required 10, 18, and 25 seconds for 1/3, 2/3 and 3/3 of the subjects, the expected linear growth. Extrapolating to the full dataset we would predict 12<em>25 seconds or about 6 minutes, versus 867</em>9 seconds or 130 minutes for the original counting process form. Expansion is a clear win.</p>
 <pre><code>proc phreg data= nhs2;
@@ -567,7 +587,7 @@ What does it do to the compute time?</p>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>                                 <span class="fu">strata</span>(agem), <span class="at">ties=</span><span class="st">'breslow'</span>, <span class="at">data=</span>nhs))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
- 57.210   0.807  58.160 </code></pre>
+ 56.803   1.345  58.296 </code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>))</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="fu">matplot</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">42</span>, <span class="fu">cbind</span>(<span class="fu">coef</span>(fit1[[<span class="dv">3</span>]]), <span class="fu">coef</span>(fit2)), </span>

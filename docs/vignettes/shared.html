@@ -178,6 +178,26 @@ window.Quarto = {
     <a class="dropdown-item" href="../vignettes/ridge.html">
  <span class="dropdown-text">The ridge function, matrices, and prediction</span></a>
   </li>  
+        <li>
+    <a class="dropdown-item" href="../vignettes/sascomparisons.html">
+ <span class="dropdown-text">SAS comparisons</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../vignettes/timedep.html">
+ <span class="dropdown-text">Using Time-Dependent Covariates in the Cox Model</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../vignettes/tutorial.html">
+ <span class="dropdown-text">Competing Risks and Multistate Models</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../vignettes/royston.html">
+ <span class="dropdown-text">Recreating a Royston and Altman paper</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../vignettes/shared.html">
+ <span class="dropdown-text">Shared coefficients and shared baseline</span></a>
+  </li>  
     </ul>
   </li>
 </ul>
@@ -261,23 +281,23 @@ Table&nbsp;1: Choices for any pair of transitions in a multistate model.
 </figcaption>
 <div aria-describedby="tbl-ch8choice-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
-<div id="bnjurgbtrv" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#bnjurgbtrv table {
+<div id="vimlrdpgsv" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#vimlrdpgsv table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#bnjurgbtrv thead, #bnjurgbtrv tbody, #bnjurgbtrv tfoot, #bnjurgbtrv tr, #bnjurgbtrv td, #bnjurgbtrv th {
+#vimlrdpgsv thead, #vimlrdpgsv tbody, #vimlrdpgsv tfoot, #vimlrdpgsv tr, #vimlrdpgsv td, #vimlrdpgsv th {
   border-style: none;
 }
 
-#bnjurgbtrv p {
+#vimlrdpgsv p {
   margin: 0;
   padding: 0;
 }
 
-#bnjurgbtrv .gt_table {
+#vimlrdpgsv .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -303,12 +323,12 @@ Table&nbsp;1: Choices for any pair of transitions in a multistate model.
   border-left-color: #D3D3D3;
 }
 
-#bnjurgbtrv .gt_caption {
+#vimlrdpgsv .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#bnjurgbtrv .gt_title {
+#vimlrdpgsv .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -320,7 +340,7 @@ Table&nbsp;1: Choices for any pair of transitions in a multistate model.
   border-bottom-width: 0;
 }
 
-#bnjurgbtrv .gt_subtitle {
+#vimlrdpgsv .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -332,7 +352,7 @@ Table&nbsp;1: Choices for any pair of transitions in a multistate model.
   border-top-width: 0;
 }
 
-#bnjurgbtrv .gt_heading {
+#vimlrdpgsv .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -344,13 +364,13 @@ Table&nbsp;1: Choices for any pair of transitions in a multistate model.
   border-right-color: #D3D3D3;
 }
 
-#bnjurgbtrv .gt_bottom_border {
+#vimlrdpgsv .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#bnjurgbtrv .gt_col_headings {
+#vimlrdpgsv .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -365,7 +385,7 @@ Table&nbsp;1: Choices for any pair of transitions in a multistate model.
   border-right-color: #D3D3D3;
 }
 
-#bnjurgbtrv .gt_col_heading {
+#vimlrdpgsv .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -385,7 +405,7 @@ Table&nbsp;1: Choices for any pair of transitions in a multistate model.
   overflow-x: hidden;
 }
 
-#bnjurgbtrv .gt_column_spanner_outer {
+#vimlrdpgsv .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -397,15 +417,15 @@ Table&nbsp;1: Choices for any pair of transitions in a multistate model.
   padding-right: 4px;
 }
 
-#bnjurgbtrv .gt_column_spanner_outer:first-child {
+#vimlrdpgsv .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#bnjurgbtrv .gt_column_spanner_outer:last-child {
+#vimlrdpgsv .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#bnjurgbtrv .gt_column_spanner {
+#vimlrdpgsv .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -417,11 +437,11 @@ Table&nbsp;1: Choices for any pair of transitions in a multistate model.
   width: 100%;
 }
 
-#bnjurgbtrv .gt_spanner_row {
+#vimlrdpgsv .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#bnjurgbtrv .gt_group_heading {
+#vimlrdpgsv .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -447,7 +467,7 @@ Table&nbsp;1: Choices for any pair of transitions in a multistate model.
   text-align: left;
 }
 
-#bnjurgbtrv .gt_empty_group_heading {
+#vimlrdpgsv .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -462,15 +482,15 @@ Table&nbsp;1: Choices for any pair of transitions in a multistate model.
   vertical-align: middle;
 }
 
-#bnjurgbtrv .gt_from_md > :first-child {
+#vimlrdpgsv .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#bnjurgbtrv .gt_from_md > :last-child {
+#vimlrdpgsv .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#bnjurgbtrv .gt_row {
+#vimlrdpgsv .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -489,7 +509,7 @@ Table&nbsp;1: Choices for any pair of transitions in a multistate model.
   overflow-x: hidden;
 }
 
-#bnjurgbtrv .gt_stub {
+#vimlrdpgsv .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -502,7 +522,7 @@ Table&nbsp;1: Choices for any pair of transitions in a multistate model.
   padding-right: 5px;
 }
 
-#bnjurgbtrv .gt_stub_row_group {
+#vimlrdpgsv .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -516,15 +536,15 @@ Table&nbsp;1: Choices for any pair of transitions in a multistate model.
   vertical-align: top;
 }
 
-#bnjurgbtrv .gt_row_group_first td {
+#vimlrdpgsv .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#bnjurgbtrv .gt_row_group_first th {
+#vimlrdpgsv .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#bnjurgbtrv .gt_summary_row {
+#vimlrdpgsv .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -534,16 +554,16 @@ Table&nbsp;1: Choices for any pair of transitions in a multistate model.
   padding-right: 5px;
 }
 
-#bnjurgbtrv .gt_first_summary_row {
+#vimlrdpgsv .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#bnjurgbtrv .gt_first_summary_row.thick {
+#vimlrdpgsv .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#bnjurgbtrv .gt_last_summary_row {
+#vimlrdpgsv .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -553,7 +573,7 @@ Table&nbsp;1: Choices for any pair of transitions in a multistate model.
   border-bottom-color: #D3D3D3;
 }
 
-#bnjurgbtrv .gt_grand_summary_row {
+#vimlrdpgsv .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -563,7 +583,7 @@ Table&nbsp;1: Choices for any pair of transitions in a multistate model.
   padding-right: 5px;
 }
 
-#bnjurgbtrv .gt_first_grand_summary_row {
+#vimlrdpgsv .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -573,7 +593,7 @@ Table&nbsp;1: Choices for any pair of transitions in a multistate model.
   border-top-color: #D3D3D3;
 }
 
-#bnjurgbtrv .gt_last_grand_summary_row_top {
+#vimlrdpgsv .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -583,11 +603,11 @@ Table&nbsp;1: Choices for any pair of transitions in a multistate model.
   border-bottom-color: #D3D3D3;
 }
 
-#bnjurgbtrv .gt_striped {
+#vimlrdpgsv .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#bnjurgbtrv .gt_table_body {
+#vimlrdpgsv .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -596,7 +616,7 @@ Table&nbsp;1: Choices for any pair of transitions in a multistate model.
   border-bottom-color: #D3D3D3;
 }
 
-#bnjurgbtrv .gt_footnotes {
+#vimlrdpgsv .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -610,7 +630,7 @@ Table&nbsp;1: Choices for any pair of transitions in a multistate model.
   border-right-color: #D3D3D3;
 }
 
-#bnjurgbtrv .gt_footnote {
+#vimlrdpgsv .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -619,7 +639,7 @@ Table&nbsp;1: Choices for any pair of transitions in a multistate model.
   padding-right: 5px;
 }
 
-#bnjurgbtrv .gt_sourcenotes {
+#vimlrdpgsv .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -633,7 +653,7 @@ Table&nbsp;1: Choices for any pair of transitions in a multistate model.
   border-right-color: #D3D3D3;
 }
 
-#bnjurgbtrv .gt_sourcenote {
+#vimlrdpgsv .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -641,72 +661,72 @@ Table&nbsp;1: Choices for any pair of transitions in a multistate model.
   padding-right: 5px;
 }
 
-#bnjurgbtrv .gt_left {
+#vimlrdpgsv .gt_left {
   text-align: left;
 }
 
-#bnjurgbtrv .gt_center {
+#vimlrdpgsv .gt_center {
   text-align: center;
 }
 
-#bnjurgbtrv .gt_right {
+#vimlrdpgsv .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#bnjurgbtrv .gt_font_normal {
+#vimlrdpgsv .gt_font_normal {
   font-weight: normal;
 }
 
-#bnjurgbtrv .gt_font_bold {
+#vimlrdpgsv .gt_font_bold {
   font-weight: bold;
 }
 
-#bnjurgbtrv .gt_font_italic {
+#vimlrdpgsv .gt_font_italic {
   font-style: italic;
 }
 
-#bnjurgbtrv .gt_super {
+#vimlrdpgsv .gt_super {
   font-size: 65%;
 }
 
-#bnjurgbtrv .gt_footnote_marks {
+#vimlrdpgsv .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#bnjurgbtrv .gt_asterisk {
+#vimlrdpgsv .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#bnjurgbtrv .gt_indent_1 {
+#vimlrdpgsv .gt_indent_1 {
   text-indent: 5px;
 }
 
-#bnjurgbtrv .gt_indent_2 {
+#vimlrdpgsv .gt_indent_2 {
   text-indent: 10px;
 }
 
-#bnjurgbtrv .gt_indent_3 {
+#vimlrdpgsv .gt_indent_3 {
   text-indent: 15px;
 }
 
-#bnjurgbtrv .gt_indent_4 {
+#vimlrdpgsv .gt_indent_4 {
   text-indent: 20px;
 }
 
-#bnjurgbtrv .gt_indent_5 {
+#vimlrdpgsv .gt_indent_5 {
   text-indent: 25px;
 }
 
-#bnjurgbtrv .katex-display {
+#vimlrdpgsv .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#bnjurgbtrv div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#vimlrdpgsv div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>

@@ -4,10 +4,20 @@ format: html
 ---
 
 Welcome to the survivalVignettes documentation site.
-This package provides vignettes on survival analysis topics.
+This package contains many of the vignettes for the survival package, along with some optional datasets used in those vignettes. Since survival is a recommended package, the documentation is required to be completely "vanilla". In particular, the survival package vignettes use Sweave rather than knitr, markdown or quarto, and no other packages outside the base + recommended set can be referenced. Splitting vignettes into this package overcomes this, and also allowed the survival package itself to be a smaller object. Additionally, by
+translating the vignettes from `Sweave` to `quarto`, this will more
+easily enable others to submit updates.
 
 ## Vignettes
 
 - [External Validation](vignettes/external.qmd)
 - [Pseudo-values for survival data](vignettes/pseudo.qmd)
 - [The ridge function, matrices, and prediction](vignettes/ridge.qmd)
+- [SAS comparisons](vignettes/sascomparisons.qmd)
+- [Using Time-Dependent Covariates in the Cox Model](vignettes/timedep.qmd)
+
+### Multistate 
+
+- [Competing Risks and Multistate Models](vignettes/tutorial.qmd)
+- [Recreating a Royston and Altman paper](vignettes/royston.qmd)
+- [Shared coefficients and shared baseline](vignettes/shared.qmd)

@@ -3,6 +3,8 @@ title: "SAS comparisons"
 author: "Terry Therneau"
 date: "`r Sys.Date()`"
 bibliography: refer.bib
+execute: 
+  cache: true
 format: 
     html:
       toc: true

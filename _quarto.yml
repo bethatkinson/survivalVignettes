@@ -19,7 +19,17 @@ website:
             text: "Pseudo-values for survival data"
           - href: vignettes/ridge.qmd
             text: "The ridge function, matrices, and prediction"
-
+          - href: vignettes/sascomparisons.qmd
+            text: "SAS comparisons"
+          - href: vignettes/timedep.qmd
+            text: "Using Time-Dependent Covariates in the Cox Model"
+          - href: vignettes/tutorial.qmd
+            text: "Competing Risks and Multistate Models"
+          - href: vignettes/royston.qmd
+            text: "Recreating a Royston and Altman paper"
+          - href: vignettes/shared.qmd
+            text: "Shared coefficients and shared baseline"
+          
 format:
   html:
     theme: cosmo

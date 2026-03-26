@@ -112,6 +112,26 @@ ul.task-list li input[type="checkbox"] {
     <a class="dropdown-item" href="./vignettes/ridge.html">
  <span class="dropdown-text">The ridge function, matrices, and prediction</span></a>
   </li>  
+        <li>
+    <a class="dropdown-item" href="./vignettes/sascomparisons.html">
+ <span class="dropdown-text">SAS comparisons</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./vignettes/timedep.html">
+ <span class="dropdown-text">Using Time-Dependent Covariates in the Cox Model</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./vignettes/tutorial.html">
+ <span class="dropdown-text">Competing Risks and Multistate Models</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./vignettes/royston.html">
+ <span class="dropdown-text">Recreating a Royston and Altman paper</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="./vignettes/shared.html">
+ <span class="dropdown-text">Shared coefficients and shared baseline</span></a>
+  </li>  
     </ul>
   </li>
 </ul>
@@ -130,7 +150,10 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#vignettes" id="toc-vignettes" class="nav-link active" data-scroll-target="#vignettes">Vignettes</a></li>
+  <li><a href="#vignettes" id="toc-vignettes" class="nav-link active" data-scroll-target="#vignettes">Vignettes</a>
+  <ul class="collapse">
+  <li><a href="#multistate" id="toc-multistate" class="nav-link" data-scroll-target="#multistate">Multistate</a></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
@@ -156,16 +179,26 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>Welcome to the survivalVignettes documentation site. This package provides vignettes on survival analysis topics.</p>
+<p>Welcome to the survivalVignettes documentation site. This package contains many of the vignettes for the survival package, along with some optional datasets used in those vignettes. Since survival is a recommended package, the documentation is required to be completely “vanilla”. In particular, the survival package vignettes use Sweave rather than knitr, markdown or quarto, and no other packages outside the base + recommended set can be referenced. Splitting vignettes into this package overcomes this, and also allowed the survival package itself to be a smaller object. Additionally, by translating the vignettes from <code>Sweave</code> to <code>quarto</code>, this will more easily enable others to submit updates.</p>
 <section id="vignettes" class="level2">
 <h2 class="anchored" data-anchor-id="vignettes">Vignettes</h2>
 <ul>
 <li><a href="./vignettes/external.html">External Validation</a></li>
 <li><a href="./vignettes/pseudo.html">Pseudo-values for survival data</a></li>
 <li><a href="./vignettes/ridge.html">The ridge function, matrices, and prediction</a></li>
+<li><a href="./vignettes/sascomparisons.html">SAS comparisons</a></li>
+<li><a href="./vignettes/timedep.html">Using Time-Dependent Covariates in the Cox Model</a></li>
+</ul>
+<section id="multistate" class="level3">
+<h3 class="anchored" data-anchor-id="multistate">Multistate</h3>
+<ul>
+<li><a href="./vignettes/tutorial.html">Competing Risks and Multistate Models</a></li>
+<li><a href="./vignettes/royston.html">Recreating a Royston and Altman paper</a></li>
+<li><a href="./vignettes/shared.html">Shared coefficients and shared baseline</a></li>
 </ul>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->
