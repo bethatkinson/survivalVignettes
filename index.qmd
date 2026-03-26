@@ -1,0 +1,13 @@
+---
+title: "survivalVignettes"
+format: html
+---
+
+Welcome to the survivalVignettes documentation site.
+This package provides vignettes on survival analysis topics.
+
+## Vignettes
+
+- [External Validation](vignettes/external.qmd)
+- [Pseudo-values for survival data](vignettes/pseudo.qmd)
+- [The ridge function, matrices, and prediction](vignettes/ridge.qmd)

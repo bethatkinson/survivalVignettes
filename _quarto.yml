@@ -1,0 +1,26 @@
+project:
+  type: website
+  output-dir: docs
+
+website:
+  title: "survivalVignettes"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - text: Vignettes
+        menu:
+          - href: vignettes/external.qmd
+            text: "External Validation"
+          - href: vignettes/pseudo.qmd
+            text: "Pseudo-values for survival data"
+          - href: vignettes/ridge.qmd
+            text: "The ridge function, matrices, and prediction"
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+
+
+

@@ -12,10 +12,8 @@ vignettes/figures
 vignettes/pseudo_files
 .hg
 vignettes/*.html
-/doc/
 /Meta/
 temp
-docs
 
 /.quarto/
 **/*.quarto_ipynb
