@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.25">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Terry Therneau">
+<meta name="dcterms.date" content="2026-03-26">
+
+<title>Pseudo-values for survival data – survivalVignettes</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-0b37c64f34216b628666a8dac638b53b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    </a>
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">survivalVignettes</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-vignettes" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Vignettes</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-vignettes">    
+        <li>
+    <a class="dropdown-item" href="../vignettes/external.html">
+ <span class="dropdown-text">External Validation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../vignettes/pseudo.html">
+ <span class="dropdown-text">Pseudo-values for survival data</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../vignettes/ridge.html">
+ <span class="dropdown-text">The ridge function, matrices, and prediction</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction"><span class="header-section-number">1</span> Introduction</a></li>
+  <li><a href="#residual-mean-survival-time" id="toc-residual-mean-survival-time" class="nav-link" data-scroll-target="#residual-mean-survival-time"><span class="header-section-number">2</span> Residual mean survival time</a></li>
+  <li><a href="#survival-and-probability-in-state" id="toc-survival-and-probability-in-state" class="nav-link" data-scroll-target="#survival-and-probability-in-state"><span class="header-section-number">3</span> Survival and probability in state</a>
+  <ul class="collapse">
+  <li><a href="#aml-data" id="toc-aml-data" class="nav-link" data-scroll-target="#aml-data"><span class="header-section-number">3.1</span> AML data</a></li>
+  <li><a href="#colon-cancer" id="toc-colon-cancer" class="nav-link" data-scroll-target="#colon-cancer"><span class="header-section-number">3.2</span> Colon cancer</a></li>
+  </ul></li>
+  <li><a href="#competing-risks" id="toc-competing-risks" class="nav-link" data-scroll-target="#competing-risks"><span class="header-section-number">4</span> Competing risks</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references"><span class="header-section-number">5</span> References</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Pseudo-values for survival data</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Terry Therneau </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">March 26, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introduction" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Introduction</h1>
+<p>Let <span class="math inline">\(Y\)</span> be survival time and <span class="math inline">\(f\)</span> some function of interest, for which we desire to estimate <span class="math inline">\(E(f(Y))\)</span> over the population. With complete data on each observation’s survival time, we can compute the expectation in the straightforward way as the simple mean <span class="math inline">\(\sum f(y_i) /n\)</span>. Due to censoring, survival data is unfortunately incomplete.</p>
+<p>Pseudo-values are based on a simple idea. Suppose the data are incomplete but we have an estimator <span class="math inline">\(\hat\theta = E(f(Y)\)</span> of the quantity of interest, e.g., <span class="math inline">\(\theta\)</span> = survival probability at time 45, and <span class="math inline">\(\hat\theta\)</span> the Kaplan-Meier estimate at time 45. The pseudo-value for <span class="math inline">\(y_i\)</span> is then defined as</p>
+<p><span class="math display">\[\begin{equation}
+  \theta_{(i)} = \hat\theta + (n-1)(\hat\theta - \hat\theta_{-i})
+\end{equation}\]</span></p>
+<p>where <span class="math inline">\(\hat\theta_{-i}\)</span> is defined as the value of the estimate when subject <span class="math inline">\(i\)</span> is omitted from the sample. As an illustration, evaluate this formula when <span class="math inline">\(\theta\)</span> is an ordinary mean: <span class="math display">\[\begin{align*}
+  \hat\theta +  (n-1)(\hat\theta - \hat\theta_{-i}) &amp;=
+   \sum_j y_j/n + (n-1)\left( \sum_{j} y_j/n - \sum_{j\ne i} y_j/(n-1) \right)\\
+  &amp;= \sum_j y_j - \sum_{j\ne i} y_j \\
+  &amp;= y_i
+\end{align*}\]</span></p>
+<p>In this case the pseudo-value has exactly recovered the data value <span class="math inline">\(y_i\)</span>. The idea is to use the pseudo-observations <span class="math inline">\(\theta_{(i)}\)</span> as a replacement for the incompletely observed data <span class="math inline">\(y_i\)</span>, i.e., as a stand-in for the <em>uncensored</em> data. These pseudo-values are not censored, allowing for ordinary statistical methods to be applied. An good overview of pseudo-value based methods for survival is provided by Andersen and Perme <span class="citation" data-cites="Andersen10">Andersen and Perme (<a href="#ref-Andersen10" role="doc-biblioref">2010</a>)</span>.</p>
+<p>The <code>pseudo</code> function in the survival package uses values based on the infinitesimal jackknife (IJ), i.e., <span class="math display">\[\begin{equation}
+\tilde\theta_{(i)} = \hat\theta + n\frac{\partial \hat\theta}{\partial w_i}
+\end{equation}\]</span></p>
+<p>Why use IJ based pseudo-values instead of jackknife based values?</p>
+<ol type="1">
+<li>The largest advantage is computational; IJ values can be assembled much more quickly.<br>
+</li>
+<li>The survival package already makes extensive use of IJ values to compute robust variance estimates, so these naturally fit into that framework. We take advantage of existing test suites to ensure accurate computations.</li>
+</ol>
+<p>Both estimates are linear approximations to a functional surface, something nicely pointed out by Efron <span class="citation" data-cites="Efron82">Efron (<a href="#ref-Efron82" role="doc-biblioref">1982</a>)</span>: the IJ is a tangent plane to the surface at its center and the jackknife a secant plane.<br>
+As such, they have the property that the average of the IJ pseudo-values will recover the starting estimate, mean<span class="math inline">\((\tilde\theta_{(i)}) = \hat\theta\)</span>. The choice of <span class="math inline">\(n\)</span> for the IJ based pseudo-value makes the computation for an ordinary mean exact, as was shown above for <span class="math inline">\(n-1\)</span> and the jackknife pseudo-value, and in fact Efron argues that the use of <span class="math inline">\(n-1\)</span> is somewhat arbitrary, i.e., <span class="math inline">\(\theta\)</span> statistics other than the mean might be more exact using <span class="math inline">\(n\)</span>, <span class="math inline">\(n+1\)</span> or some other multiplier. The largest potential deficit of the IJ based approach is that the literature is small — most of the direct examinations have focused on jackknife based values. Parner et. al <span class="citation" data-cites="Parner21">Parner, Andersen, and Overgaard (<a href="#ref-Parner21" role="doc-biblioref">2021</a>)</span> examine the IJ approach in detail, and show that they have the same asymptotic properties as the jackknife pseudo-values. Examples show that the numerical difference between the two is minuscule, with the possible exception of large outliers.</p>
+</section>
+<section id="residual-mean-survival-time" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Residual mean survival time</h1>
+<p>We will start with one of the more compelling uses, which provides modeling tools for the mean time spent in a state. For any positive probability distribution, a well known identity is that the mean is equal to the area under the survival curve.</p>
+<p><span class="math display">\[\begin{equation*}
+\mu = \int S(t) dt
+\end{equation*}\]</span></p>
+<p>This extends to the multi-state case, where the expected time in state will be equal to the area under the P(state) curve for that state.</p>
+<p>Since the Kaplan-Meier gives an unbiased estimate of <span class="math inline">\(S\)</span>, we can use the area under the KM to estimate the mean time to death. However, since the entire <span class="math inline">\(S(t)\)</span> curve is usually not available, i.e., the KM terminates before reaching 0, we instead estimate the restricted mean survival time (RMST), using the area under the KM up to some specified point <span class="math inline">\(\tau\)</span>. This is interpreted as the expected number of life years, out of the first <span class="math inline">\(\tau\)</span> years since initiation. If <span class="math inline">\(\tau=10\)</span> and the area under the curve were 8.1, the relevant phrase would be an “expected lifetime of 8.1 out of the next 10 years”. Other common labels the sojourn time, or for a multi-state model, the restricted mean time in state (RMTS). The sojourn time for all states must sum to <span class="math inline">\(\tau\)</span>, i.e.&nbsp;everyone has to be somewhere. Common choices for <span class="math inline">\(\tau\)</span> are either a fixed time of interest such as 2, 5 or 10 years, the last observed event time, or the point at which any one of the curves has no subjects.</p>
+<p>Here is a simple example using the lung cancer data set.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>lfit0 <span class="ot">&lt;-</span> <span class="fu">survfit</span>(<span class="fu">Surv</span>(time<span class="sc">/</span><span class="fl">365.25</span>, status) <span class="sc">~</span> <span class="dv">1</span>, <span class="at">data=</span>lung)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>lfit1 <span class="ot">&lt;-</span> <span class="fu">survfit</span>(<span class="fu">Surv</span>(time<span class="sc">/</span><span class="fl">365.25</span>, status) <span class="sc">~</span> ph.ecog, <span class="at">data=</span>lung)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(lfit1, <span class="at">rmean=</span><span class="fl">2.5</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Call: survfit(formula = Surv(time/365.25, status) ~ ph.ecog, data = lung)</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    1 observation deleted due to missingness </span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             n events rmean* se(rmean) median 0.95LCL 0.95UCL</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ph.ecog=0  63     37  1.251    0.1085  1.079   0.953   1.572</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ph.ecog=1 113     82  1.035    0.0692  0.838   0.734   1.175</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ph.ecog=2  50     44  0.708    0.0855  0.545   0.427   0.789</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ph.ecog=3   1      1  0.323    0.0000  0.323      NA      NA</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     * restricted mean with upper limit =  2.5</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(lfit1, <span class="at">lty=</span><span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>, <span class="at">xlab=</span><span class="st">"Years since enrollment"</span>, <span class="at">ylab=</span><span class="st">"Survival"</span>)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="st">"topright"</span>, <span class="fu">c</span>(<span class="st">"PS 0"</span>, <span class="st">"PS 1"</span>, <span class="st">"PS 2"</span>, <span class="st">"PS 3"</span>), </span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>       <span class="at">lty=</span><span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>, <span class="at">bty=</span><span class="st">'n'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="pseudo_files/figure-html/lung1-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The strongest predictor in the data set is ECOG performance score, which has levels of 0-3. For a single categorical predictor such as this, it is easy to obtain the RMST and its standard error directly from the print routine for <code>survfit</code>. We can also do this with pseudo-values, which allow for a multivariate model. The result shows a loss of about .26 years for each 1 point increase in the performance score, and about .32 years longer RMST for females.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>pmean <span class="ot">&lt;-</span> <span class="fu">pseudo</span>(lfit0, <span class="at">times=</span><span class="fl">2.5</span>, <span class="at">type=</span><span class="st">"RMST"</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>ldata <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(lung, <span class="at">pmean=</span> <span class="fu">c</span>(pmean), </span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>                    <span class="at">id=</span><span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(lung))  </span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>afit1 <span class="ot">&lt;-</span> <span class="fu">lm</span>(pmean <span class="sc">~</span> ph.ecog <span class="sc">+</span> sex <span class="sc">+</span> age, <span class="at">data=</span>ldata)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">summary</span>(afit1)<span class="sc">$</span>coefficients, <span class="dv">3</span>)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             Estimate Std. Error t value Pr(&gt;|t|)</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)    1.192      0.379   3.144    0.002</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ph.ecog       -0.255      0.068  -3.738    0.000</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; sex            0.322      0.099   3.260    0.001</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; age           -0.006      0.005  -1.120    0.264</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The IJ residuals for observations that are censored early in the study are of necessity small, as they have less opportunity to affect the results, which in turn means that the pseudo-values are not equivariant. An observation censored before the first event has residual 0, so its pseudo-value has no variance at all. In such a case theory argues for using White’s variance estimate for the linear model fit, which accounts for possible heteroscedasticity. This is the same as the “working independence” estimate of a GEE model, or the variance estimate from a survey sampling approach. We compute both of these below.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>afit2 <span class="ot">&lt;-</span> <span class="fu">geese</span>(pmean <span class="sc">~</span> ph.ecog <span class="sc">+</span> sex <span class="sc">+</span> age, <span class="at">data=</span>ldata, </span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">subset =</span> (<span class="sc">!</span><span class="fu">is.na</span>(ph.ecog)))</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">summary</span>(afit2)<span class="sc">$</span>mean, <span class="dv">3</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             estimate san.se   wald     p</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)    1.192  0.389  9.399 0.002</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ph.ecog       -0.255  0.067 14.526 0.000</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; sex            0.322  0.099 10.519 0.001</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; age           -0.006  0.006  1.217 0.270</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>ldesign <span class="ot">&lt;-</span> <span class="fu">svydesign</span>(<span class="at">data=</span>ldata, <span class="at">id=</span> <span class="sc">~</span>id, <span class="at">weights=</span><span class="cn">NULL</span>,</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>              <span class="at">variables=</span> <span class="sc">~</span> . <span class="sc">-</span>id)</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>afit3 <span class="ot">&lt;-</span> <span class="fu">svyglm</span>(pmean <span class="sc">~</span> ph.ecog <span class="sc">+</span> sex <span class="sc">+</span> age, <span class="at">design=</span>ldesign)</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">summary</span>(afit3)<span class="sc">$</span>coefficients, <span class="dv">3</span>)</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             Estimate Std. Error t value Pr(&gt;|t|)</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)    1.192      0.390   3.059    0.002</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ph.ecog       -0.255      0.067  -3.803    0.000</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; sex            0.322      0.100   3.236    0.001</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; age           -0.006      0.006  -1.101    0.272</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The estimated coefficients will be identical for all three approaches, as evidenced above. In this particular case the robust and normal standard errors hardly differ, which we have found to be the usual case when there is a single pseudo-value per subject. When there are pseudo-values at multiple reporting times, and thus multiple observations per subject, then the correction becomes essential. Deficiencies in R’s <code>geese</code> function lead us to use the survey sampling approach from here forward, in particular that any missing values cause geese to fail, the input data is required to be sorted by id, and that standard extraction functions such as <code>coef</code> and <code>vcov</code> have not been implemented. The <code>survey</code> package requires that the design be specified in advance; the resulting object acts as the data for subsequent fits.</p>
+<p>The validity of pseudo-values relies on an assumption of non-informative censoring. When censoring is uninformative within strata, but not overall, a solution is to base the pseudo-values on the per-stratum survival curves. For example, the <code>lung</code> data set comes from a multi-center study, and contains an identifier for the institution from which the subject was recruited. We might want to adjust for the possibility that different institutions recruit from different patient populations, with different overall survival. If those institutions had different median follow-up times as well as differential survival, this would introduce informative censoring. (Differential follow-up of quite common in multi-center studies; some will join late due to administrative delays.)</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># There is 1 missing value for inst so pseudo by default will have 227 values instead of 228</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># When creating pmean4, you need to put the values in the correct spot.</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Specifying na.exclude expands the results to have the proper length</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>lfit4 <span class="ot">&lt;-</span> <span class="fu">survfit</span>(<span class="fu">Surv</span>(time<span class="sc">/</span><span class="fl">365.25</span>, status) <span class="sc">~</span> inst, <span class="at">data=</span>lung, <span class="at">na.action=</span>na.exclude)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>pmean4 <span class="ot">&lt;-</span> <span class="fu">pseudo</span>(lfit4, <span class="at">time=</span><span class="fl">2.5</span>, <span class="at">type=</span><span class="st">"auc"</span>)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>ldata<span class="sc">$</span>pmean4 <span class="ot">&lt;-</span> <span class="fu">c</span>(pmean4)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>afit4a <span class="ot">&lt;-</span> <span class="fu">lm</span>(pmean4 <span class="sc">~</span> ph.ecog <span class="sc">+</span> sex <span class="sc">+</span> age, <span class="at">data=</span>ldata)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co"># survey package does not allow a missing strata, and one obs in the lung data</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co"># has institution missing</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>temp <span class="ot">&lt;-</span> <span class="fu">subset</span>(ldata, <span class="sc">!</span><span class="fu">is.na</span>(inst))</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>ldesign4 <span class="ot">&lt;-</span> <span class="fu">svydesign</span>(<span class="at">data=</span>temp,  <span class="at">id=</span> <span class="sc">~</span>id, <span class="at">weights=</span><span class="cn">NULL</span>, <span class="at">strata=</span> <span class="sc">~</span>inst,</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>                      <span class="at">variables=</span> <span class="sc">~</span> .<span class="sc">-</span>id <span class="sc">-</span>inst)</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>afit4b <span class="ot">&lt;-</span> <span class="fu">svyglm</span>(pmean4 <span class="sc">~</span> ph.ecog <span class="sc">+</span> sex <span class="sc">+</span> age, <span class="at">design=</span>ldesign4)</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">summary</span>(afit4a)<span class="sc">$</span>coefficients, <span class="dv">3</span>)</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             Estimate Std. Error t value Pr(&gt;|t|)</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)    1.085      0.387   2.805    0.005</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ph.ecog       -0.276      0.070  -3.941    0.000</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; sex            0.448      0.101   4.429    0.000</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; age           -0.006      0.006  -1.108    0.269</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">summary</span>(afit4b)<span class="sc">$</span>coefficients[<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>,], <span class="dv">3</span>)</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             Estimate Std. Error t value Pr(&gt;|t|)</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)    1.085      0.377   2.876    0.004</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ph.ecog       -0.276      0.069  -4.006    0.000</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; sex            0.448      0.099   4.504    0.000</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; age           -0.006      0.006  -1.112    0.267</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>It is interesting that correct variance is somewhat smaller than the simple glm result, in this case.</p>
+</section>
+<section id="survival-and-probability-in-state" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Survival and probability in state</h1>
+<section id="aml-data" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="aml-data"><span class="header-section-number">3.1</span> AML data</h2>
+<p>As a first case for this endpoint look at a simple survival data set, the well known AML study with 23 subjects, which records the time to relapse for patients with acute myelogenous leukemia. Relapse times range from 5 to 48 months, 5 of the 23 patient times are censored. Get the pseudo-values for 12 and 24 month survival.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">with</span>(aml, <span class="fu">Surv</span>(time, status))</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [1]   9   13   13+  18   23   28+  31   34   45+  48  161+   5    5 </span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [14]   8    8   12   16+  23   27   30   33   43   45</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>fit1 <span class="ot">&lt;-</span> <span class="fu">survfit</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span><span class="dv">1</span>, aml)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>rr1 <span class="ot">&lt;-</span> <span class="fu">resid</span>(fit1, <span class="at">times=</span><span class="fu">c</span>(<span class="dv">12</span>,<span class="dv">24</span>))</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>pv1 <span class="ot">&lt;-</span> <span class="fu">pseudo</span>(fit1, <span class="at">times=</span> <span class="fu">c</span>(<span class="dv">12</span>, <span class="dv">24</span>))</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(pv1[<span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>,], <span class="dv">4</span>)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    times</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     12      24</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   1  0  0.0000</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   2  1  0.0000</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   3  1  0.7857</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   4  1 -0.1122</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   5  1 -0.1122</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   6  1  1.0306</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   7  1  1.0306</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   8  1  1.0306</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Both the matrix of IJ values from <code>resid</code> and the matrix of IJ pseudo-values from the <code>pseudo</code> function have one row per subject and one column per reporting time. The first censoring is at 13 months, and so at the first reporting time of 12 months the pseudo-values behave exactly like a mean, and have recaptured the (uncensored) 0/1 response of “relapse within 12 months”. At 24 months, after censoring enters, the pseudo-values are no longer constrained to lie in <span class="math inline">\((0,1)\)</span>.</p>
+<p>What happens if we use these values in an ordinary regression? The <code>data.frame</code> argument causes the values to be returned in long form as a data.frame.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>pdata <span class="ot">&lt;-</span> <span class="fu">pseudo</span>(fit1, <span class="at">times=</span> <span class="fu">c</span>(<span class="dv">12</span>, <span class="dv">24</span>), <span class="at">data.frame=</span><span class="cn">TRUE</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>lfit1 <span class="ot">&lt;-</span> <span class="fu">lm</span>(pseudo <span class="sc">~</span><span class="dv">1</span>, pdata, <span class="at">subset=</span> (time<span class="sc">==</span><span class="dv">12</span>))</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>lfit2 <span class="ot">&lt;-</span> <span class="fu">lm</span>(pseudo <span class="sc">~</span><span class="dv">1</span>, pdata, <span class="at">subset=</span> (time<span class="sc">==</span><span class="dv">24</span>))</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(lfit1)<span class="sc">$</span>coefficients</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;              Estimate Std. Error  t value    Pr(&gt;|t|)</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept) 0.7391304 0.09361833 7.895146 7.34356e-08</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(lfit2)<span class="sc">$</span>coefficients</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;              Estimate Std. Error  t value     Pr(&gt;|t|)</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept) 0.5465839  0.1096611 4.984302 5.472569e-05</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(fit1, <span class="at">time=</span><span class="fu">c</span>(<span class="dv">12</span>,<span class="dv">24</span>))</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Call: survfit(formula = Surv(time, status) ~ 1, data = aml)</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  time n.risk n.event survival std.err lower 95% CI upper 95% CI</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    12     18       6    0.739  0.0916        0.580        0.942</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    24     11       4    0.547  0.1073        0.372        0.803</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The regressions have exactly reproduced the KM values at 12 and 24 months, as expected, and the estimated standard errors almost match those from the <code>survfit</code> function. The robust (IJ) variance for the Kaplan-Meier, i.e.&nbsp;the sum of squared IJ values, can in fact be shown to exactly equal the Greenwood estimate of variance for a KM (Anne Eaton, personal communication). The difference above is due to the fact that the lm function uses <span class="math inline">\(n-1\)</span> rather than <span class="math inline">\(n\)</span> in computing a variance.</p>
+<p>A natural follow-on is to look at covariates. In the AML data set the covariate <code>x</code> denotes the two treatment arms.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>cfit3 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span>x, <span class="at">data=</span>aml)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>cfit3</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; coxph(formula = Surv(time, status) ~ x, data = aml)</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                  coef exp(coef) se(coef)     z      p</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; xNonmaintained 0.9155    2.4981   0.5119 1.788 0.0737</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Likelihood ratio test=3.38  on 1 df, p=0.06581</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; n= 23, number of events= 18</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>pdata <span class="ot">&lt;-</span> <span class="fu">cbind</span>(pdata, <span class="at">x=</span> aml<span class="sc">$</span>x)   <span class="co"># original data + pseudo-values</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>lfit3 <span class="ot">&lt;-</span> <span class="fu">lm</span>(pseudo <span class="sc">~</span> x <span class="sc">+</span> <span class="fu">factor</span>(time), <span class="at">data=</span>pdata)</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(lfit3)<span class="sc">$</span>coefficients</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                  Estimate Std. Error   t value     Pr(&gt;|t|)</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)     0.8574050  0.1245665  6.883111 1.900447e-08</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; xNonmaintained -0.2266929  0.1418401 -1.598229 1.173154e-01</span></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; factor(time)24 -0.1925466  0.1417060 -1.358775 1.813030e-01</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>sfit3 <span class="ot">&lt;-</span> <span class="fu">survfit</span>(cfit3, <span class="at">newdata=</span><span class="fu">list</span>(<span class="at">x=</span> <span class="fu">c</span>(<span class="st">"Maintained"</span>, <span class="st">"Nonmaintained"</span>)))</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(sfit3, <span class="at">times=</span><span class="fu">c</span>(<span class="dv">12</span>,<span class="dv">24</span>))</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Call: survfit(formula = cfit3, newdata = list(x = c("Maintained", "Nonmaintained")))</span></span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  time n.risk n.event survival1 survival2</span></span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    12     18       6     0.841     0.648</span></span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    24     11       4     0.706     0.419</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The above code contains a lot of ideas. First, the Cox model estimates that the subjects on the no maintenance arm have a hazard rate of about 2.5 fold higher than the maintenance arm, <span class="math inline">\(p=.09\)</span>. Second, a linear model using pseudo-values has estimated the absolute probability of no recurrence, at 12 and 24 months, to be about .23 lower for the no maintenance group, <span class="math inline">\(p=.12\)</span>; conversely the probability of recurrence is .23 higher. Last is a plot comparing the curves. The overall probabilities of recurrence are gathered into a table below.</p>
+<div class="cell" data-layout-align="center">
+<pre><code>#&gt;                 Cox, 12 Pseudo, 12 Cox, 24 Pseudo, 24
+#&gt; Maintainance       0.16       0.14    0.29       0.34
+#&gt; Nonmaintainance    0.35       0.37    0.58       0.56
+#&gt; Difference         0.19       0.23    0.29       0.23</code></pre>
+</div>
+<p>One advantage of the linear model is that the pseudo-values are direct estimates of a probability, and so may be easier to communicate to study participants than a hazards ratio. The linear model contains the strong assumption that the difference in survival is the same at times 12 and 24, the Cox model the equally strong one that hazards are proportional across all time points. Of potentially more consequence, the pseudo-value has two observations for each subject, leading to correlated data. We can correct for this using a robust sandwich estimator either via survey sampling or a GEE argument. These are shown below. The <code>geese</code> function has the unfortunate feature that correct standard errors require that all of the observations for a subject are in contiguous rows of the input data. No error message arises if this does not hold, only an incorrect result.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Naive lm</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(lfit3)<span class="sc">$</span>coefficients</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                  Estimate Std. Error   t value     Pr(&gt;|t|)</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)     0.8574050  0.1245665  6.883111 1.900447e-08</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; xNonmaintained -0.2266929  0.1418401 -1.598229 1.173154e-01</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; factor(time)24 -0.1925466  0.1417060 -1.358775 1.813030e-01</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="co">#survey</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="co"># When an id is constructed rather than supplied, pseudo() purposely gives</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="co">#  it a non-standard name to avoid confusion with any user's variable names.</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="co">#  But that name is a PITA to use in formulas</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>flag <span class="ot">&lt;-</span> <span class="fu">toupper</span>(<span class="fu">names</span>(pdata))<span class="sc">==</span><span class="st">'(ID)'</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>pdata<span class="sc">$</span>id <span class="ot">&lt;-</span> pdata[,flag] </span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>pdesign <span class="ot">&lt;-</span> <span class="fu">svydesign</span>(<span class="at">id=</span> <span class="sc">~</span> id, <span class="at">varibles=</span> <span class="sc">~</span> pseudo <span class="sc">+</span> x <span class="sc">+</span> time, <span class="at">weights=</span><span class="cn">NULL</span>,</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>                     <span class="at">data=</span>pdata)</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>sfit <span class="ot">&lt;-</span> <span class="fu">svyglm</span>(pseudo <span class="sc">~</span> x <span class="sc">+</span> <span class="fu">factor</span>(time), <span class="at">design=</span>pdesign)</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(sfit)<span class="sc">$</span>coefficients</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                  Estimate Std. Error   t value     Pr(&gt;|t|)</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)     0.8574050 0.09337136  9.182741 1.300627e-08</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; xNonmaintained -0.2266929 0.17489231 -1.296186 2.096699e-01</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; factor(time)24 -0.1925466 0.08847305 -2.176330 4.168743e-02</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a><span class="co"># GEE 1</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>gfit1 <span class="ot">&lt;-</span> <span class="fu">geese</span>(pseudo <span class="sc">~</span> x <span class="sc">+</span> <span class="fu">factor</span>(time), <span class="at">data=</span>pdata, <span class="at">id=</span> id) <span class="co"># wrong answer</span></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(gfit1)<span class="sc">$</span>mean</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                  estimate     san.se      wald          p</span></span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)     0.8574050 0.09352952 84.037788 0.00000000</span></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; xNonmaintained -0.2266929 0.13604793  2.776465 0.09565912</span></span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; factor(time)24 -0.1925466 0.13700721  1.975080 0.15990964</span></span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a><span class="co"># GEE 2</span></span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>pdata <span class="ot">&lt;-</span> pdata[<span class="fu">order</span>(pdata<span class="sc">$</span>id),]  <span class="co"># group id values to be together</span></span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>gfit2 <span class="ot">&lt;-</span> <span class="fu">geese</span>(pseudo <span class="sc">~</span> x <span class="sc">+</span> <span class="fu">factor</span>(time), <span class="at">data=</span>pdata, <span class="at">id=</span> id)</span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(gfit2)<span class="sc">$</span>mean</span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                  estimate     san.se      wald          p</span></span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)     0.8574050 0.09131899 88.155586 0.00000000</span></span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; xNonmaintained -0.2266929 0.17104806  1.756466 0.18506593</span></span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; factor(time)24 -0.1925466 0.08652835  4.951706 0.02606494</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>All of the approaches give the same coefficient estimates, differing only in the estimated standard error.</p>
+</section>
+<section id="colon-cancer" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="colon-cancer"><span class="header-section-number">3.2</span> Colon cancer</h2>
+<p>Now work with a larger data set, using time to failure (recurrence or death) in the colon cancer study. The data set has 2*929 observations, the first set for time to recurrence and the second for time to death. For anyone without recurrence, their follow-up time for recurrence is equal to their follow-up time for death.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>cdata <span class="ot">&lt;-</span> <span class="fu">subset</span>(colon, etype<span class="sc">==</span><span class="dv">1</span>, <span class="sc">-</span>etype)  <span class="co"># time to recurrence</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>temp  <span class="ot">&lt;-</span> <span class="fu">subset</span>(colon, etype<span class="sc">==</span><span class="dv">2</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>cdata<span class="sc">$</span>status <span class="ot">&lt;-</span> <span class="fu">pmax</span>(cdata<span class="sc">$</span>status, temp<span class="sc">$</span>status)</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>trtsurv <span class="ot">&lt;-</span> <span class="fu">survfit</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> rx, cdata, <span class="at">id=</span>id)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(trtsurv, <span class="at">fun=</span><span class="st">"event"</span>, <span class="at">xscale=</span> <span class="fl">365.25</span>, <span class="at">col =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, <span class="at">lwd=</span><span class="dv">2</span>,</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab=</span> <span class="st">"Years from randomization"</span>, <span class="at">ylab=</span><span class="st">"Treatment failure"</span>)</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="dv">5</span><span class="sc">*</span><span class="dv">365</span>, .<span class="dv">25</span>, <span class="fu">levels</span>(cdata<span class="sc">$</span>rx), <span class="at">col=</span><span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, <span class="at">lwd=</span><span class="dv">2</span>, <span class="at">bty=</span><span class="st">'n'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="pseudo_files/figure-html/cdata-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>ccox <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> rx <span class="sc">+</span> sex <span class="sc">+</span> age <span class="sc">+</span> extent <span class="sc">+</span> node4<span class="sc">+</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>                  obstruct <span class="sc">+</span> perfor <span class="sc">+</span> adhere,  <span class="at">data=</span>cdata)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The graph shows that the Levamisole + 5-FU treatment are is markedly superior to either observation or 5-FU alone (the standard treatment at the time). There are few further events after 4–5 years and the curves flatten out. Having 4 or more positive lymph nodes and greater local spread of the disease are also potent predictors. Now look at pseudo-values for the data.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>csurv <span class="ot">&lt;-</span> <span class="fu">survfit</span>(<span class="fu">Surv</span>(time, status)  <span class="sc">~</span><span class="dv">1</span>, <span class="at">data=</span>cdata, <span class="at">id=</span>id)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>cptemp <span class="ot">&lt;-</span> <span class="fu">pseudo</span>(csurv, <span class="at">time=</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span> <span class="sc">*</span> <span class="fl">365.25</span>, <span class="at">data.frame=</span><span class="cn">TRUE</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>cptemp<span class="sc">$</span>pdeath <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">-</span> cptemp<span class="sc">$</span>pseudo</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>cptemp<span class="sc">$</span>year <span class="ot">&lt;-</span> <span class="fu">round</span>(cptemp<span class="sc">$</span>time<span class="sc">/</span><span class="fl">365.25</span>)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>cpdat <span class="ot">&lt;-</span> <span class="fu">merge</span>(cptemp, </span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>               <span class="fu">subset</span>(<span class="at">x=</span>cdata,<span class="at">select=</span><span class="fu">c</span>(id, rx, extent, node4)), </span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>               <span class="at">by=</span><span class="st">"id"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Most users will prefer a model for the risk of death, i.e., for pseudo-values based on the probability of death <span class="math inline">\(1- S(t)\)</span>. It is easy to show that these are simply <span class="math inline">\(1- p(S)\)</span> where <span class="math inline">\(p(S)\)</span> are the pseudo-values for <span class="math inline">\(S\)</span>. This was saved as the variable <code>pdeath</code>. We then merge the pseudo data, which has multiple rows per subject, with the original data, by the subject identifier <code>id</code> found in the colon cancer data set. Because id was specified in the survfit call it carries through and properly labels the pseudo-values.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(cpdat<span class="sc">$</span>pdeath, <span class="at">nclass=</span><span class="dv">50</span>, <span class="at">main=</span><span class="cn">NULL</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="pseudo_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>This shows that for a large data set with moderate censoring, the pseudo-values are clustered around 0 and 1, mimicking binomial data. To assess survival, which values should we use: year 4 alone, 2 or 3 of the 6 years, or all of them? One important consideration for all of this is the choice of a transformation function <span class="math inline">\(f\)</span>, where we assume that <span class="math inline">\(E(y) \approx f(\eta) + \epsilon\)</span>. (Generalized linear model literature normally focuses on the function <span class="math inline">\(g= f^{-1}\)</span>.)</p>
+<p>The ideal function <span class="math inline">\(f\)</span> will</p>
+<ul>
+<li>Transform treatment effects to a common scale over time. That is, a separate intercept for each time point will suffice. No interactions between covariates and time are needed.</li>
+<li>Cause multivariate effects to be additive. That example, the effect of treatment is the same for those with and without 4+ positive lymph nodes. No between covariate interactions are needed.</li>
+<li>Normalize the variance so that <span class="math inline">\(\epsilon\)</span> is constant across time and across covariates. Alternatively, choose a distribution that properly maps between the predicted mean and variance.</li>
+<li>Bound predicted values to the range of 0–1.</li>
+</ul>
+<p>Satisfying all four of these at once is likely to be impossible. Logistic regression, most user’s immediate response to estimation of a yes/no question, fails directly. First, it does not accommodate response values outside the range of 0–1, and secondly the variance for a predicted value near 0 or 1 is assumed to drop to zero. The maximum value of 1.4 for <code>cpdat\$pdeath</code> fails both of these.</p>
+<p>As a first pass, look at the between curve difference for the other arms vs. 5-FU across time, based on the Kaplan-Meier estimates. For this particular data set and these time points, absolute difference between the curves is more stable across time than logit differences.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>temp1 <span class="ot">&lt;-</span> <span class="fu">summary</span>(trtsurv, <span class="at">times=</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span><span class="sc">*</span><span class="fl">365.25</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>temp2 <span class="ot">&lt;-</span> <span class="fu">matrix</span>(temp1<span class="sc">$</span>surv, <span class="at">nrow=</span><span class="dv">6</span>)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>temp3 <span class="ot">&lt;-</span> <span class="fu">rbind</span>(<span class="st">"Obs vs 5FU"</span><span class="ot">=</span> temp2[,<span class="dv">1</span>]<span class="sc">-</span> temp2[,<span class="dv">2</span>],</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>            <span class="st">"Lev vs 5FU"</span><span class="ot">=</span> temp2[,<span class="dv">3</span>]<span class="sc">-</span> temp2[,<span class="dv">2</span>]) </span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"absolute difference</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; absolute difference</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(temp3<span class="sc">*</span><span class="dv">100</span>, <span class="dv">1</span>)</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;            [,1] [,2] [,3] [,4] [,5] [,6]</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Obs vs 5FU  0.8  1.6  0.1 -2.1 -1.8 -0.8</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Lev vs 5FU 11.3 13.9 14.5 14.7 15.0 14.4</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"logit difference</span><span class="sc">\n</span><span class="st">"</span>) </span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; logit difference</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>logit <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="fu">log</span>(<span class="dv">1</span><span class="sc">/</span>(<span class="dv">1</span><span class="sc">-</span>x))</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>temp4 <span class="ot">&lt;-</span> <span class="fu">rbind</span>(<span class="st">"Obs vs 5FU"</span><span class="ot">=</span> <span class="fu">logit</span>(temp2[,<span class="dv">1</span>])<span class="sc">-</span> <span class="fu">logit</span>(temp2[,<span class="dv">2</span>]),</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>            <span class="st">"Lev vs 5FU"</span><span class="ot">=</span> <span class="fu">logit</span>(temp2[,<span class="dv">3</span>])<span class="sc">-</span> <span class="fu">logit</span>(temp2[,<span class="dv">2</span>]))</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(temp4<span class="sc">*</span><span class="dv">100</span>, <span class="dv">1</span>)</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;            [,1] [,2] [,3] [,4] [,5] [,6]</span></span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Obs vs 5FU  2.7  3.6  0.2 -3.9 -3.1 -1.4</span></span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Lev vs 5FU 49.9 36.8 33.6 32.7 31.3 28.5</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Based on this, do a first model with linear effects. The next question is which time points to use, and how many. First, look at 6 models with a single time point, each containing treatment, extent and nodes, but summarize only the levamisole coefficient.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>onetime <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="dv">6</span>, <span class="dv">4</span>,</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>                  <span class="at">dimnames=</span><span class="fu">list</span>(<span class="fu">paste</span>(<span class="st">"Time"</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>), </span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>                                <span class="fu">c</span>(<span class="st">"coefficient"</span>, <span class="st">"se.glm"</span>, <span class="st">"coef"</span>, <span class="st">"se.survey"</span>)))</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>cpdesign <span class="ot">&lt;-</span> <span class="fu">svydesign</span>(<span class="at">id=</span> <span class="sc">~</span>id, <span class="at">weights=</span><span class="cn">NULL</span>, <span class="at">data=</span>cpdat,</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>                      <span class="at">variables =</span> <span class="sc">~</span> . <span class="sc">-</span> id)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>) {</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    fit1 <span class="ot">&lt;-</span> <span class="fu">lm</span>(pdeath <span class="sc">~</span> rx <span class="sc">+</span> extent <span class="sc">+</span> node4, <span class="at">data=</span>cpdat, <span class="at">subset=</span> (year<span class="sc">==</span>i))</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    onetime[i,<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>] <span class="ot">&lt;-</span> <span class="fu">summary</span>(fit1)<span class="sc">$</span>coefficients[<span class="dv">3</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>]</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    sfit1 <span class="ot">&lt;-</span> <span class="fu">svyglm</span>(pdeath <span class="sc">~</span> rx<span class="sc">+</span> extent <span class="sc">+</span> node4, <span class="at">design=</span>cpdesign, </span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>                    <span class="at">subset=</span> (year<span class="sc">==</span>i))</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>    onetime[i,<span class="dv">3</span><span class="sc">:</span><span class="dv">4</span>] <span class="ot">&lt;-</span> <span class="fu">summary</span>(sfit1)<span class="sc">$</span>coefficients[<span class="dv">3</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>]</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>onetime <span class="ot">&lt;-</span> <span class="fu">cbind</span>(onetime, <span class="st">"coef/se"</span><span class="ot">=</span> onetime[,<span class="dv">3</span>]<span class="sc">/</span>onetime[,<span class="dv">4</span>])</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(onetime[, <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">5</span>)],<span class="dv">3</span>)</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        coefficient se.glm se.survey coef/se</span></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Time 1      -0.099  0.033     0.032  -3.091</span></span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Time 2      -0.114  0.037     0.037  -3.100</span></span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Time 3      -0.135  0.038     0.038  -3.585</span></span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Time 4      -0.160  0.038     0.038  -4.225</span></span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Time 5      -0.159  0.038     0.038  -4.196</span></span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Time 6      -0.144  0.038     0.038  -3.763</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>If you are only going to use one time point, then a robust variance is apparently not necessary, at least in this case, and the best time point in terms of <span class="math inline">\(z\)</span> statistic or power, by an admittedly small margin, is 4–5 years when the results have largely matured. This happens to be the largest estimated gain for levamisole, reducing the absolute failure rate by 16%. A robust variance is called for not only when there are multiple observations per subject, but in the case of heteroscedasticity, however. We should therefore not be too quick to declare it unnecessary based on a single example.</p>
+<p>Now consider combination of times 2,4,6, or all 6 time points.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>pfun <span class="ot">&lt;-</span> <span class="cf">function</span>(x,<span class="at">d=</span><span class="dv">2</span>) <span class="fu">printCoefmat</span>(x, <span class="at">digits=</span>d, <span class="at">P.values=</span><span class="cn">TRUE</span>,</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">has.Pvalue=</span><span class="cn">TRUE</span>, <span class="at">signif.stars=</span> <span class="cn">FALSE</span>)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>sfit1 <span class="ot">&lt;-</span> <span class="fu">svyglm</span>(pdeath <span class="sc">~</span> rx <span class="sc">+</span> extent <span class="sc">+</span> node4,</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>                        <span class="at">design=</span> cpdesign, <span class="at">subset=</span>(year<span class="sc">==</span><span class="dv">4</span>))</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="fu">pfun</span>(<span class="fu">summary</span>(sfit1)<span class="sc">$</span>coefficients[<span class="dv">2</span><span class="sc">:</span><span class="dv">5</span>,])</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;           Estimate Std. Error t value Pr(&gt;|t|)</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; rxLev       -0.026      0.038    -0.7      0.5</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; rxLev+5FU   -0.160      0.038    -4.2    3e-05</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; extent       0.150      0.031     4.9    1e-06</span></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; node4        0.274      0.034     8.0    4e-15</span></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>sfit3 <span class="ot">&lt;-</span> <span class="fu">svyglm</span>(pdeath <span class="sc">~</span> rx <span class="sc">+</span> extent <span class="sc">+</span> node4 <span class="sc">+</span> <span class="fu">factor</span>(year), </span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>                        <span class="at">design=</span> cpdesign, </span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>                <span class="at">subset=</span> (year<span class="sc">==</span><span class="dv">2</span> <span class="sc">|</span> year<span class="sc">==</span><span class="dv">4</span> <span class="sc">|</span> year<span class="sc">==</span><span class="dv">6</span>))</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a><span class="fu">pfun</span>(<span class="fu">summary</span>(sfit3)<span class="sc">$</span>coefficients[<span class="dv">2</span><span class="sc">:</span><span class="dv">5</span>,],)</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;           Estimate Std. Error t value Pr(&gt;|t|)</span></span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; rxLev      -0.0091     0.0353    -0.3      0.8</span></span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; rxLev+5FU  -0.1395     0.0351    -4.0    8e-05</span></span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; extent      0.1501     0.0283     5.3    1e-07</span></span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; node4       0.2774     0.0322     8.6   &lt;2e-16</span></span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>sfit6 <span class="ot">&lt;-</span> <span class="fu">svyglm</span>(pdeath <span class="sc">~</span> rx <span class="sc">+</span> extent <span class="sc">+</span> node4 <span class="sc">+</span> <span class="fu">factor</span>(year),</span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>                <span class="at">design=</span> cpdesign)</span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a><span class="fu">pfun</span>(<span class="fu">summary</span>(sfit6)<span class="sc">$</span>coefficients)</span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;               Estimate Std. Error t value Pr(&gt;|t|)</span></span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)    -0.1787     0.0800    -2.2     0.03</span></span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; rxLev          -0.0081     0.0335    -0.2     0.81</span></span>
+<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; rxLev+5FU      -0.1353     0.0330    -4.1    4e-05</span></span>
+<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; extent          0.1382     0.0271     5.1    4e-07</span></span>
+<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; node4           0.2711     0.0308     8.8   &lt;2e-16</span></span>
+<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; factor(year)2   0.1530     0.0118    12.9   &lt;2e-16</span></span>
+<span id="cb16-34"><a href="#cb16-34" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; factor(year)3   0.2112     0.0134    15.8   &lt;2e-16</span></span>
+<span id="cb16-35"><a href="#cb16-35" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; factor(year)4   0.2404     0.0140    17.1   &lt;2e-16</span></span>
+<span id="cb16-36"><a href="#cb16-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; factor(year)5   0.2675     0.0145    18.4   &lt;2e-16</span></span>
+<span id="cb16-37"><a href="#cb16-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; factor(year)6   0.2911     0.0151    19.3   &lt;2e-16</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>For the coefficient of interest, the treatment effect, the use of 1, 3, or 6 time points hardly changes the t-statistic or the estimate. All the remaining coefficients are also fairly stable. The year coefficients show the baseline rate creeping up.</p>
+<section id="logit-link" class="level4" data-number="3.2.0.1">
+<h4 data-number="3.2.0.1" class="anchored" data-anchor-id="logit-link"><span class="header-section-number">3.2.0.1</span> Logit link</h4>
+<p>Although a linear link was indicated for the colon data, the logit link is more common. Directly using it will fail, however consider the following</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tryCatch</span>( <span class="fu">svyglm</span>(pdeath <span class="sc">~</span>rx <span class="sc">+</span> extent <span class="sc">+</span> node4 <span class="sc">+</span> <span class="fu">factor</span>(year), <span class="at">design=</span>cpdesign,</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>              <span class="at">family=</span> <span class="fu">gaussian</span>(<span class="at">link =</span> <span class="st">"logit"</span>)),</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">error=</span> <span class="cf">function</span>(e) e)</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;simpleError in family$linkfun(mustart): Value -0.000235585 out of range (0, 1)&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The same out of range error occurs with the simple <code>glm</code> function. The issue is that the glm function uses the logit link of <span class="math inline">\(f(x) = \log(x/(1-x))\)</span> to create starting estimates for the iteration, and values outside of <span class="math inline">\((0, 1)\)</span> lead to a missing value. (That is actually the only place the link is used.) Two choices are to give explicit initial values, or to define our own link. Here is an example of the first, i.e., give starting estimates which are “good enough”.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>sfit6b <span class="ot">&lt;-</span> <span class="fu">svyglm</span>(pdeath <span class="sc">~</span>rx <span class="sc">+</span> extent <span class="sc">+</span> node4 <span class="sc">+</span> <span class="fu">factor</span>(year), <span class="at">design=</span>cpdesign,</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>              <span class="at">family=</span> <span class="fu">gaussian</span>(<span class="at">link =</span> <span class="st">"logit"</span>), </span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>              <span class="at">etastart=</span> <span class="fu">pmax</span>(.<span class="dv">05</span>, <span class="fu">pmin</span>(.<span class="dv">95</span>, cpdat<span class="sc">$</span>pdeath)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>A problem with this is that if we add a subset argument, then the starting estimate also needs to be explicitly trimmed down. An alternate is to define our own link function, based on the code found in the documentation for <code>family</code>, or on examination of the glm <code>make.link</code> function. We call the resulting function <code>blogit</code> for “bounded logit”, and have included it in the survival package.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>blogit <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">edge=</span>.<span class="dv">05</span>) {</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    new <span class="ot">&lt;-</span> <span class="fu">make.link</span>(<span class="st">"logit"</span>)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    new<span class="sc">$</span>linkfun <span class="ot">&lt;-</span> <span class="cf">function</span>(mu) { </span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>        x <span class="ot">&lt;-</span> (<span class="fu">pmax</span>(edge, <span class="fu">pmin</span>(mu, <span class="dv">1</span><span class="sc">-</span>edge)))</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>        <span class="fu">log</span>(x<span class="sc">/</span>(<span class="dv">1</span><span class="sc">-</span>x))</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>    new</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>sfit3c <span class="ot">&lt;-</span> <span class="fu">svyglm</span>(pdeath <span class="sc">~</span>rx <span class="sc">+</span> extent <span class="sc">+</span> node4 <span class="sc">+</span> <span class="fu">factor</span>(year), <span class="at">design=</span>cpdesign,</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>              <span class="at">family=</span> <span class="fu">gaussian</span>(<span class="at">link =</span> <span class="fu">blogit</span>()), <span class="at">subset=</span>(year <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">6</span>)))</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a><span class="fu">pfun</span>(<span class="fu">summary</span>(sfit3c)<span class="sc">$</span>coefficients)</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;               Estimate Std. Error t value Pr(&gt;|t|)</span></span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)     -2.759      0.477    -5.8    1e-08</span></span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; rxLev           -0.066      0.159    -0.4      0.7</span></span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; rxLev+5FU       -0.645      0.163    -4.0    8e-05</span></span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; extent           0.765      0.158     4.8    2e-06</span></span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; node4            1.228      0.153     8.0    4e-15</span></span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; factor(year)4    0.399      0.043     9.2   &lt;2e-16</span></span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; factor(year)6    0.633      0.054    11.8   &lt;2e-16</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Though common, results from the logit link are harder to interpret than the linear link. The latter estimates that Levamisole+5FU will reduce the probability of death by 14%, on average, for time points from years 2–6, while the logit link predicts an exp(-.645)= .52 odds of relapse.</p>
+</section>
+<section id="complementary-log-log-link" class="level4" data-number="3.2.0.2">
+<h4 data-number="3.2.0.2" class="anchored" data-anchor-id="complementary-log-log-link"><span class="header-section-number">3.2.0.2</span> Complementary log-log link</h4>
+<p>If a Cox model holds, then <span class="math display">\[\begin{align*}
+  1 - F(t) &amp;= S(t) = e^{- \Lambda_0(t) e^{(X\beta)}} \\
+  \log(-\log(S(t)) &amp;= \log[\Lambda_0(t)]  + X \beta
+\end{align*}\]</span></p>
+<p>which motivates using the following link function.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>bcloglog <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">edge=</span>.<span class="dv">05</span>) {</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    new <span class="ot">&lt;-</span> <span class="fu">make.link</span>(<span class="st">"cloglog"</span>)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    new<span class="sc">$</span>linkfun <span class="ot">&lt;-</span> <span class="cf">function</span>(mu) {</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>        x <span class="ot">&lt;-</span> (<span class="fu">pmax</span>(edge, <span class="fu">pmin</span>(mu, <span class="dv">1</span><span class="sc">-</span>edge)))</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>        <span class="fu">log</span>(<span class="sc">-</span><span class="fu">log</span>(x))</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>    new<span class="sc">$</span>name <span class="ot">&lt;-</span> <span class="st">"bcloglog"</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>    new</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>sfit3d <span class="ot">&lt;-</span> <span class="fu">svyglm</span>(pseudo <span class="sc">~</span>rx <span class="sc">+</span> extent <span class="sc">+</span> node4 <span class="sc">+</span> <span class="fu">factor</span>(year), <span class="at">design=</span>cpdesign,</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>              <span class="at">family=</span> <span class="fu">gaussian</span>(<span class="at">link =</span> <span class="fu">bcloglog</span>()), <span class="at">subset=</span>(year <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">6</span>)))</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a><span class="fu">pfun</span>(<span class="fu">summary</span>(sfit3d)<span class="sc">$</span>coefficients)</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;               Estimate Std. Error t value Pr(&gt;|t|)</span></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)    1.6e+00    3.3e-01     5.1    5e-07</span></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; rxLev          5.9e-02    1.2e-01     0.5      0.6</span></span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; rxLev+5FU      4.1e-01    1.2e-01     3.4    8e-04</span></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; extent        -5.7e-01    1.1e-01    -5.2    3e-07</span></span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; node4         -5.9e+14    1.4e+14    -4.1    4e-05</span></span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; factor(year)4 -2.7e-01    3.3e-02    -8.2    7e-16</span></span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; factor(year)6 -4.3e-01    4.1e-02   -10.4   &lt;2e-16</span></span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>cfit <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> rx <span class="sc">+</span> extent <span class="sc">+</span> node4, cdata)                 </span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">summary</span>(cfit)<span class="sc">$</span>coefficients, <span class="dv">3</span>)</span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             coef exp(coef) se(coef)      z Pr(&gt;|z|)</span></span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; rxLev     -0.049     0.953    0.104 -0.468     0.64</span></span>
+<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; rxLev+5FU -0.482     0.618    0.113 -4.262     0.00</span></span>
+<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; extent     0.527     1.694    0.108  4.864     0.00</span></span>
+<span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; node4      0.819     2.268    0.093  8.849     0.00</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>And indeed, the coefficients of the glm model closely mimic a coxph fit.</p>
+</section>
+</section>
+</section>
+<section id="competing-risks" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Competing risks</h1>
+<p>In a competing risks situation, let <span class="math inline">\(p_j(t)\)</span> be the probability of being in state <span class="math inline">\(j\)</span> at time <span class="math inline">\(t\)</span>. The Fine-Gray model assumes that <span class="math inline">\(1- p_1(t) = exp(-exp(\beta_0(t) + \beta X))\)</span> or equivalently that <span class="math inline">\(\log(-\log(1- p_1(t))) = \beta_0(t) + \beta X\)</span>, where outcome <span class="math inline">\(j=1\)</span> is assumed to be the event of interest. We can use pseudo-values from an Aalen-Johansen estimate of <span class="math inline">\(p_j\)</span>, along with a complimentary log-log link GLM, to estimate the same quantity. We will use the <code>mgus2</code> data set, which has been used to illustrate competing risks elsewhere in the survival vignettes.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>mdata <span class="ot">&lt;-</span> mgus2</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>mdata<span class="sc">$</span>etime <span class="ot">&lt;-</span> <span class="fu">with</span>(mdata, <span class="fu">ifelse</span>(pstat<span class="sc">==</span><span class="dv">1</span>, ptime, futime))</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>mdata<span class="sc">$</span>event <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">with</span>(mdata, <span class="fu">ifelse</span>(pstat<span class="sc">==</span><span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span><span class="sc">*</span>death)), <span class="dv">0</span><span class="sc">:</span><span class="dv">2</span>,</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>                      <span class="fu">c</span>(<span class="st">"censor"</span>, <span class="st">"PCM"</span>, <span class="st">"Death"</span>))</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>mdata<span class="sc">$</span>age10 <span class="ot">&lt;-</span> mdata<span class="sc">$</span>age<span class="sc">/</span><span class="dv">10</span>  <span class="co"># age in decades</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>msurv <span class="ot">&lt;-</span> <span class="fu">survfit</span>(<span class="fu">Surv</span>(etime, event) <span class="sc">~</span><span class="dv">1</span>, <span class="at">data=</span>mdata, <span class="at">id=</span>id)</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(msurv, <span class="at">lty=</span><span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">xscale=</span><span class="dv">12</span>, </span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab=</span><span class="st">"Years from Diagnosis"</span>, <span class="at">ylab=</span><span class="st">"Probability in state"</span>)</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a><span class="fu">text</span>(<span class="fu">c</span>(<span class="dv">345</span>, <span class="dv">340</span>), <span class="fu">c</span>(.<span class="dv">18</span>, .<span class="dv">73</span>), <span class="fu">c</span>(<span class="st">"PCM"</span>, <span class="st">"Death w/o PCM"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="pseudo_files/figure-html/mgus2cr-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>At 30 years post diagnosis approximately 13% of the subjects have experienced a plasma cell malignancy (PCM), while 78% have died without PCM. Fit the model using either 30 time point for the pseudo-values (years 1–30), 10 (every 3 years) or 5 (every 6). The pseudo-value matrix has 3 columns corresponding to each of the 3 states, we focus on the PCM outcome (column).</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>mps <span class="ot">&lt;-</span> <span class="fu">pseudo</span>(msurv, <span class="at">times=</span><span class="dv">12</span><span class="sc">*</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>), <span class="at">type=</span><span class="st">"pstate"</span>, <span class="at">data.frame=</span><span class="cn">TRUE</span>)</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>mdata6 <span class="ot">&lt;-</span> <span class="fu">merge</span>(mdata, <span class="fu">subset</span>(mps, state<span class="sc">==</span> <span class="st">"PCM"</span>), <span class="at">by=</span><span class="st">"id"</span>)</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>mdata6<span class="sc">$</span>year <span class="ot">&lt;-</span> mdata6<span class="sc">$</span>time<span class="sc">/</span><span class="dv">12</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>mdesign <span class="ot">&lt;-</span> <span class="fu">svydesign</span>(<span class="at">data=</span>mdata6, <span class="at">id=</span><span class="sc">~</span>id, <span class="at">weights=</span><span class="cn">NULL</span>, <span class="at">variables=</span> <span class="sc">~</span>. <span class="sc">-</span>id)</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>mpfit1 <span class="ot">&lt;-</span> <span class="fu">svyglm</span>(pseudo <span class="sc">~</span> age10 <span class="sc">+</span> sex <span class="sc">+</span> mspike <span class="sc">+</span> <span class="fu">factor</span>(year), <span class="at">design =</span> mdesign,</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>                 <span class="at">family =</span> <span class="fu">gaussian</span>(<span class="at">link =</span><span class="fu">bcloglog</span>()))</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>mpfit2 <span class="ot">&lt;-</span> <span class="fu">svyglm</span>(pseudo <span class="sc">~</span> age10 <span class="sc">+</span> sex <span class="sc">+</span> mspike <span class="sc">+</span> <span class="fu">factor</span>(year), <span class="at">design =</span> mdesign,</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>                 <span class="at">subset =</span> (year <span class="sc">%in%</span> (<span class="dv">3</span><span class="sc">*</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>)),</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>                 <span class="at">family =</span> <span class="fu">gaussian</span>(<span class="at">link =</span><span class="fu">bcloglog</span>()))</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>mpfit3 <span class="ot">&lt;-</span> <span class="fu">svyglm</span>(pseudo <span class="sc">~</span> age10 <span class="sc">+</span> sex <span class="sc">+</span> mspike <span class="sc">+</span> <span class="fu">factor</span>(year), <span class="at">design =</span> mdesign,</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>                 <span class="at">subset =</span> (year <span class="sc">%in%</span> (<span class="dv">6</span><span class="sc">*</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>)),</span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>                 <span class="at">family =</span> <span class="fu">gaussian</span>(<span class="at">link =</span><span class="fu">bcloglog</span>()))</span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>fgdata <span class="ot">&lt;-</span> <span class="fu">finegray</span>(<span class="fu">Surv</span>(etime, event) <span class="sc">~</span> .,  mdata, <span class="at">etype=</span><span class="st">"PCM"</span>)</span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>fgfit <span class="ot">&lt;-</span>  <span class="fu">coxph</span>(<span class="fu">Surv</span>(fgstart, fgstop, fgstatus) <span class="sc">~</span> age10 <span class="sc">+</span> sex <span class="sc">+</span> mspike, </span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>                <span class="at">data=</span>fgdata, <span class="at">weights =</span> fgwt)</span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>temp <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="fu">summary</span>(fgfit)<span class="sc">$</span>coef[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">3</span>)],</span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>              <span class="fu">summary</span>(mpfit1)<span class="sc">$</span>coef[<span class="dv">2</span><span class="sc">:</span><span class="dv">4</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>],</span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>              <span class="fu">summary</span>(mpfit2)<span class="sc">$</span>coef[<span class="dv">2</span><span class="sc">:</span><span class="dv">4</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>],</span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>              <span class="fu">summary</span>(mpfit3)<span class="sc">$</span>coef[<span class="dv">2</span><span class="sc">:</span><span class="dv">4</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>])</span>
+<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(temp) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"FGcoef"</span>, <span class="st">"FGstd"</span>, <span class="st">"Coef30"</span>, <span class="st">"Std30"</span>, </span>
+<span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"Coef10"</span>, <span class="st">"Std10"</span>, <span class="st">"Coef5"</span>, <span class="st">"Std5"</span>)</span>
+<span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-26"><a href="#cb22-26" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(temp[,<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">3</span>,<span class="dv">5</span>,<span class="dv">7</span>, <span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">6</span>,<span class="dv">8</span>)], <span class="dv">3</span>)</span>
+<span id="cb22-27"><a href="#cb22-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        FGcoef Coef30 Coef10  Coef5 FGstd Std30 Std10  Std5</span></span>
+<span id="cb22-28"><a href="#cb22-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; age10  -0.169 -0.161 -0.169 -0.192 0.071 0.087 0.089 0.098</span></span>
+<span id="cb22-29"><a href="#cb22-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; sexM   -0.213 -0.208 -0.225 -0.271 0.187 0.232 0.240 0.262</span></span>
+<span id="cb22-30"><a href="#cb22-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; mspike  0.888  0.860  0.861  0.848 0.157 0.200 0.202 0.198</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We see that using pseudo-values with a complimentary log-log link returns coefficients that are very close to the formal Fine-Gray method, within 1/5 of a standard error or less, but with somewhat larger estimated standard errors. The intercept terms from the GLM model (not shown) estimate a cumulative baseline hazard. Other links are of course possible, and may be more appropriate in a given situation.</p>
+<p>One lack in the pseudo-value approach is that it does not extend to time-dependent covariates, unlike the Fine-Gray model. A second concern is that in a data set with left-truncation, it has been shown that the final regression coefficients will be biased whenever the truncation is covariate dependent (personal communication, PK Andersen).</p>
+</section>
+<section id="references" class="level1" data-number="5">
+
+
+
+
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">5 References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-Andersen10" class="csl-entry" role="listitem">
+Andersen, P. K., and M. P. Perme. 2010. <span>“Pseudo-Observations in Survival Analysis.”</span> <em>Stat Methods Medical Research</em> 19: 71–99.
+</div>
+<div id="ref-Efron82" class="csl-entry" role="listitem">
+Efron, B. 1982. <em>The Jackknife, the Bootstrap and Other Resampling Plans</em>. Philadelphia: SIAM.
+</div>
+<div id="ref-Parner21" class="csl-entry" role="listitem">
+Parner, E. T., P. K. Andersen, and M. Overgaard. 2021. <span>“Pseudo-Observations for Competing Risks Data with Left Truncation.”</span> <em>In Submission</em>.
+</div>
+</div></section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

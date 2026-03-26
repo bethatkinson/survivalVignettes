@@ -1,0 +1,1596 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.25">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Terry Therneau and Elizabeth Atkinson">
+<meta name="dcterms.date" content="2026-03-26">
+
+<title>Shared coefficients and shared baseline – survivalVignettes</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-0b37c64f34216b628666a8dac638b53b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    </a>
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">survivalVignettes</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-vignettes" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Vignettes</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-vignettes">    
+        <li>
+    <a class="dropdown-item" href="../vignettes/external.html">
+ <span class="dropdown-text">External Validation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../vignettes/pseudo.html">
+ <span class="dropdown-text">Pseudo-values for survival data</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../vignettes/ridge.html">
+ <span class="dropdown-text">The ridge function, matrices, and prediction</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#background" id="toc-background" class="nav-link active" data-scroll-target="#background"><span class="header-section-number">1</span> Background</a></li>
+  <li><a href="#data" id="toc-data" class="nav-link" data-scroll-target="#data"><span class="header-section-number">2</span> Data</a></li>
+  <li><a href="#separate-hazards" id="toc-separate-hazards" class="nav-link" data-scroll-target="#separate-hazards"><span class="header-section-number">3</span> Separate hazards</a>
+  <ul class="collapse">
+  <li><a href="#separate-coefficients" id="toc-separate-coefficients" class="nav-link" data-scroll-target="#separate-coefficients"><span class="header-section-number">3.1</span> Separate coefficients</a></li>
+  <li><a href="#sec-sect2" id="toc-sec-sect2" class="nav-link" data-scroll-target="#sec-sect2"><span class="header-section-number">3.2</span> Shared coefficients</a></li>
+  <li><a href="#predicted-values" id="toc-predicted-values" class="nav-link" data-scroll-target="#predicted-values"><span class="header-section-number">3.3</span> Predicted values</a></li>
+  </ul></li>
+  <li><a href="#shared-proportional-hazards" id="toc-shared-proportional-hazards" class="nav-link" data-scroll-target="#shared-proportional-hazards"><span class="header-section-number">4</span> Shared proportional hazards</a>
+  <ul class="collapse">
+  <li><a href="#common-endpoint" id="toc-common-endpoint" class="nav-link" data-scroll-target="#common-endpoint"><span class="header-section-number">4.1</span> Common endpoint</a></li>
+  <li><a href="#risk-sets" id="toc-risk-sets" class="nav-link" data-scroll-target="#risk-sets"><span class="header-section-number">4.2</span> Risk sets</a></li>
+  <li><a href="#shared-hazards-common-starting-state" id="toc-shared-hazards-common-starting-state" class="nav-link" data-scroll-target="#shared-hazards-common-starting-state"><span class="header-section-number">4.3</span> Shared hazards, common starting state</a></li>
+  <li><a href="#shared-hazard-disjoint-pairs" id="toc-shared-hazard-disjoint-pairs" class="nav-link" data-scroll-target="#shared-hazard-disjoint-pairs"><span class="header-section-number">4.4</span> Shared hazard, disjoint pairs</a></li>
+  </ul></li>
+  <li><a href="#identical-hazards" id="toc-identical-hazards" class="nav-link" data-scroll-target="#identical-hazards"><span class="header-section-number">5</span> Identical hazards</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Shared coefficients and shared baseline</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Terry Therneau and Elizabeth Atkinson </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">March 26, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>This vignette is still an early draft.</p>
+<section id="background" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Background</h1>
+<p>A multi-state hazards (MSH) model will model the transitions between multiple states. An example is analysis of the NAFLD data, whose transition diagram is shown in <a href="#fig-nafld1" class="quarto-xref">Figure&nbsp;1</a>; living patients will have 0–3 of the following metabolic comorbidities: diabetes, hypertension, and hyperlipidemia. In this figure there are 10 transitions (arrows). For any given pair of transitions a:b and c:d there are 6 different choices to organize the coefficients and baseline hazards, shown in <a href="#tbl-ch8choice" class="quarto-xref">Table&nbsp;1</a>. This document explores both technical and statistical aspects of those choices.</p>
+<div class="cell">
+<div id="tbl-ch8choice" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-ch8choice-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Choices for any pair of transitions in a multistate model.
+</figcaption>
+<div aria-describedby="tbl-ch8choice-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div id="bnjurgbtrv" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#bnjurgbtrv table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#bnjurgbtrv thead, #bnjurgbtrv tbody, #bnjurgbtrv tfoot, #bnjurgbtrv tr, #bnjurgbtrv td, #bnjurgbtrv th {
+  border-style: none;
+}
+
+#bnjurgbtrv p {
+  margin: 0;
+  padding: 0;
+}
+
+#bnjurgbtrv .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#bnjurgbtrv .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#bnjurgbtrv .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#bnjurgbtrv .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#bnjurgbtrv .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#bnjurgbtrv .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#bnjurgbtrv .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#bnjurgbtrv .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#bnjurgbtrv .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#bnjurgbtrv .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#bnjurgbtrv .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#bnjurgbtrv .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#bnjurgbtrv .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#bnjurgbtrv .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#bnjurgbtrv .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#bnjurgbtrv .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#bnjurgbtrv .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#bnjurgbtrv .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#bnjurgbtrv .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#bnjurgbtrv .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#bnjurgbtrv .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#bnjurgbtrv .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#bnjurgbtrv .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#bnjurgbtrv .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#bnjurgbtrv .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#bnjurgbtrv .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#bnjurgbtrv .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#bnjurgbtrv .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#bnjurgbtrv .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#bnjurgbtrv .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#bnjurgbtrv .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#bnjurgbtrv .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#bnjurgbtrv .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#bnjurgbtrv .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#bnjurgbtrv .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#bnjurgbtrv .gt_left {
+  text-align: left;
+}
+
+#bnjurgbtrv .gt_center {
+  text-align: center;
+}
+
+#bnjurgbtrv .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#bnjurgbtrv .gt_font_normal {
+  font-weight: normal;
+}
+
+#bnjurgbtrv .gt_font_bold {
+  font-weight: bold;
+}
+
+#bnjurgbtrv .gt_font_italic {
+  font-style: italic;
+}
+
+#bnjurgbtrv .gt_super {
+  font-size: 65%;
+}
+
+#bnjurgbtrv .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#bnjurgbtrv .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#bnjurgbtrv .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#bnjurgbtrv .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#bnjurgbtrv .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#bnjurgbtrv .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#bnjurgbtrv .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#bnjurgbtrv .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#bnjurgbtrv div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+
+<table class="gt_table do-not-create-environment cell caption-top table table-sm table-striped small" data-quarto-bootstrap="false">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="gt_col_headings gt_spanner_row header">
+<th rowspan="2" id="coef" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col"></th>
+<th colspan="3" id="Baseline hazard" class="gt_center gt_columns_top_border gt_column_spanner_outer" data-quarto-table-cell-role="th" scope="colgroup"><div class="gt_column_spanner">
+Baseline hazard
+</div></th>
+</tr>
+<tr class="gt_col_headings even">
+<th id="Separate" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">Separate</th>
+<th id="Proportional" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">Proportional</th>
+<th id="Identical" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">Identical</th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+<tr class="odd">
+<td class="gt_row gt_left" headers="coef">Separate coefficients</td>
+<td class="gt_row gt_right" headers="Separate">1</td>
+<td class="gt_row gt_right" headers="Proportional">2</td>
+<td class="gt_row gt_right" headers="Identical">3</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="coef">Shared coefficients</td>
+<td class="gt_row gt_right" headers="Separate">4</td>
+<td class="gt_row gt_right" headers="Proportional">5</td>
+<td class="gt_row gt_right" headers="Identical">6</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</figure>
+</div>
+</div>
+</section>
+<section id="data" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Data</h1>
+<p>We will use two running examples in this document. The first is data on non-alcoholic liver disease (NAFLD) which is represented by the state space shown in <a href="#fig-nafld1" class="quarto-xref">Figure&nbsp;1</a>. Living subjects can have one or more of three metabolic comorbidities of diabetes, hypertension and hyperlipidemia. The study focuses on the impact of a NAFLD diagnosis on the rate at which subjects progress through the three states.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-nafld1" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-nafld1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="figures/fig-nafld1-1.png" class="img-fluid figure-img" width="624">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-nafld1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: State space for the NAFLD data. The dashed lines are transitions that would not be observed if monitoring were continuous, but are present in the observed data.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Below is the transition table for the data set.<br>
+A direct transition from 0 to 3 of the comorbidities can not occur, biologically; no one aquires both hypertension and diabetes on the exact same second of the exact same day. We observe 4 such transitions, however, because our observation of any subject is intermittent. These “jump” transitions, the dotted lines in <a href="#fig-nafld1" class="quarto-xref">Figure&nbsp;1</a>, are a motivation for shared coefficient models.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> check1 <span class="ot">&lt;-</span> <span class="fu">survcheck</span>(<span class="fu">Surv</span>(age1, age2, event) <span class="sc">~</span> nafld <span class="sc">+</span> male, <span class="at">data=</span>ndata, </span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>                    <span class="at">id=</span>id, <span class="at">istate=</span>cstate)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> </span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="er">&gt;</span> check1<span class="sc">$</span>transitions</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>       to
+from     1mc  2mc  3mc death (censored)
+  0mc   1829   70    4   263       5705
+  1mc      0 1843   28   243       4567
+  2mc      0    0 1048   417       3687
+  3mc      0    0    0   441       2220
+  death    0    0    0     0          0</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-pbc1" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-pbc1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="figures/fig-pbc1-1.png" class="img-fluid figure-img" width="624">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pbc1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: State space for the PBC example.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The primary biliary cholangitis state space is shown in <a href="#fig-pbc1" class="quarto-xref">Figure&nbsp;2</a>. The states in this example are created by categorization of the continuous bilirubin variable. Primary biliary cholangitis is an inflammatory disease, thought to be of auto-immune origin, characterized by a slow but inexhortable loss of the small bile ducts in the liver, as scar replaces functional tissue. Bilirubin and other markers of liver compromise rise slowly over time, then more quickly once the liver’s excess capacity has been exhausted. <a href="#fig-pbc1" class="quarto-xref">Figure&nbsp;2</a> shows a multi-state model that includes bilirubin progression. Many of the reverse transitions (dotted lines in the figure) will be subjects whose true bilirubin value is currently near one of the cut points. There are very few observed jumps from normal bilirubin to <span class="math inline">\(&gt;4\)</span> or vice-versa (3 and 1, respectively).</p>
+</section>
+<section id="separate-hazards" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Separate hazards</h1>
+<section id="separate-coefficients" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="separate-coefficients"><span class="header-section-number">3.1</span> Separate coefficients</h2>
+<p>Separate coefficients and separate hazards for each transition is the default for a multi-state hazards (MSH) model using . The code below uses the NAFLD data.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> nfit1 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(age1, age2, event) <span class="sc">~</span> nafld <span class="sc">+</span> male, <span class="at">data =</span> ndata,</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>                <span class="at">id =</span> id, <span class="at">istate =</span> cstate)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in agreg.fit(X, Y, istrat, offset, init, control, weights =
+weights, : Loglik converged before variable 8 ; beta may be infinite.</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fu">round</span>(<span class="fu">coef</span>(nfit1, <span class="at">matrix=</span><span class="cn">TRUE</span>), <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>       1:2  1:3  2:3   1:4  2:4  3:4  1:5  2:5  3:5  4:5
+nafld 0.93 0.31 0.53  1.51 0.08 0.48 0.63 0.53 0.55 0.06
+male  0.16 0.54 0.25 12.80 0.02 0.15 0.43 0.47 0.36 0.16
+attr(,"states")
+[1] "0mc"   "1mc"   "2mc"   "3mc"   "death"</code></pre>
+</div>
+</div>
+<p>The fit has given a warning about a potentially infinite coefficient. Indeed, a look at the coefficient matrix shows a value of 12.8 for male sex, for the 1:4 (0MC to 3MC) transition, exp(12.8) <span class="math inline">\(&gt; 362000\)</span> which is effectively infinite for a sample of 17 thousand subjects, and the log partial likelihood had not yet reached its maximum. Further checking shown below identifies that 0/4246 female and 4/3675 males who were “at risk” for a 0mc:3mc jump had such an event, the hazard ratio for male sex is <span class="math inline">\(.001/0 = \infty\)</span>. We will address this issue in <a href="#sec-sect2" class="quarto-xref">Section&nbsp;3.2</a>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> temp <span class="ot">&lt;-</span> <span class="fu">with</span>(<span class="fu">subset</span>(ndata, cstate<span class="sc">==</span><span class="st">"0mc"</span>), <span class="fu">table</span>(event, male))</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> temp <span class="ot">&lt;-</span> <span class="fu">rbind</span>(temp, <span class="at">Total=</span> <span class="fu">colSums</span>(temp))</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> temp</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>            0    1
+censored 3152 2603
+1mc       937  892
+2mc        30   40
+3mc         0    4
+death     127  136
+Total    4246 3675</code></pre>
+</div>
+</div>
+<p>The underlying <code>coxph</code> code fits all 10 of the transitions in model <code>nfit1</code> simultaneously by creating a stacked data set. Two internal matrices <code>cmap</code> and <code>smap</code> direct the setup of the computation.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> <span class="do">## internal mapping matrices</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="er">&gt;</span> nfit1<span class="sc">$</span>cmap</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      1:2 1:3 2:3 1:4 2:4 3:4 1:5 2:5 3:5 4:5
+nafld   1   3   5   7   9  11  13  15  17  19
+male    2   4   6   8  10  12  14  16  18  20</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> nfit1<span class="sc">$</span>smap</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>           1:2 1:3 2:3 1:4 2:4 3:4 1:5 2:5 3:5 4:5
+(Baseline)   1   2   3   4   5   6   7   8   9  10</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> </span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="er">&gt;</span> <span class="do">## number of data rows in each state</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="er">&gt;</span> <span class="fu">table</span>(ndata<span class="sc">$</span>cstate)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+ 0mc  1mc  2mc  3mc 
+7921 6764 5249 2749 </code></pre>
+</div>
+</div>
+<p>The <code>cmap</code> and <code>smap</code> matrices are used by the internal <code>stacker</code> routine to create expanded data used for the partial likelihood solution. The result has an expanded <code>X</code>, <code>Y</code> and <code>transition</code> variables which contain first all the data rows for transition 1 (0mc:1mc, 7921 rows), then for transition 2 (0mc:2mc, 7921 rows, etc. up to transition 10 (3mc:death, 2749 rows). The transition variable has repeated values of 1, 1, … , 1, 2, … , 2, 3, … 10. The first block of the expanded <code>Y</code> has a simple 0/1 status with 1 for a transition from 0mc to 1mc for the observations in that block. The expanded <code>X</code> matrix is block diagonal for this fit, as shown in <a href="#eq-blockdiag" class="quarto-xref">Equation&nbsp;1</a>. Here <span class="math inline">\(X^{(1)}\)</span> is all the rows of the data that are at risk for the first transtion (7921 rows, 2 columns), and etc. to <span class="math inline">\(X^{(10)}\)</span> for the tenth transition. The final matrix has 20 columns, one for each coefficient, and 65223 rows. The 20 coefficients for the 10 transitions are now fit all at once using a single call to the internal Cox model fitting routine <code>agreg.fit</code>, with the transition as a strata.</p>
+<p><span id="eq-blockdiag"><span class="math display">\[
+\begin{equation}
+\left( \begin{array}{cccc} X^{(1)} &amp;0 &amp; \ldots &amp; 0 \\
+   0 &amp; X^{(2)} &amp; \ldots &amp; 0 \\
+   0 &amp; \vdots &amp; \ddots &amp; \vdots \\
+   0 &amp;  0  &amp;     0     &amp; X^{(10)} \end{array} \right)
+\end{equation}
+\tag{1}\]</span></span></p>
+</section>
+<section id="sec-sect2" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="sec-sect2"><span class="header-section-number">3.2</span> Shared coefficients</h2>
+<p>You will have noticed that <code>nfit1</code> gave a warning message that coefficient 8 appears to be infinite, which is the estimated male effect for the 1:4 transition. There are only 4 0mc to 3mc transitions in the data, and all of them are males, so indeed the MLE solution is <span class="math inline">\(\hat \beta= \infty\)</span>; there simply are not enough events in this stratum to estimate 2 coefficients. The other two jumps of Omc:2mc and 1mc:3mc also have small counts.</p>
+<p>Biologically, we know that acquisition of 2 new comorbidities on the same exact day does not actually happen. An alternative model is to have coefficients for an increase from 0mc to “one or more” and from 1mc to “two or more”. This is shown below.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> nfit2 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">list</span>(<span class="fu">Surv</span>(age1, age2, event) <span class="sc">~</span> nafld <span class="sc">+</span> male,</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>                     <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span> <span class="sc">+</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span> <span class="sc">+</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span> <span class="sc">~</span> nafld <span class="sc">+</span> male <span class="sc">/</span> common,</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>                     <span class="dv">2</span><span class="sc">:</span><span class="dv">3</span> <span class="sc">+</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">4</span> <span class="sc">~</span> nafld <span class="sc">+</span> male<span class="sc">/</span>common),</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">data=</span>ndata, <span class="at">id=</span> id, <span class="at">istate=</span> cstate)</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> nfit2<span class="sc">$</span>cmap</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      1:2 1:3 2:3 1:4 2:4 3:4 1:5 2:5 3:5 4:5
+nafld   1   1   3   1   3   5   7   9  11  13
+male    2   2   4   2   4   6   8  10  12  14</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> </span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="er">&gt;</span> <span class="fu">round</span>(<span class="fu">coef</span>(nfit2, <span class="at">matrix=</span><span class="cn">TRUE</span>), <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>       1:2  1:3  2:3  1:4  2:4  3:4  1:5  2:5  3:5  4:5
+nafld 0.91 0.91 0.52 0.91 0.52 0.48 0.63 0.53 0.55 0.06
+male  0.18 0.18 0.25 0.18 0.25 0.15 0.43 0.47 0.36 0.16
+attr(,"states")
+[1] "0mc"   "1mc"   "2mc"   "3mc"   "death"</code></pre>
+</div>
+</div>
+<p>When the model formula is a list of formulas, the first formula is the default for all transtions and subsequent lines amend that formula for selected transtions. Variables can be add or removed in the same way as <code>update.formula</code>. The <code>common</code> modifier signals common coefficients for these variables and transitions.</p>
+<p>The final model has 14 coefficients instead of 20, and the overall risk of exp(.18) = 1.2 for males for the 0:mc to 1+ transition is much more sensible. The expanded X matrix in this model will have the same number of rows as before, but 14 rather than 20 columns. It is no longer block diagonal, column 1 for instance now has non-zero entries in 3 different transition blocks.</p>
+<p>The coefficient vector found in the fit object has 14 unique entries and the estimated variance/covariance matrix is 14 by 14, these are what are returned by the <code>coef</code> and <code>vcov</code> functions. These choices make the MSH model results better fit in to the standard Cox model framework. The <code>matrix=TRUE</code> modifier for <code>coef</code> gives a more user friendly printout.</p>
+</section>
+<section id="predicted-values" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="predicted-values"><span class="header-section-number">3.3</span> Predicted values</h2>
+<p>For predicted values from a MSH model, we will normally want to show separate predictions for each transition. For linear predictors, this is facilitated by the <code>matrix</code> argument to <code>coef.coxphms</code> and <code>vcov.coxphms</code>, the MSH methods for the coef and vcov methods. For example</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> eta2 <span class="ot">&lt;-</span> <span class="fu">model.matrix</span>(nfit2) <span class="sc">%*%</span> <span class="fu">coef</span>(nfit2, <span class="at">matrix=</span><span class="cn">TRUE</span>)</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fu">dim</span>(eta2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 22683    10</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fu">nrow</span>(ndata)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 22683</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> </span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="er">&gt;</span> v2 <span class="ot">&lt;-</span> <span class="fu">vcov</span>(nfit2, <span class="at">matrix=</span><span class="cn">TRUE</span>)</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fu">dim</span>(v2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 14 14</code></pre>
+</div>
+</div>
+<p>The <code>model.matrix</code> function for the fit returns the standard X matrix, which is the correct object for this task, not the expanded one which was needed (temporarily) for computing the fit. Then <code>eta2</code> is a matrix with one row for each observation in the data set and one column for each transition. This matrix contains more values than we need, formally. Observation 1 is a row with current state of <code>cstate = 0mc</code>, for instance, so one could argue that the 2mc:death entry of row 1 is not ``relevant’’ to that row of the data.</p>
+<p>Predicted probability in state curves, however, are always for a hypothetical subject, in which case we do want all the predicted hazards, since all the hazards are needed to compute absolute risks. Remember that a predicted curve is for a particular subject (covariate values) at a particular time (age) in a particular starting state. We find it helpful to use the mental picture of “prediction for the patient currently sitting across from me in the examination room”, i.e., absolute prediction is always specific. For an ordinary alive/dead KM where everyone starts at time 0 we don’t have to think about starting state and starting time, but for multistate they are necessary.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> <span class="co"># predicted curves for a 50 year old female with and without NAFLD, who</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="er">&gt;</span> <span class="co">#  starts with none of the comorbidities.  Solid= NAFLD.</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="er">&gt;</span> dummy <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">nafld=</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">1</span>, <span class="at">male=</span><span class="dv">0</span>)</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> pstate2 <span class="ot">&lt;-</span> <span class="fu">survfit</span>(nfit2, <span class="at">newdata=</span>dummy, <span class="at">start.time=</span><span class="dv">50</span>, <span class="at">p0=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>))</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fu">plot</span>(pstate2, <span class="at">col=</span><span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, <span class="at">each=</span><span class="dv">2</span>), <span class="at">lty=</span><span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">lwd=</span><span class="dv">2</span>,</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>      <span class="at">xlab=</span><span class="st">"Age"</span>, <span class="at">ylab=</span><span class="st">"Probability in state"</span>)</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fu">legend</span>(<span class="dv">70</span>, <span class="dv">1</span>, <span class="fu">c</span>(<span class="st">"0mc"</span>, <span class="st">"1mc"</span>, <span class="st">"2mc"</span>, <span class="st">"3mc"</span>, <span class="st">"death"</span>), <span class="at">col=</span><span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, <span class="at">lty=</span><span class="dv">1</span>, <span class="at">lwd=</span><span class="dv">2</span>,</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">bty=</span><span class="st">'n'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/predict1b-1.png" class="img-fluid figure-img" width="624"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>(Yet to do: show examples with predict())</p>
+</section>
+</section>
+<section id="shared-proportional-hazards" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Shared proportional hazards</h1>
+<p>An alternative to separate hazards is shared proportional hazards. We will separate this into three cases: “common endpoint” will be pairs of transitions such as A:C and B:C that lead to a common state, “disjoint” a pair like A:C and B:D, and “common origin” A:B and A:C.</p>
+<section id="common-endpoint" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="common-endpoint"><span class="header-section-number">4.1</span> Common endpoint</h2>
+<p>This has been by far the most prevalent example in our work. As an example, we might assume that the 4 transitions from comorbidity to death, in the NAFLD data, have the same shape but a different scale. That is</p>
+<p><span class="math display">\[
+\begin{align}
+  \lambda_{1d}(t,x) &amp;= \lambda_{0d}(t) \exp(\gamma_1)\exp(X\beta_{.8})
+      \label{nshare1}\\
+  \lambda_{2d}(t,x) &amp;= \lambda_{0d}(t) \exp(\gamma_2)\exp(X\beta_{.9})
+       \label{nshare2} \\
+  \lambda_{3d}(t,x) &amp;= \lambda_{0d}(t) \exp(\gamma_3)\exp(X\beta_{.10})
+     \label{nshar3}\\
+\end{align}
+\]</span></p>
+<p>where <span class="math inline">\(\lambda_{kd}\)</span> is the hazard for <span class="math inline">\(k\)</span> comorbidities to death, and we have selected the appropriate column of the coefficient matrix <span class="math inline">\(\beta\)</span>. (For both <code>nfit1</code> and <code>nfit2</code> the matrix form has has 10 columns, 1 per transition, with the last 4 being the transitions to death.)</p>
+<p>Here is sample code to fit this model, retaining the shared coefficients for mc:mc transition used in <code>nfit2</code>. Behind the scenes, the code bundles the <span class="math inline">\(\gamma\)</span> and <span class="math inline">\(\beta\)</span> coefficients together, in order to jointly estimate both of them using the <code>agreg.fit</code> routine. We take advantage of the use of “1” as the representation of an intercept in the formula modeling language of R, along with the fact that the basline hazard can be thought of as the “intercept” term of a MSH model, to create a compact notation. Our call has only one more line than <code>nfit2</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> nfit3 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">list</span>(<span class="fu">Surv</span>(age1, age2, event) <span class="sc">~</span> nafld <span class="sc">+</span> male,</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>                     <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span> <span class="sc">+</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span> <span class="sc">+</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span> <span class="sc">~</span> nafld <span class="sc">+</span> male <span class="sc">/</span> common,</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>                     <span class="dv">2</span><span class="sc">:</span><span class="dv">3</span> <span class="sc">+</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">4</span> <span class="sc">~</span> nafld <span class="sc">+</span> male<span class="sc">/</span>common,</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>                     <span class="dv">0</span><span class="sc">:</span><span class="dv">5</span>  <span class="sc">~</span> cstate <span class="sc">+</span> <span class="dv">1</span> <span class="sc">/</span> common), </span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>                <span class="at">data=</span>ndata, <span class="at">id=</span> id, <span class="at">istate=</span> cstate)</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fu">print</span>(nfit3, <span class="at">digits=</span><span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Call:
+coxph(formula = list(Surv(age1, age2, event) ~ nafld + male, 
+    1:2 + 1:3 + 1:4 ~ nafld + male/common, 2:3 + 2:4 ~ nafld + 
+        male/common, 0:5 ~ cstate + 1/common), data = ndata, 
+    id = id, istate = cstate)
+
+             
+1:2, 1:3, 1:4  coef exp(coef) se(coef) robust se    z      p
+        nafld 0.915     2.496    0.063     0.067 13.6 &lt;2e-16
+        male  0.179     1.196    0.046     0.048  3.7  2e-04
+
+        
+2:3, 2:4  coef exp(coef) se(coef) robust se   z      p
+   nafld 0.521     1.683    0.052     0.056 9.3 &lt;2e-16
+   male  0.246     1.278    0.047     0.050 4.9  9e-07
+
+       
+3:4      coef exp(coef) se(coef) robust se   z     p
+  nafld 0.485     1.624    0.065     0.068 7.1 9e-13
+  male  0.149     1.161    0.063     0.065 2.3  0.02
+
+           
+1:5          coef exp(coef) se(coef) robust se    z     p
+  nafld      0.53      1.70     0.22      0.22  2.4  0.01
+  male       0.41      1.51     0.12      0.12  3.4 6e-04
+  cstate1mc -0.30      0.74     0.13      0.13 -2.4  0.02
+  cstate2mc -0.18      0.84     0.12      0.12 -1.5  0.13
+  cstate3mc  0.62      1.86     0.12      0.12  5.1 4e-07
+
+           
+2:5          coef exp(coef) se(coef) robust se    z     p
+  nafld      0.51      1.66     0.15      0.15  3.4 6e-04
+  male       0.47      1.59     0.13      0.13  3.7 2e-04
+  cstate1mc -0.30      0.74     0.13      0.13 -2.4  0.02
+  cstate2mc -0.18      0.84     0.12      0.12 -1.5  0.13
+  cstate3mc  0.62      1.86     0.12      0.12  5.1 4e-07
+
+           
+3:5           coef exp(coef) se(coef) robust se    z     p
+  nafld      0.571     1.771    0.104     0.107  5.3 9e-08
+  male       0.364     1.438    0.098     0.099  3.7 2e-04
+  cstate1mc -0.300     0.741    0.133     0.127 -2.4  0.02
+  cstate2mc -0.175     0.839    0.121     0.117 -1.5  0.13
+  cstate3mc  0.618     1.856    0.123     0.122  5.1 4e-07
+
+           
+4:5           coef exp(coef) se(coef) robust se    z     p
+  nafld      0.128     1.136    0.098     0.101  1.3  0.21
+  male       0.160     1.173    0.096     0.099  1.6  0.11
+  cstate1mc -0.300     0.741    0.133     0.127 -2.4  0.02
+  cstate2mc -0.175     0.839    0.121     0.117 -1.5  0.13
+  cstate3mc  0.618     1.856    0.123     0.122  5.1 4e-07
+
+ States:  1= 0mc, 2= 1mc, 3= 2mc, 4= 3mc, 5= death 
+
+Likelihood ratio test=566  on 17 df, p=&lt;2e-16
+n= 22683, unique id= 17549, number of events= 6186 </code></pre>
+</div>
+</div>
+<p>Since the current state of each observation is a factor variable <code>cstate</code>, the default coding for factors in R does exactly what we wished. We see that after adjustment for sex and NAFLD status, those with 3 comorbidities have a higher death rate than 0mc, which is not a surprise, but also that 1mc appears to be lower than 0mc. More on that will be discussed further below.</p>
+<p>One aspect of the printout which is potentially misleading is that all 3 cstate coefficients appear for all 4 transitions. However, for the 1:5 transition (0mc:death) the three 0/1 dummy variables <code>cstate1mc</code>, <code>cstate2mc</code> and <code>cstate3mc</code> will all be 0. The coefficients that appear in the 1:5 printout above will never be used. For the 2:5 transition only <code>cstate1mc</code> is non-zero so the <code>cstate2mc</code> and <code>cstate3mc</code> coefficients are redundant, with similar comments for the 3:5 and 4:5 transtions. We can fit an equivalent model with somewhat simpler printout by creating a single 0/1 dummy variable which is 0 only for the 0mc state.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> ndata<span class="sc">$</span>notzero <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">*</span>(ndata<span class="sc">$</span>cstate <span class="sc">!=</span> <span class="st">"0mc"</span>)</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> nfit3b <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">list</span>(<span class="fu">Surv</span>(age1, age2, event) <span class="sc">~</span> nafld <span class="sc">+</span> male,</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>                     <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span> <span class="sc">+</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span> <span class="sc">+</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span> <span class="sc">~</span> nafld <span class="sc">+</span> male <span class="sc">/</span> common,</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>                     <span class="dv">2</span><span class="sc">:</span><span class="dv">3</span> <span class="sc">+</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">4</span> <span class="sc">~</span> nafld <span class="sc">+</span> male<span class="sc">/</span>common,</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>                     <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>)<span class="sc">:</span><span class="dv">5</span> <span class="sc">~</span> notzero,</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>                     <span class="dv">0</span><span class="sc">:</span><span class="dv">5</span>  <span class="sc">~</span> <span class="dv">1</span> <span class="sc">/</span> common), </span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>                <span class="at">data=</span>ndata, <span class="at">id=</span> id, <span class="at">istate=</span> cstate)</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fu">round</span>(<span class="fu">coef</span>(nfit3b, <span class="at">matrix=</span><span class="cn">TRUE</span>), <span class="at">digits=</span><span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         1:2  1:3  2:3  1:4  2:4  3:4  1:5   2:5   3:5  4:5
+nafld   0.91 0.91 0.52 0.91 0.52 0.48 0.53  0.51  0.57 0.13
+male    0.18 0.18 0.25 0.18 0.25 0.15 0.41  0.47  0.36 0.16
+notzero 0.00 0.00 0.00 0.00 0.00 0.00 0.00 -0.30 -0.18 0.62
+attr(,"states")
+[1] "0mc"   "1mc"   "2mc"   "3mc"   "death"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> </span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="er">&gt;</span> <span class="fu">all.equal</span>(nfit3<span class="sc">$</span>loglik, nfit3b<span class="sc">$</span>loglik)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+</div>
+<p>Another approach which provides an even clearer printout is to use the <code>shared</code> option.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> nfit3c <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">list</span>(<span class="fu">Surv</span>(age1, age2, event) <span class="sc">~</span> nafld <span class="sc">+</span> male,</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>                     <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span> <span class="sc">+</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span> <span class="sc">+</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span> <span class="sc">~</span> nafld <span class="sc">+</span> male <span class="sc">/</span> common,</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>                     <span class="dv">2</span><span class="sc">:</span><span class="dv">3</span> <span class="sc">+</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">4</span> <span class="sc">~</span> nafld <span class="sc">+</span> male<span class="sc">/</span>common,</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>                     <span class="dv">0</span><span class="sc">:</span><span class="dv">5</span> <span class="sc">~</span> nafld <span class="sc">+</span> male<span class="sc">/</span> shared),</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>                <span class="at">data=</span>ndata, <span class="at">id=</span> id, <span class="at">istate=</span> cstate)</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> </span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a><span class="er">&gt;</span> <span class="fu">round</span>(<span class="fu">coef</span>(nfit3c, <span class="at">matrix=</span><span class="cn">TRUE</span>), <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         1:2  1:3  2:3  1:4  2:4  3:4  1:5   2:5   3:5  4:5
+nafld   0.91 0.91 0.52 0.91 0.52 0.48 0.53  0.51  0.57 0.13
+male    0.18 0.18 0.25 0.18 0.25 0.15 0.41  0.47  0.36 0.16
+ph(1:5) 0.00 0.00 0.00 0.00 0.00 0.00 0.00 -0.30 -0.18 0.62
+attr(,"states")
+[1] "0mc"   "1mc"   "2mc"   "3mc"   "death"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fu">all.equal</span>(nfit3c<span class="sc">$</span>loglik, nfit3<span class="sc">$</span>loglik)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+</div>
+<p>We stated earlier that the baseline hazard plays the role of an intercept, and it does so in another way that is less often noticed. In a linear model, the intercept term makes a fit invariant to simple changes in the covariates, e.g., replace some covariate <span class="math inline">\(x\)</span> in model with <span class="math inline">\(z= x+2\)</span>, and the predicted values <span class="math inline">\(\hat y\)</span> from the fit will remain unchanged, as do all of the non-intercept coefficients and their estimated standard errors. A much more common case is replacement of a 0/1 covariate with 1/0, e.g., one fit coded 1=male and another 1=female. Compare the coefficients of the modified model below. Nothing changes <em>except</em> the ph(1:5) coefficients, and they do they shift by a constant. This means that we must be cautious about interpreting the absolute values of these coefficients, and perhaps even more so any p-values, just as would be the case for intercepts in a linear model.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> ndata<span class="sc">$</span>male23 <span class="ot">&lt;-</span> ndata<span class="sc">$</span>male <span class="sc">+</span> <span class="dv">2</span>  <span class="co"># code male as 2/3</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> nfit3d <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">list</span>(<span class="fu">Surv</span>(age1, age2, event) <span class="sc">~</span> nafld <span class="sc">+</span> male23,</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>                     <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span> <span class="sc">+</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span> <span class="sc">+</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span> <span class="sc">~</span> nafld <span class="sc">+</span> male23 <span class="sc">/</span> common,</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>                     <span class="dv">2</span><span class="sc">:</span><span class="dv">3</span> <span class="sc">+</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">4</span> <span class="sc">~</span> nafld <span class="sc">+</span> male23<span class="sc">/</span>common,</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>                     <span class="dv">0</span><span class="sc">:</span><span class="dv">5</span> <span class="sc">~</span> nafld <span class="sc">+</span> male23<span class="sc">/</span> shared),</span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>                <span class="at">data=</span>ndata, <span class="at">id=</span> id, <span class="at">istate=</span> cstate)</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> </span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a><span class="er">&gt;</span> <span class="fu">round</span>(<span class="fu">coef</span>(nfit3c, <span class="at">matrix=</span><span class="cn">TRUE</span>), <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         1:2  1:3  2:3  1:4  2:4  3:4  1:5   2:5   3:5  4:5
+nafld   0.91 0.91 0.52 0.91 0.52 0.48 0.53  0.51  0.57 0.13
+male    0.18 0.18 0.25 0.18 0.25 0.15 0.41  0.47  0.36 0.16
+ph(1:5) 0.00 0.00 0.00 0.00 0.00 0.00 0.00 -0.30 -0.18 0.62
+attr(,"states")
+[1] "0mc"   "1mc"   "2mc"   "3mc"   "death"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> </span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="er">&gt;</span> <span class="fu">round</span>(<span class="fu">coef</span>(nfit3d, <span class="at">matrix=</span><span class="cn">TRUE</span>), <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         1:2  1:3  2:3  1:4  2:4  3:4  1:5   2:5   3:5  4:5
+nafld   0.91 0.91 0.52 0.91 0.52 0.48 0.53  0.51  0.57 0.13
+male23  0.18 0.18 0.25 0.18 0.25 0.15 0.41  0.47  0.36 0.16
+ph(1:5) 0.00 0.00 0.00 0.00 0.00 0.00 0.00 -0.41 -0.08 1.12
+attr(,"states")
+[1] "0mc"   "1mc"   "2mc"   "3mc"   "death"</code></pre>
+</div>
+</div>
+<p>However, just as in a linear model, this shift does not affect absolute predictions. We point out the following about the predicted survival curves:</p>
+<ol type="1">
+<li>A predicted curve needs to have a starting time, a starting state, and the covariate values of the hypothetical subject.</li>
+<li>Covariates associated with the <span class="math inline">\(\gamma\)</span> coefficients are not a part of newdata. This is because those coefficients belong to the <em>state</em>, not to the covariates of the hypothetical subject.</li>
+</ol>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> dummy<span class="sc">$</span>male23 <span class="ot">&lt;-</span> dummy<span class="sc">$</span>male <span class="sc">+</span> <span class="dv">2</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> pstate3c <span class="ot">&lt;-</span> <span class="fu">survfit</span>(nfit3c, <span class="at">newdata=</span>dummy, <span class="at">start.time=</span><span class="dv">50</span>, <span class="at">p0=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>))</span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> pstate3d <span class="ot">&lt;-</span> <span class="fu">survfit</span>(nfit3d, <span class="at">newdata=</span>dummy, <span class="at">start.time=</span><span class="dv">50</span>, <span class="at">p0=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>))</span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fu">all.equal</span>(pstate3c<span class="sc">$</span>pstate, pstate3d<span class="sc">$</span>pstate)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+</div>
+<p>The survfit routine recognizes <span class="math inline">\(\gamma\)</span> coefficients in the model by their special variable name <code>ph(1:5)</code>. (I have little doubt that someone, somewhere will eventually create a variable name enough like this to fool my code, and then post it as a bug.) For probability in state curves based on model <code>nfit3b</code> a bit more is needed: the variable <code>notzero</code> looks, to the survfit code, no different than any other; the routine needs the user’s help to identify that this variable is associated with <span class="math inline">\(\gamma\)</span> rather than <span class="math inline">\(\beta\)</span> terms. At this time, the method is to add <code>notzero</code> to the dummy data set with a value of NA. From a user interface perspective simply leaving <code>notzero</code> out of the dummy data set would be cleaner, but the <code>model.matrix</code> routine from base R, which I depend on, is unhappy if a variable found in the model formula is missing from newdata. I don’t yet have a way to work around that.</p>
+<p>To do: example using nfit3b, once I have the NA code debugged. To do: add the PBC example.</p>
+</section>
+<section id="risk-sets" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="risk-sets"><span class="header-section-number">4.2</span> Risk sets</h2>
+<p>One aspect of this that we have not mentioned is that with a set of transitions A:D + B:D + C:D to a common final state, the risk sets also make sense. Since no subject can be two places at once (in two states at the same time), the risk set for the shared hazard at time <span class="math inline">\(t\)</span> = (in state A at <span class="math inline">\(t\)</span>) + (in state B at <span class="math inline">\(t\)</span>) + (in state C at <span class="math inline">\(t\)</span>) will have no duplicate subjects. The Cox partial likelihood term for an event at <span class="math inline">\(t\)</span> will thus have a proper denominator, i.e., a weighted sum over all those at risk, where <span class="math inline">\(\exp(X\hat \beta)\)</span> are the risk weights. This identity of risk sets is what makes it particularly easy to jointly estimate <span class="math inline">\(\gamma\)</span> and <span class="math inline">\(\beta\)</span>.</p>
+</section>
+<section id="shared-hazards-common-starting-state" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="shared-hazards-common-starting-state"><span class="header-section-number">4.3</span> Shared hazards, common starting state</h2>
+<p>This is the case where a pair of transitions A:B and A:C are considered to have a common hazard shape. At this point:</p>
+<ul>
+<li>We have not encountered any examples where such an assumption makes biological sense. Without a concrete example, it has not been possible to reason out what the software <em>should</em> do in this case.</li>
+<li>The current code will create risk sets with multiple copies of the same subject. We are not at all sure that this makes sense, in fact we rather doubt it. (Exception, no duplicates are created if A:B and A:C have common coefficients for all variables.)</li>
+</ul>
+<p>If any reader has such a use case we would be delighted to hear of it.</p>
+</section>
+<section id="shared-hazard-disjoint-pairs" class="level2" data-number="4.4">
+<h2 data-number="4.4" class="anchored" data-anchor-id="shared-hazard-disjoint-pairs"><span class="header-section-number">4.4</span> Shared hazard, disjoint pairs</h2>
+<p>The second subcase is a shared baseline hazard for a transition pair like A:B and C:D. In general, it may be hard to think of situations where we would be willing to assume that these two transitions, to two disparate endpoints B and D, would have hazards of the same shape. We have encountered one example, however, which has motivated the details in our code. It can be seen as an extension of the PBC example.</p>
+<p>To do: This is not yet reliably working in our code.</p>
+</section>
+</section>
+<section id="identical-hazards" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Identical hazards</h1>
+<p>Identical hazards are a problem child. The issue is that such models will be at the mercy of how covariates are coded. As a simple case, consider the NAFLD data, and assume that the transitions to death have an identical hazard rather than a proportional one. It turns out that the impact of changing the coding of male sex from 0/1 to 2/3 is profound, with a different log-likelihood and multiple coefficient changes.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> nfit4a <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">list</span>(<span class="fu">Surv</span>(age1, age2, event) <span class="sc">~</span> nafld <span class="sc">+</span> male, </span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>                      <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span> <span class="sc">+</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span> <span class="sc">+</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span> <span class="sc">~</span> nafld <span class="sc">+</span> male<span class="sc">/</span>common, </span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>                      <span class="dv">2</span><span class="sc">:</span><span class="dv">3</span> <span class="sc">+</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">4</span> <span class="sc">~</span> nafld <span class="sc">+</span> male<span class="sc">/</span>common, </span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>                      <span class="dv">0</span><span class="sc">:</span><span class="dv">5</span> <span class="sc">~</span> <span class="dv">1</span><span class="sc">/</span>common),</span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>                 <span class="at">data =</span> ndata, <span class="at">id =</span> id, <span class="at">istate =</span> cstate)</span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> nfit4b <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">list</span>(<span class="fu">Surv</span>(age1, age2, event) <span class="sc">~</span> nafld <span class="sc">+</span> male23, </span>
+<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>                      <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span> <span class="sc">+</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span> <span class="sc">+</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span> <span class="sc">~</span> nafld <span class="sc">+</span> male23<span class="sc">/</span>common, </span>
+<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a>                      <span class="dv">2</span><span class="sc">:</span><span class="dv">3</span> <span class="sc">+</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">4</span> <span class="sc">~</span> nafld <span class="sc">+</span> male23<span class="sc">/</span>common, </span>
+<span id="cb42-9"><a href="#cb42-9" aria-hidden="true" tabindex="-1"></a>                      <span class="dv">0</span><span class="sc">:</span><span class="dv">5</span> <span class="sc">~</span> <span class="dv">1</span><span class="sc">/</span>common),</span>
+<span id="cb42-10"><a href="#cb42-10" aria-hidden="true" tabindex="-1"></a>                 <span class="at">data =</span> ndata, <span class="at">id =</span> id, <span class="at">istate =</span> cstate)</span>
+<span id="cb42-11"><a href="#cb42-11" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> </span>
+<span id="cb42-12"><a href="#cb42-12" aria-hidden="true" tabindex="-1"></a><span class="er">&gt;</span> temp <span class="ot">&lt;-</span> <span class="fu">rbind</span>(<span class="at">male01=</span> nfit4a<span class="sc">$</span>log, <span class="at">male23=</span> nfit4b<span class="sc">$</span>log)</span>
+<span id="cb42-13"><a href="#cb42-13" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fu">colnames</span>(temp) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Initial loglik"</span>, <span class="st">"Final loglik"</span>)</span>
+<span id="cb42-14"><a href="#cb42-14" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> temp</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>       Initial loglik Final loglik
+male01      -40534.77    -40284.86
+male23      -40534.77    -40260.73</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> </span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="er">&gt;</span> <span class="fu">plot</span>(<span class="fu">coef</span>(nfit4a), <span class="fu">coef</span>(nfit4b), <span class="at">xlab=</span><span class="st">"Coefficients, model with male as 0/1"</span>,</span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>      <span class="at">ylab=</span> <span class="st">"Coefficients, male as 2/3"</span>)</span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fu">abline</span>(<span class="dv">0</span>,<span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/nfitid-1.png" class="img-fluid figure-img" width="624"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Many discussions mention a “common hazard function” as a modeling idea, but few have followed through on the consequences of assuming that <span class="math inline">\(\gamma =1\)</span> uniformly.<br>
+If we also force common coefficients for all the covariates then the problem goes away, but that becomes, in essence, a single transition model of “either outcome”.</p>
+<p>Speculation:</p>
+<ul>
+<li>The same sort of confusions occur in linear models with regression through the origin. I don’t know if that analogy is helpful, however.</li>
+<li>I think that part of the problem above is that the overall death rate for 3mc:death is substantially higher than 0mc:death, and so any other variable that is out of balance will get recruited as an alias for the missing <span class="math inline">\(\gamma\)</span> coefficient. NAFLD prevalence, for instance, is .89 for the 0mc stratum and .56 for the 3mc stratum.</li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

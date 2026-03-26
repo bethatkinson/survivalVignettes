@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.25">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Terry Therneau">
+<meta name="dcterms.date" content="2026-03-26">
+
+<title>SAS comparisons – survivalVignettes</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-0b37c64f34216b628666a8dac638b53b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    </a>
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">survivalVignettes</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-vignettes" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Vignettes</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-vignettes">    
+        <li>
+    <a class="dropdown-item" href="../vignettes/external.html">
+ <span class="dropdown-text">External Validation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../vignettes/pseudo.html">
+ <span class="dropdown-text">Pseudo-values for survival data</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../vignettes/ridge.html">
+ <span class="dropdown-text">The ridge function, matrices, and prediction</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#convergence" id="toc-convergence" class="nav-link active" data-scroll-target="#convergence"><span class="header-section-number">1</span> Convergence</a></li>
+  <li><a href="#efron-approximation" id="toc-efron-approximation" class="nav-link" data-scroll-target="#efron-approximation"><span class="header-section-number">2</span> Efron approximation</a></li>
+  <li><a href="#efficiency-of-the-cox-model" id="toc-efficiency-of-the-cox-model" class="nav-link" data-scroll-target="#efficiency-of-the-cox-model"><span class="header-section-number">3</span> Efficiency of the Cox model</a>
+  <ul class="collapse">
+  <li><a href="#counting-process-data" id="toc-counting-process-data" class="nav-link" data-scroll-target="#counting-process-data"><span class="header-section-number">3.1</span> Counting process data</a></li>
+  <li><a href="#data-expansion" id="toc-data-expansion" class="nav-link" data-scroll-target="#data-expansion"><span class="header-section-number">3.2</span> Data expansion</a></li>
+  <li><a href="#stratification" id="toc-stratification" class="nav-link" data-scroll-target="#stratification"><span class="header-section-number">3.3</span> Stratification</a></li>
+  <li><a href="#speeding-up-phreg" id="toc-speeding-up-phreg" class="nav-link" data-scroll-target="#speeding-up-phreg"><span class="header-section-number">3.4</span> Speeding up phreg</a></li>
+  <li><a href="#dataset-sizes" id="toc-dataset-sizes" class="nav-link" data-scroll-target="#dataset-sizes"><span class="header-section-number">3.5</span> dataset sizes</a></li>
+  <li><a href="#the-fast-option" id="toc-the-fast-option" class="nav-link" data-scroll-target="#the-fast-option"><span class="header-section-number">3.6</span> The FAST option</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">3.7</span> Summary</a></li>
+  </ul></li>
+  <li><a href="#type-3-tests" id="toc-type-3-tests" class="nav-link" data-scroll-target="#type-3-tests"><span class="header-section-number">4</span> Type 3 tests</a>
+  <ul class="collapse">
+  <li><a href="#linear-models" id="toc-linear-models" class="nav-link" data-scroll-target="#linear-models"><span class="header-section-number">4.1</span> Linear Models</a></li>
+  <li><a href="#type-3-and-phreg" id="toc-type-3-and-phreg" class="nav-link" data-scroll-target="#type-3-and-phreg"><span class="header-section-number">4.2</span> Type 3 and phreg</a></li>
+  </ul></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references"><span class="header-section-number">5</span> References</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">SAS comparisons</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Terry Therneau </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">March 26, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<blockquote class="blockquote">
+<blockquote class="blockquote">
+<p>I found a bug in your software; it gives a different answer than SAS. Message from a user.</p>
+</blockquote>
+</blockquote>
+<p>One of the perils of writing and maintaining a basic package like <code>survival</code> is the inevitable comparisons to SAS. This note talks about a few of these. It’s primary message is that for most issues here is a good reason for the differences: they are not an oversight.</p>
+<p>None of the material in this vignette is terribly important, and in fact for many of cases the change will be numerically small — of the <span class="math inline">\(n-1\)</span> vs <span class="math inline">\(n\)</span> variety — and can be ignored for practical purposes. I’m hoping that it diverts at least some of the comments like the above. (By the way, in that particular email the real problem was the the <em>datasets</em> used for the SAS and R calls were slightly different, a simple user error had occurred in setting up the comparison.)</p>
+<section id="convergence" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Convergence</h1>
+<p>It should go without saying that <code>coxph</code> and SAS <code>phreg</code> will not give <em>exactly</em> the same answers. They are both working with finite precision floating point arithmetic, a world in which <span class="math inline">\((1.1 + 1.3) - 1.4 \ne 1.1 + (1.3 - 1.4)\)</span>. See the R FAQ, item 7.31 for a longer discussion and explanation of this.</p>
+<p>In any case, it is a certainty that even if the two routines are evaluating the same formulas, and both are using Newton-Raphson iteration to arrive at a solution, there will be points at which certain arithmetic operations were done in a different order. Add onto this slightly different methods for matrix inversion, prescaling of the data or not, and different thresholds for our convergence criteria, then yes, the answers will certainly differ in the final digits. Neither is wrong in this case.</p>
+</section>
+<section id="efron-approximation" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Efron approximation</h1>
+<p>The mathematics for a Cox model are all worked out for continuous time values, but in real data there will be ties, i.e., two or more events on the same day. There are several approximations that are used to adapt the method for tied times: the Breslow and Efron approximations, Prentice’s marginal likelihood, or the exact partial likelihood option found in Cox’s original paper. SAS defaults to the Breslow approximation and R to the Efron approximation.</p>
+<p>There was a lot of interest and activity in this area in the early years after the introduction of the Cox model, but the consensus has now settled down to a few simple points.</p>
+<ul>
+<li>The Breslow approximation is both easy to program and computationally efficient. The Efron approximation is nearly as fast, and somewhat more accurate.</li>
+<li>The exact partial likelihood is computationally intensive: if there are <span class="math inline">\(d\)</span> events at one time point out of <span class="math inline">\(n\)</span> subjects at risk, the likelihood is a sum of all <span class="math inline">\(n \choose d\)</span> possible subsets. When <span class="math inline">\(d\)</span> is between 2 and 10 this is manageable, particularly if an efficient enumeration due to <span class="citation" data-cites="Gail81">Gail, Lubin, and Rubinstein (<a href="#ref-Gail81" role="doc-biblioref">1981</a>)</span> is used, but beyond that point the computation can quickly become untenable. Prentice’s marginal likelihood requires a numerical integration; it’s computation time is intermediate between the Efron and exact methods.</li>
+<li>At any time point where there are no ties, all four approximations produce identical increments to the partial likelihood.</li>
+<li>If the number of ties is small to moderate, as it is in most datasets, then the <em>numerical</em> difference between the methods will be negligible.</li>
+</ul>
+<p>It has now come to be appreciated that point 4 may be the most important one, and most people have simply (and sensibly) stopped worrying about which approximation to use. Consider for instance the example below using recurrence time for the colon cancer dataset, and then a second version of the data where time is rounded to the nearest month. In the original data most of the event times are unique; the largest count of ties is 5 events on the same day, which happened twice. The coefficients under the three approximations hardly differ for this dataset: standard errors of each coefficient are about 0.1 (not shown) while the differences in estimates do not appear until the third decimal point. That is, there is less than .01 standard error of difference, which is essentially identical from a statistical point of view.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>rdata <span class="ot">&lt;-</span> <span class="fu">subset</span>(colon, etype<span class="sc">==</span><span class="dv">1</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(<span class="fu">table</span>(colon<span class="sc">$</span>time[colon<span class="sc">$</span>status<span class="sc">==</span><span class="dv">1</span>]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+  1   2   3   4   5 
+533 133  29   6   2 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>lfit1 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> rx <span class="sc">+</span> adhere <span class="sc">+</span> node4, rdata, </span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">ties=</span><span class="st">'breslow'</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>lfit2 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> rx <span class="sc">+</span> adhere <span class="sc">+</span> node4, rdata, </span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>               <span class="at">ties=</span><span class="st">'efron'</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>lfit3 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> rx <span class="sc">+</span> adhere <span class="sc">+</span> node4, rdata, </span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>               <span class="at">ties=</span><span class="st">'exact'</span>)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="fu">rbind</span>(<span class="at">breslow=</span> <span class="fu">coef</span>(lfit1), <span class="at">efron=</span><span class="fu">coef</span>(lfit2), <span class="at">exact=</span><span class="fu">coef</span>(lfit3))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>              rxLev  rxLev+5FU    adhere     node4
+breslow -0.02191469 -0.5119040 0.2819693 0.8851118
+efron   -0.02189126 -0.5121441 0.2819438 0.8855844
+exact   -0.02193393 -0.5122693 0.2822260 0.8858689</code></pre>
+</div>
+</div>
+<p>Using the coarsened time scale there are only 67 unique event times for the 468 events which occur, leading to some time points with over 20 events. But even in then coefficients only disagree in the second digit.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>months <span class="ot">&lt;-</span> <span class="fu">floor</span>(rdata<span class="sc">$</span>time<span class="sc">/</span><span class="fl">30.5</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(<span class="fu">table</span>(months[rdata<span class="sc">$</span>status<span class="sc">==</span><span class="dv">1</span>]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+ 1  2  3  4  5  6  7  8  9 11 13 14 15 16 19 20 22 23 26 
+16  9  8  4  3  3  1  3  2  4  1  3  1  1  1  2  1  1  3 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>mfit1 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(months, status) <span class="sc">~</span> rx <span class="sc">+</span> adhere <span class="sc">+</span> node4, rdata, </span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">ties=</span><span class="st">'breslow'</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>mfit2 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(months, status) <span class="sc">~</span> rx <span class="sc">+</span> adhere <span class="sc">+</span> node4, rdata, </span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>               <span class="at">ties=</span><span class="st">'efron'</span>)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>mfit3 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(months, status) <span class="sc">~</span> rx <span class="sc">+</span> adhere <span class="sc">+</span> node4, rdata, </span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>               <span class="at">ties=</span><span class="st">'exact'</span>)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="fu">rbind</span>(<span class="at">breslow2=</span> <span class="fu">coef</span>(mfit1), <span class="at">efron2=</span><span class="fu">coef</span>(mfit2), <span class="at">exact2=</span><span class="fu">coef</span>(mfit3))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>               rxLev  rxLev+5FU    adhere     node4
+breslow2 -0.02220581 -0.5070205 0.2798748 0.8733094
+efron2   -0.02199445 -0.5121841 0.2829676 0.8844781
+exact2   -0.02283086 -0.5173065 0.2870346 0.8944991</code></pre>
+</div>
+</div>
+<p>Looking more carefully, the Efron approximation has been affected the least by the coarsening; it is also (less importantly) closer to the exact computation result. The survival package chose the Efron as the default from a basic “why not the best” logic. After all, if one had two approximations to the cosine function with similar compute cost, but one of them behaved better in certain edge cases, any sensible code for fundamental libraries would use the more stable one. However, in a statistical analysis context and given the usual size of standard errors, a Breslow default will be just as good. The Breslow approximation is the default in many statistical packages for a simple historical reason: since it is the easiest to program it was usually the first method to be implemented.</p>
+<p>Once having chosen the Efron default it is important to carry through, however. The approximation turns out to have implications for how residuals and baseline hazard functions are computed, which in turn affects robust variance estimates. Details of this can be found in the validation vignette. This is one area where the phreg procedure is not quite correct, so its results do not agree with the validation suite. For all the examples that we have investigated in detail, however, the practical implications of the inaccuracy have been small. The largest practical issue are users who don’t read the documentation, and then get worried when numbers don’t exactly agree, since one run used Efron and the other Breslow.</p>
+</section>
+<section id="efficiency-of-the-cox-model" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Efficiency of the Cox model</h1>
+<p>A question of the relative speeds of coxph and phreg is one that arises fairly often; a particular dataset caused us to look into this more formally.</p>
+<section id="counting-process-data" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="counting-process-data"><span class="header-section-number">3.1</span> Counting process data</h2>
+<p>The solution to the Cox estimating equations is found using Newton-Raphson iteration, which requires the computation of first and second derivatives with respect to to each coefficient. The basic quantities for these are a weighted mean and variance of <span class="math inline">\(X\)</span>, at each event time, taken over the set of subjects who are at risk at that event time, using <span class="math inline">\(\exp(X\hat\beta)\)</span> as the weights. Let <span class="math inline">\(p\)</span> be the number of covariates, <span class="math inline">\(d\)</span> the number of unique event times and <span class="math inline">\(n\)</span> the number of observations. An ideal Cox model program would have a computational burden of <span class="math inline">\([O(d) + O(dp) + O(dp^2)] k\)</span> for the partial likelihood, the coefficients, and the variance matrix, respectively, where <span class="math inline">\(k\)</span> is the number of iterations required; for almost all datasets <span class="math inline">\(k\)</span> is between 3 and 5.<br>
+This is simply the work of adding up the partial likelihood and its first and second derivatives. In a real program there will an additional <span class="math inline">\([O(n) + O(np) +O(np^2)] k\)</span> time for creating the increments which should be added to the sums, where <span class="math inline">\(n\)</span> is total number of observations in the dataset. For a Cox model the increment to the second derivative, at each death time, is a weighted variance of the covariates <span class="math inline">\(X\)</span>, over all those who were at risk for the event, while the increment to the first derivative involves the vector of weighted means. For the rest of this discussion assume that <span class="math inline">\(p\)</span> and <span class="math inline">\(k\)</span> are fixed, and we will refer the run time for a Cox model program as <span class="math inline">\(O(n) + O(d)\)</span>. Since <span class="math inline">\(n &gt;d\)</span>, often by a large margin, the first term normally dominates the second. More importantly, real programs and algorithms will not match this ideal, since there are various other tasks to be done.</p>
+<p>For ordinary <code>Surv(time, status)</code> survival data, SAS phreg, R coxph, and every other code that I am aware achieves the <span class="math inline">\(O(n)\)</span> ideal via a simple strategy: process the data from largest to smallest survival time. That way the sums needed for each of the risk sets occur naturally as we proceed; and one pass through the data will suffice to compute them using well known formulas for updating a mean and variance. Essentially no time is spent on the ``who is in each risk set’’ task. This makes the code quite efficient. If there are strata in the model, means and variances of <span class="math inline">\(X\)</span> are taken <em>within</em> strata; this adds no extra work since we need only zero the relevant running sums at the start of each stratum. The computation starts by sorting the data by reverse time within strata, but sorting is a basic operation that all packages do efficiently so we haven’t counted it in the total.</p>
+<p>When the data is in counting process form, i.e., <code>Surv(time1, time2, status)</code>, the computation is more challenging. The risk set for a subject who dies at some time <span class="math inline">\(t\)</span> is the set of all observations such that <code>time1</code> <span class="math inline">\(&lt; t \le\)</span> <code>time2</code>. A worst case algorithm is to compute the mean and variance de novo at each death time, iterating over all the observations to enumerate the at risk subset. This leads to a computation time of <span class="math inline">\(O(nd)\)</span>. We hope to do better than that. A slightly better approach is to keep a running list of which observations are in the risk set, leading to an <span class="math inline">\(O(rd)\)</span> algorithm where <span class="math inline">\(r\)</span> is the average number of subjects at risk. (Updating a list of indices is a well known problem in computer science, and like sorting it can be done very efficiently. See red/black trees for example.)</p>
+<p>As a way of investigating the performance we will use a simulation dataset. It is intended to mimic to some degree the Nurses Health Study, since analysis of that dataset raised a question about the relative speed of coxph and phreg. The code for the dataset is below; most readers can skip directly to the printout at the end.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate a study with long follow-up</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Base it roughly on the NHS, with follow-up every 2 years</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1960</span>)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">121700</span>    <span class="co"># number of nurses who enrolled</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="co">#n &lt;-  12170      # test run, with smaller data</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>temp <span class="ot">&lt;-</span> <span class="fu">floor</span>(<span class="fu">c</span>(<span class="dv">30</span><span class="sc">*</span><span class="fl">365.25</span>, <span class="dv">55</span><span class="sc">*</span><span class="fl">365.25</span>))     </span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>age <span class="ot">&lt;-</span> <span class="fu">sample</span>(temp[<span class="dv">1</span>]<span class="sc">:</span>temp[<span class="dv">2</span>], n, <span class="at">replace=</span><span class="cn">TRUE</span>) <span class="co"># age in days, at enrollment</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>iage <span class="ot">&lt;-</span> <span class="fu">floor</span>(age<span class="sc">/</span><span class="fl">365.25</span>)               <span class="co"># birthday age</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="co"># up to 16 bi-annual follow-ups for each subject + enrollment visit</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="co">#  covariates are rounded to fewer digits to make nicer printout</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="co">#  of dataset rows</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>times <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">sample</span>(<span class="dv">700</span><span class="sc">:</span><span class="dv">770</span>, n<span class="sc">*</span><span class="dv">16</span>, <span class="at">replace=</span><span class="cn">TRUE</span>), <span class="at">ncol=</span>n)</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>vage <span class="ot">&lt;-</span> <span class="fu">apply</span>(<span class="fu">rbind</span>(age, times), <span class="dv">2</span>, cumsum)</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>temp <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">id=</span><span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span>n, <span class="at">each=</span><span class="dv">17</span>),</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>                   <span class="at">vage =</span> <span class="fu">c</span>(vage),     <span class="co"># age at visit</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>                   <span class="at">x1 =</span> <span class="fu">round</span>(<span class="fu">runif</span>(n<span class="sc">*</span> <span class="dv">17</span>, <span class="dv">100</span>, <span class="dv">200</span>)),</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>                   <span class="at">x2 =</span> <span class="fu">round</span>(<span class="fu">rgamma</span>(n<span class="sc">*</span> <span class="dv">17</span>, <span class="dv">1</span>,<span class="dv">2</span>), <span class="dv">2</span>))</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Every subject has a flotilla of binary covariates,</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a><span class="co">#  which I will make constant per subject (it's simpler and won't change</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a><span class="co">#  the timing behavior) and somewhat correlated.</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a><span class="co"># There are nice packages for this, but I'm constrained by the fact that</span></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a><span class="co">#  survival is a recommended package</span></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>cbin <span class="ot">&lt;-</span> <span class="cf">function</span>(n, p, <span class="at">rho=</span>.<span class="dv">5</span>) {</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>    gauss <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(n<span class="sc">*</span>p), <span class="at">ncol=</span>p)</span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>    cmat <span class="ot">&lt;-</span> <span class="fu">diag</span>(p)</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>    cmat[<span class="fu">col</span>(cmat) <span class="sc">&lt;</span> <span class="fu">row</span>(cmat)<span class="sc">*</span>.<span class="dv">8</span>] <span class="ot">&lt;-</span> rho   <span class="co"># cholesky of my variance matrix</span></span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ifelse</span>(gauss <span class="sc">%*%</span> cmat <span class="sc">&gt;</span><span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>) </span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>xb <span class="ot">&lt;-</span> <span class="fu">cbin</span>(n, <span class="dv">40</span>)  <span class="co"># binary covariates</span></span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a><span class="co"># a random survival time for each subject.  Scaled Minnesota death rates </span></span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a><span class="co">#  give approx the same number of deaths as the NHS (31,000).</span></span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>truecoef <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="fu">seq</span>(<span class="sc">-</span><span class="dv">5</span>,<span class="dv">4</span>), <span class="dv">2</span>)<span class="sc">/</span><span class="dv">10</span>, <span class="fu">rep</span>(<span class="dv">0</span>,<span class="dv">20</span>)) <span class="co"># some are important, more not</span></span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>eta <span class="ot">&lt;-</span> xb <span class="sc">%*%</span> truecoef <span class="sc">+</span> <span class="fu">rnorm</span>(n, <span class="at">sd=</span>.<span class="dv">3</span>)  <span class="co"># we never know all the risks</span></span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a>sy <span class="ot">&lt;-</span> survexp.mn[<span class="dv">1</span><span class="sc">:</span><span class="dv">110</span>, <span class="st">'female'</span>, <span class="st">"1985"</span>]<span class="sc">*</span><span class="fl">365.25</span> <span class="co"># yearly hazard rate</span></span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>sy <span class="ot">&lt;-</span> sy <span class="sc">*</span> .<span class="dv">8</span> <span class="sc">/</span> <span class="fu">mean</span>(<span class="fu">exp</span>(eta))  <span class="co"># empirical adjustment</span></span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>dtime <span class="ot">&lt;-</span> <span class="fu">double</span>(n)</span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">30</span><span class="sc">:</span><span class="dv">55</span>) {   <span class="co"># some start at each age</span></span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a>    j <span class="ot">&lt;-</span> <span class="fu">which</span>(iage <span class="sc">==</span> i)</span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a>    chaz <span class="ot">&lt;-</span> <span class="fu">rexp</span>(<span class="fu">length</span>(j))  <span class="co"># chaz for each subject is exp(1)</span></span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a>    dtime[j] <span class="ot">&lt;-</span> <span class="fu">approx</span>(<span class="fu">cumsum</span>(sy[i<span class="sc">:</span><span class="dv">109</span>]), i<span class="sc">:</span><span class="dv">109</span>, chaz<span class="sc">/</span><span class="fu">exp</span>(eta[j]), <span class="at">rule=</span><span class="dv">2</span>)<span class="sc">$</span>y</span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a>truecoef <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>, truecoef)  <span class="co"># add the coefs for x1 and x2</span></span>
+<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a><span class="co"># change to days</span></span>
+<span id="cb9-49"><a href="#cb9-49" aria-hidden="true" tabindex="-1"></a>dtime <span class="ot">&lt;-</span> <span class="fu">pmax</span>(<span class="dv">30</span>, <span class="fu">ceiling</span>(dtime<span class="sc">*</span><span class="fl">365.25</span>))  <span class="co"># at least 1 month of survival</span></span>
+<span id="cb9-50"><a href="#cb9-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-51"><a href="#cb9-51" aria-hidden="true" tabindex="-1"></a>dummy <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">id=</span><span class="dv">1</span><span class="sc">:</span>n, <span class="at">dtime=</span>dtime, <span class="at">agem =</span> <span class="fu">floor</span>(age<span class="sc">*</span><span class="dv">12</span><span class="sc">/</span><span class="fl">365.25</span>))</span>
+<span id="cb9-52"><a href="#cb9-52" aria-hidden="true" tabindex="-1"></a>nhs <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(dummy, dummy, <span class="at">id=</span>id,  <span class="at">death=</span><span class="fu">event</span>(dtime),</span>
+<span id="cb9-53"><a href="#cb9-53" aria-hidden="true" tabindex="-1"></a>               <span class="at">options=</span> <span class="fu">list</span>(<span class="at">tstartname=</span><span class="st">"age1"</span>, <span class="at">tstopname=</span><span class="st">"age2"</span>))</span>
+<span id="cb9-54"><a href="#cb9-54" aria-hidden="true" tabindex="-1"></a>nhs <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(nhs, temp, <span class="at">id=</span>id, <span class="at">qnum=</span> <span class="fu">cumtdc</span>(vage), </span>
+<span id="cb9-55"><a href="#cb9-55" aria-hidden="true" tabindex="-1"></a>               <span class="at">x1=</span><span class="fu">tdc</span>(vage, x1), <span class="at">x2=</span><span class="fu">tdc</span>(vage, x2))</span>
+<span id="cb9-56"><a href="#cb9-56" aria-hidden="true" tabindex="-1"></a>latedeath <span class="ot">&lt;-</span> <span class="fu">with</span>(nhs, death<span class="sc">==</span><span class="dv">1</span> <span class="sc">&amp;</span> (age2<span class="sc">-</span>age1) <span class="sc">&gt;</span> <span class="dv">800</span>)</span>
+<span id="cb9-57"><a href="#cb9-57" aria-hidden="true" tabindex="-1"></a>nhs <span class="ot">&lt;-</span> <span class="fu">subset</span>(nhs, age1<span class="sc">&gt;</span><span class="dv">0</span> <span class="sc">&amp;</span> <span class="sc">!</span>latedeath)</span>
+<span id="cb9-58"><a href="#cb9-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-59"><a href="#cb9-59" aria-hidden="true" tabindex="-1"></a><span class="co"># Adding xb last makes it remain a matrix within the dataframe.</span></span>
+<span id="cb9-60"><a href="#cb9-60" aria-hidden="true" tabindex="-1"></a><span class="co"># This allows me to write</span></span>
+<span id="cb9-61"><a href="#cb9-61" aria-hidden="true" tabindex="-1"></a><span class="co">#   + xb in the model rather than +xb.1 + xb.2 + ... + xb.40</span></span>
+<span id="cb9-62"><a href="#cb9-62" aria-hidden="true" tabindex="-1"></a><span class="co">#  That is, same model, less typing.</span></span>
+<span id="cb9-63"><a href="#cb9-63" aria-hidden="true" tabindex="-1"></a>nhs<span class="sc">$</span>xb <span class="ot">&lt;-</span> xb[nhs<span class="sc">$</span>id,]</span>
+<span id="cb9-64"><a href="#cb9-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-65"><a href="#cb9-65" aria-hidden="true" tabindex="-1"></a><span class="co"># Look at statistics for the first 1/3, 2/3, and 3/3 of the subjects</span></span>
+<span id="cb9-66"><a href="#cb9-66" aria-hidden="true" tabindex="-1"></a>nsubject <span class="ot">&lt;-</span> <span class="fu">max</span>(nhs<span class="sc">$</span>id)</span>
+<span id="cb9-67"><a href="#cb9-67" aria-hidden="true" tabindex="-1"></a>stats <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="dv">5</span>, <span class="dv">3</span>)</span>
+<span id="cb9-68"><a href="#cb9-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-69"><a href="#cb9-69" aria-hidden="true" tabindex="-1"></a>fit1 <span class="ot">&lt;-</span> <span class="fu">vector</span>(<span class="st">"list"</span>, <span class="dv">3</span>)</span>
+<span id="cb9-70"><a href="#cb9-70" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>) {</span>
+<span id="cb9-71"><a href="#cb9-71" aria-hidden="true" tabindex="-1"></a>    temp <span class="ot">&lt;-</span> <span class="fu">subset</span>(nhs, id <span class="sc">&lt;=</span> (nsubject<span class="sc">*</span> i<span class="sc">/</span><span class="dv">3</span>))</span>
+<span id="cb9-72"><a href="#cb9-72" aria-hidden="true" tabindex="-1"></a>    stats[<span class="dv">1</span>,i] <span class="ot">&lt;-</span> <span class="fu">nrow</span>(temp)</span>
+<span id="cb9-73"><a href="#cb9-73" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-74"><a href="#cb9-74" aria-hidden="true" tabindex="-1"></a>    km <span class="ot">&lt;-</span> <span class="fu">survfit</span>(<span class="fu">Surv</span>(age1, age2, death) <span class="sc">~</span> <span class="dv">1</span>, temp)</span>
+<span id="cb9-75"><a href="#cb9-75" aria-hidden="true" tabindex="-1"></a>    stats[<span class="dv">2</span>,i] <span class="ot">&lt;-</span> <span class="fu">sum</span>(km<span class="sc">$</span>n.event)</span>
+<span id="cb9-76"><a href="#cb9-76" aria-hidden="true" tabindex="-1"></a>    stats[<span class="dv">3</span>,i] <span class="ot">&lt;-</span> <span class="fu">sum</span>(km<span class="sc">$</span>n.event<span class="sc">&gt;</span><span class="dv">0</span>)</span>
+<span id="cb9-77"><a href="#cb9-77" aria-hidden="true" tabindex="-1"></a>    stats[<span class="dv">4</span>,i] <span class="ot">&lt;-</span> <span class="fu">mean</span>(km<span class="sc">$</span>n.risk[km<span class="sc">$</span>n.event <span class="sc">&gt;</span><span class="dv">0</span>])</span>
+<span id="cb9-78"><a href="#cb9-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-79"><a href="#cb9-79" aria-hidden="true" tabindex="-1"></a>    time1 <span class="ot">&lt;-</span> <span class="fu">system.time</span>(fit1[[i]] <span class="ot">&lt;-</span><span class="fu">coxph</span>(<span class="fu">Surv</span>(age1, age2, death) <span class="sc">~</span> x1<span class="sc">+</span> x2 <span class="sc">+</span> xb,</span>
+<span id="cb9-80"><a href="#cb9-80" aria-hidden="true" tabindex="-1"></a>                         <span class="at">ties=</span><span class="st">"breslow"</span>, temp))</span>
+<span id="cb9-81"><a href="#cb9-81" aria-hidden="true" tabindex="-1"></a>    stats[<span class="dv">5</span>,i] <span class="ot">&lt;-</span> <span class="fu">sum</span>(time1[<span class="sc">-</span><span class="dv">3</span>],<span class="at">na.rm=</span>T)   <span class="co"># ignore elapsed time</span></span>
+<span id="cb9-82"><a href="#cb9-82" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-83"><a href="#cb9-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-84"><a href="#cb9-84" aria-hidden="true" tabindex="-1"></a><span class="fu">dimnames</span>(stats) <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="st">"number of observations"</span>, <span class="st">"number of events"</span>,</span>
+<span id="cb9-85"><a href="#cb9-85" aria-hidden="true" tabindex="-1"></a>                          <span class="st">"unique event times"</span>, <span class="st">"mean number at risk"</span>,</span>
+<span id="cb9-86"><a href="#cb9-86" aria-hidden="true" tabindex="-1"></a>                          <span class="st">"coxph cpu time"</span>),</span>
+<span id="cb9-87"><a href="#cb9-87" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">c</span>(<span class="st">"first 1/3"</span>, <span class="st">"2/3"</span>, <span class="st">"all"</span>))</span>
+<span id="cb9-88"><a href="#cb9-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-89"><a href="#cb9-89" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(stats)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                       first 1/3     2/3     all
+number of observations    610216 1221132 1831069
+number of events           10287   20432   30677
+unique event times          7255   10811   12733
+mean number at risk        22366   45328   68526
+coxph cpu time                30      62      96</code></pre>
+</div>
+</div>
+<p>The resulting dataset has 1.8 million records for 122 thousand subjects, reflecting 24 years of biennial follow up in the NHS.<br>
+Subjects have a new observation at each visit. In the actual data the covariates are time dependent (though most covariates don’t change, for most of the visits, for most subjects.) There are a lot of events, so coefficient estimates are quite precise as shown in the next graph, whether one uses all the patients or only 1/3 of them. Evaluation required 4 iterations of the <code>coxph</code> function.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="fu">coef</span>(fit1[[<span class="dv">1</span>]]), <span class="fu">coef</span>(fit1[[<span class="dv">2</span>]]), <span class="fu">coef</span>(fit1[[<span class="dv">3</span>]]))</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">matplot</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">42</span>, y, <span class="at">pch=</span><span class="st">"123"</span>, </span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>        <span class="at">xlab=</span><span class="st">"Covariate"</span>, <span class="at">ylab=</span><span class="st">"Coefficient"</span>)</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">42</span>, truecoef, <span class="at">lty=</span><span class="dv">2</span>) <span class="co"># add the true coefficient to the plot </span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The run time for <code>coxph</code> is nearly linear in <span class="math inline">\(n\)</span>, the number of observations. The approach used by coxph is to use running sums for (time1, time2) data, just as it does for simple survival, but in this case subjects will be added <em>and</em> subtracted from the totals.<br>
+The code marches backwards in time; an observation of (100, 200, 1) would be added to the totals when the code’s internal time value crosses 200, and then removed when the time crosses 100.<br>
+This requires some care in the internal routines to avoid catastrophic cancellation; e.g., in finite precision arithmetic (1e18 + 123) - (1e18) =0 so a large outlier that is added and then later removed can be deadly. (Mitigation for this is discussed in the noweb source code.) Said algorithm is expected to have <span class="math inline">\(O(2n)\)</span> run time since it touches each observation twice. Since <span class="math inline">\(d &lt; n/60\)</span> the <span class="math inline">\(O(d)\)</span> term hardly matters in this data.</p>
+<p>Running the same dataset using SAS phreg, the execution times were 85, 303, and 867 seconds for 1/9, 2/9, and 3/9 of the subjects, a quadratic growth rate. (We used ties=‘breslow’ in R to match the phreg default.) The phreg algorithm appears to use the simpler approach, which is to calculate the variance anew at each death time. In this case the dominating term in the compute time will be <span class="math inline">\(O(nd)\)</span>, and <span class="math inline">\(d\)</span> grows with <span class="math inline">\(n\)</span>; the full dataset fit is anticipated to take approximately 9*867 seconds or about 2.2 hours. (We ran out of patience and did not actually run this case.)</p>
+<p>I was asked if the iteration count would increase in the real dataset, due to high correlation of the covariates. Something that is often not appreciated is that one can replace the matrix of covariates <span class="math inline">\(X\)</span> with a transformed version <span class="math inline">\(AX\)</span>, and the iteration path for the Newton-Raphson iteration of a Cox model remains unchanged, giving the exact same series of likelihood values. Practically, this means that the expected iteration count does not depend on whether the covariates are correlated, unless <span class="math inline">\(X\)</span> has become so close to singularity that round off errors intervene.</p>
+</section>
+<section id="data-expansion" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="data-expansion"><span class="header-section-number">3.2</span> Data expansion</h2>
+<p>The NHS example started with a complaint that R was 8 fold <em>slower</em> than SAS on the actual NHS dataset, which puzzled me. In what situation could this happen?</p>
+<p>One way is to make the R code slower by artificially increasing <span class="math inline">\(n\)</span>. This can be done by <em>dicing</em> the <code>nhs</code> dataset, i.e., cut each observation into multiple small pieces<br>
+(in the same sense as dicing vegetables in the kitchen). The very first observation of the simulation dataset, for instance, is a censored time span from age 40 to age 42.06 = 14615 to 15361 days of age. What if we were to replace this observation by a whole set of rows with (age1, age2, death) values of (14610, 14611, 0), (14611, 14612, 0), (14612, 14613, 0), … (15360, 15361, 0)? Since NHS subjects are contacted every two years, this will increase the dataset size by approximately 730 fold, leading to a corresponding 730 fold increase in the compute time for <code>coxph</code>.</p>
+<p>This kind of expansion is sometimes done to create dummy covariates x*log(t) as a step towards testing proportional hazards. Said PH test does not require expansion for every single day, however, only for the set of unique death times, i.e., we can use the set of death times as the cut points when creating an expanded dataset. (Any intervals that don’t overlap a death time turn out to play no role in the Cox partial likelihood.) In the survival package an expanded dataset is never needed for this particular purpose, since the <code>cox.zph</code> function directly computes the relevant score test in <span class="math inline">\(O(n)\)</span> time, without data expansion.</p>
+<p>Another use of such datasets is when a user desires to control the risk sets exactly. An example is nested case-control sampling, where at each death time a sub-sample of the subjects who were at risk at that time is selected.<br>
+Say there were 52 events and 10 controls were selected for each. A special dataset is constructed which has 52*11 observations: the first event + the 10 controls for it, then the second event + its 10 controls, etc. The dataset will contain a <code>group</code> variable that divides these into 52 groups and a status variable of 1=event/ 0=control. A standard Cox model program can now be used to fit the data. A <code>time</code> value, which used by the <code>coxph</code> routine to determine risk set membership, is not needed since the risk sets are already set, and one can use the call</p>
+<pre><code>   fit &lt;- coxph(Surv(dummy, status) ~ strata(group) + x1 + x2 + ...)</code></pre>
+<p>where <code>dummy</code> is a dummy variable set to a constant value (often 0 or 1).</p>
+<p>Such an approach has attraction for phreg, since we are no longer using a (time1, time2) form. Perhaps trading a larger dataset size for <span class="math inline">\(O(n)\)</span> behavior will be a win? To test this out, and yet keep the running time of this vignette sane, we create an expanded dataset using 1/12 of the subjects, breaking each subject into monthly intervals.<br>
+This will create a dataset with approximately 24/12 = 2 times as many rows as the starting <code>nhs</code> dataset. Within the dataset, use age in months as the time scale.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>temp <span class="ot">&lt;-</span>  <span class="fu">subset</span>(nhs, id <span class="sc">&lt;=</span> <span class="dv">10140</span>)    <span class="co"># 1/12 of 121700 subjects</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>temp<span class="sc">$</span>dummy <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>temp<span class="sc">$</span>month1 <span class="ot">&lt;-</span> <span class="fu">floor</span>(temp<span class="sc">$</span>age1 <span class="sc">*</span> <span class="dv">12</span><span class="sc">/</span><span class="fl">365.25</span>)  </span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>temp<span class="sc">$</span>month2 <span class="ot">&lt;-</span> <span class="fu">floor</span>(temp<span class="sc">$</span>age2 <span class="sc">*</span> <span class="dv">12</span><span class="sc">/</span><span class="fl">365.25</span>)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>temp <span class="ot">&lt;-</span> <span class="fu">subset</span>(temp, month1 <span class="sc">&lt;</span> month2)   <span class="co"># avoid 0 length intervals</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>dtime <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(temp<span class="sc">$</span>month2[temp<span class="sc">$</span>death <span class="sc">==</span> <span class="dv">1</span>]))</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>nhs2 <span class="ot">&lt;-</span> <span class="fu">survSplit</span>(<span class="fu">Surv</span>(month1, month2, death) <span class="sc">~</span>., <span class="at">data=</span>temp, <span class="at">cut=</span>dtime)</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(nhs2)  <span class="co"># 3 million rows</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 3062743</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>stat2 <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="dv">6</span>, <span class="dv">3</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>maxid <span class="ot">&lt;-</span> <span class="fu">max</span>(nhs2<span class="sc">$</span>id)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>fit3a <span class="ot">&lt;-</span> fit3b <span class="ot">&lt;-</span> <span class="fu">vector</span>(<span class="st">"list"</span>, <span class="dv">3</span>)</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>) {</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    temp <span class="ot">&lt;-</span> <span class="fu">subset</span>(nhs2, id <span class="sc">&lt;=</span> (maxid<span class="sc">*</span>i<span class="sc">/</span><span class="dv">3</span>))  <span class="co"># 1/3, 2/3, 3/3</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    km <span class="ot">&lt;-</span> <span class="fu">survfit</span>(<span class="fu">Surv</span>(age1, age2, death) <span class="sc">~</span> <span class="dv">1</span>, <span class="at">data=</span>temp)</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    time1 <span class="ot">&lt;-</span> <span class="fu">system.time</span>(fit3a[[i]] <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(month1, month2, death) <span class="sc">~</span> x1 <span class="sc">+</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>                                                 x2 <span class="sc">+</span> xb, </span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>                               <span class="at">ties =</span> <span class="st">"breslow"</span>, <span class="at">data=</span>temp))</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    time2 <span class="ot">&lt;-</span> <span class="fu">system.time</span>(fit3b[[i]] <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(dummy, death) <span class="sc">~</span> x1 <span class="sc">+</span> x2 <span class="sc">+</span> xb <span class="sc">+</span> </span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>                                   <span class="fu">strata</span>(month2), <span class="at">ties=</span><span class="st">"breslow"</span>, <span class="at">data=</span>temp))</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>    stat2[<span class="dv">1</span>, i] <span class="ot">&lt;-</span> <span class="fu">nrow</span>(temp)</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>    stat2[<span class="dv">2</span>, i] <span class="ot">&lt;-</span> <span class="fu">sum</span>(temp<span class="sc">$</span>death)</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>    stat2[<span class="dv">3</span>, i] <span class="ot">&lt;-</span> <span class="fu">length</span>(<span class="fu">unique</span>(temp<span class="sc">$</span>age2[temp<span class="sc">$</span>death<span class="sc">==</span><span class="dv">1</span>]))</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>    stat2[<span class="dv">4</span>, i] <span class="ot">&lt;-</span> <span class="fu">mean</span>(km<span class="sc">$</span>n.risk[km<span class="sc">$</span>n.event <span class="sc">&gt;</span> <span class="dv">0</span>])</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>    stat2[<span class="dv">5</span>, i] <span class="ot">&lt;-</span> <span class="fu">sum</span>(time1[<span class="sc">-</span><span class="dv">3</span>],<span class="at">na.rm=</span>T)</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>    stat2[<span class="dv">6</span>, i] <span class="ot">&lt;-</span> <span class="fu">sum</span>(time2[<span class="sc">-</span><span class="dv">3</span>],<span class="at">na.rm=</span>T)</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a><span class="fu">all.equal</span>(<span class="fu">coef</span>(fit3a[[<span class="dv">3</span>]]), <span class="fu">coef</span>(fit3b[[<span class="dv">3</span>]]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dimnames</span>(stat2) <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="st">"observations"</span>, <span class="st">"death"</span>, <span class="st">"unique deaths"</span>,</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>                          <span class="st">"mean risk set"</span>, </span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>                          <span class="st">"coxph time 1"</span>, <span class="st">"coxph time 2"</span>),</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">c</span>(<span class="st">"first 1/3"</span>, <span class="st">"2/3"</span>, <span class="st">"all"</span>))</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(stat2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>              first 1/3     2/3     all
+observations    1021010 2042415 3062743
+death               831    1680    2533
+unique deaths       808    1581    2310
+mean risk set     41407   84651  125407
+coxph time 1         27      71     136
+coxph time 2         18      37      56</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>ytemp <span class="ot">&lt;-</span> <span class="fu">cbind</span>(stats[<span class="dv">5</span>,], stat2[<span class="dv">5</span>,], stat2[<span class="dv">6</span>,])</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">matplot</span>(<span class="fu">cbind</span>(stats[<span class="dv">1</span>,], stat2[<span class="dv">1</span>,], stat2[<span class="dv">1</span>,])<span class="sc">/</span><span class="fl">1e6</span>,  ytemp,</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>        <span class="at">ylim=</span><span class="fu">c</span>(<span class="dv">0</span>, <span class="fu">max</span>(<span class="fu">as.vector</span>(ytemp))), <span class="at">pch=</span><span class="st">"1ab"</span>,</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">xlab=</span><span class="st">"dataset size (millions)"</span>, <span class="at">ylab=</span><span class="st">"Coxph run time"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The figure shows that the run times from <code>fit1</code> on the original time scale as ‘1’, ‘a’ for the coarsened and expanded data using (time1, time2) form, and ‘b’ using strata. For the (time1, time2) forms of the data the compute time remains linear in the number of rows, coarsening the time scale has had only a small impact. The compute time for a model that takes advantage of the strata and a dummy time value is indeed smaller, about 1/3 of the (time1, time2) form. However, the overall effect is a net loss: 56 seconds to fit 1/12 of the data in the expanded form versus 96 seconds for the entire dataset in its original form.</p>
+<p>The row count grows faster than the number of subjects, since the number of cut points per subject also grows with <span class="math inline">\(n\)</span>, though that will eventually slow (there are only so many possible death times). The two fits in the loop, one using (age1, age2) and the other stratified on the age at death, give exactly the same likelihood since they have exactly the same risk sets at each event time.</p>
+<p>For SAS however, the two constructions differ substantially in compute time. A portion of the SAS code is shown below. Using (time1, time2) form on the expanded dataset the run time was a little over 22 minutes, continuing the quadratic behavior we saw earlier, while the stratified form with a dummy time value required 10, 18, and 25 seconds for 1/3, 2/3 and 3/3 of the subjects, the expected linear growth. Extrapolating to the full dataset we would predict 12<em>25 seconds or about 6 minutes, versus 867</em>9 seconds or 130 minutes for the original counting process form. Expansion is a clear win.</p>
+<pre><code>proc phreg data= nhs2;
+   model (month1 month2) * death(0) = x1 x2 xb_1 xb_2 xb_3 xb_4 xb_5 xb_6 xb_7
+        xb_8 xb_9 xb_10 xb_11 xb_12 xb_13 xb_14 xb_15 xb_16 xb_17 xb_18 xb_19
+        xb_20 xb_21 xb_22 xb_23 xb_24 xb_25 xb_26 xb_27
+        xb_28 xb_29 xb_30 xb_31 xb_32 xb_33 xb_34 xb_35 xb_36
+        xb_37 xb_38 xb_39 xb_40;
+        strata month2;
+proc phreg data=nhs2;
+   model dummy*death(0) =x1 x2 xb_1 xb_2 xb_3 xb_4 xb_5 xb_6 xb_7
+        xb_8 xb_9 xb_10 xb_11 xb_12 xb_13 xb_14 xb_15 xb_16 xb_17 xb_18 xb_19
+        xb_20 xb_21 xb_22 xb_23 xb_24 xb_25 xb_26 xb_27
+        xb_28 xb_29 xb_30 xb_31 xb_32 xb_33 xb_34 xb_35 xb_36
+        xb_37 xb_38 xb_39 xb_40;
+   strata age2;</code></pre>
+<p>The main take home message for R is “don’t dice your dataset!” That step is essential to achieve good performance in SAS, but what makes things faster for one statistical package does not necessarily work for another. This is especially true for something like the NHS simulation, where per subject covariate updates occur at a low frequency.</p>
+</section>
+<section id="stratification" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="stratification"><span class="header-section-number">3.3</span> Stratification</h2>
+<p>The average number of subjects at risk, at each death, in the full Cox model, is over 65 thousand:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>kmfit <span class="ot">&lt;-</span> <span class="fu">survfit</span>(<span class="fu">Surv</span>(age1, age2, death) <span class="sc">~</span><span class="dv">1</span>, nhs)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(kmfit<span class="sc">$</span>n.risk[kmfit<span class="sc">$</span>n.event <span class="sc">&gt;</span> <span class="dv">0</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 68525.59</code></pre>
+</div>
+</div>
+<p>This is statistical overkill: 10-20 controls per case will work just as well. One simple way to thin this down is to stratify the analysis. As an example we will break the subjects into sets based on their age at enrollment (in months); which is the variable <code>agem</code> in our dataset above. This leads to 300 strata, corresponding to the 25 year span in ages at enrollment.<br>
+What does it do to the compute time?</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">system.time</span>(fit2 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(age1, age2, death) <span class="sc">~</span> x1 <span class="sc">+</span> x2 <span class="sc">+</span> xb <span class="sc">+</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>                                 <span class="fu">strata</span>(agem), <span class="at">ties=</span><span class="st">'breslow'</span>, <span class="at">data=</span>nhs))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   user  system elapsed 
+ 57.210   0.807  58.160 </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>))</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="fu">matplot</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">42</span>, <span class="fu">cbind</span>(<span class="fu">coef</span>(fit1[[<span class="dv">3</span>]]), <span class="fu">coef</span>(fit2)), </span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>                    <span class="at">xlab=</span><span class="st">"Coefficient"</span>, <span class="at">ylab=</span> <span class="st">"Value"</span>)</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>s1 <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="fu">diag</span>(<span class="fu">vcov</span>(fit1[[<span class="dv">3</span>]])))  <span class="co"># std of coefficients</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>s2 <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="fu">diag</span>(<span class="fu">vcov</span>(fit2)))</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">42</span>, s2<span class="sc">/</span>s1, <span class="at">xlab=</span><span class="st">"Coefficient"</span>, <span class="at">ylab=</span><span class="st">"Ratio of standard errors"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Reducing the average number at risk by 300 fold has reduced the compute time by about 30%, without any appreciable change in the estimates or their standard errors.<br>
+The overall size of the dataset has not changed and size dominates the <code>coxph</code> compute time. A small gain comes from observations that occur after the last event in any stratum, as (time1, time2) intervals that do not overlap an event time play no role in the partial likelihood and are ignored by coxph. The effect of stratification on phreg, however, was profound: the run times for 1/3, 2/3, and 3/3 of the data were now 8, 21, and 40 seconds; still quadratic but with a 120 fold decrease.</p>
+</section>
+<section id="speeding-up-phreg" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="speeding-up-phreg"><span class="header-section-number">3.4</span> Speeding up phreg</h2>
+<p>What is the best that we can do with phreg? The obvious target would be to avoid the (time1, time2) form at all costs, while at the same time not having to expand the dataset; and secondly to employ strata to reduce the size of the risk sets. Further correspondence with the NHS staff revealed that they had done exactly this. The key trick is to stratify observations based on each subject’s age at their <em>prior</em> visit (in months). Here are four versions in R.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>nhs<span class="sc">$</span>month1 <span class="ot">&lt;-</span> <span class="fu">floor</span>(nhs<span class="sc">$</span>age1 <span class="sc">*</span> <span class="dv">12</span><span class="sc">/</span><span class="fl">365.25</span>)</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>nhs<span class="sc">$</span>month2 <span class="ot">&lt;-</span> <span class="fu">floor</span>(nhs<span class="sc">$</span>age2 <span class="sc">*</span> <span class="dv">12</span><span class="sc">/</span><span class="fl">365.25</span>)</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>tdata <span class="ot">&lt;-</span> <span class="fu">subset</span>(nhs, month1 <span class="sc">&lt;</span> month2)  <span class="co"># remove any ties</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>fit4a <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(age1, age2, death) <span class="sc">~</span> x1 <span class="sc">+</span> x2 <span class="sc">+</span> xb <span class="sc">+</span> <span class="fu">strata</span>(month1), </span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>               <span class="at">data=</span>tdata, <span class="at">ties=</span><span class="st">'breslow'</span>)</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>fit4b <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(month1, month2, death) <span class="sc">~</span> x1 <span class="sc">+</span> x2 <span class="sc">+</span> xb <span class="sc">+</span> <span class="fu">strata</span>(month1),</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>               <span class="at">data=</span>tdata, <span class="at">ties=</span><span class="st">'breslow'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in coxph(Surv(month1, month2, death) ~ x1 + x2 + xb
++ strata(month1), : a variable appears on both the left and
+right sides of the formula</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>fit4c <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(month2, death) <span class="sc">~</span> x1 <span class="sc">+</span> x2 <span class="sc">+</span> xb <span class="sc">+</span> <span class="fu">strata</span>(month1),</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">data=</span>tdata, <span class="at">ties=</span><span class="st">'breslow'</span>)</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>fit4d <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(age2, death) <span class="sc">~</span> x1 <span class="sc">+</span> x2 <span class="sc">+</span> xb <span class="sc">+</span> <span class="fu">strata</span>(month1),</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>               <span class="at">data=</span>tdata, <span class="at">ties=</span><span class="st">'breslow'</span>)</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a><span class="fu">matplot</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">42</span>, <span class="fu">cbind</span>(<span class="fu">coef</span>(fit4a), <span class="fu">coef</span>(fit4b), <span class="fu">coef</span>(fit4c), <span class="fu">coef</span>(fit4d)),</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">pch=</span><span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>,</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">xlab=</span><span class="st">"Coefficient"</span>, <span class="at">ylab=</span><span class="st">"value"</span>)</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">42</span>, truecoef, <span class="at">lty=</span><span class="dv">3</span>)</span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a><span class="fu">all.equal</span>(<span class="fu">coef</span>(fit4a), <span class="fu">coef</span>(fit4b))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Mean relative difference: 0.00780723"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">all.equal</span>(<span class="fu">coef</span>(fit4b), <span class="fu">coef</span>(fit4c))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+</div>
+<p>The plot shows the coefficients from the 4 fits, results of the four are almost identical. This is not surprising: over the 50 year age range of the NHS, coarsening the time scale to months is a small relative change to any subject. A closer look reveals that fit4a and fit4b differ by less than 1%, and the coefficients for fit4b and fit4c are completely identical. The reason for the latter is that everyone in a given stratum has exactly the same <code>month1</code> value, so we can dispense with the (time1, time2) form of the call.</p>
+<p>In the above example we removed observations where month1=month2 to demonstrate the equivalence of fit4b and fit4c; such observations are automatically removed when fitting (time1, time2) data. However, this is not necessary when using the (time2, death) form of the model. The coxph compute time for fit3 above, without the removals, was 24 seconds.</p>
+<p>The phreg compute times for three models above with (age1 age2), age2, and month2 as the response, respectively, and each stratified by month1, was 289, 28, and 28 seconds. Clearly stratification and avoiding the counting process form are important for phreg, but the final step of coarsening did not create any further gain. Why is the (age1, age2) fit for phreg so much longer than an identical model stratified by month of entry? This was a complete surprise and I do not have any hypothesis.</p>
+</section>
+<section id="dataset-sizes" class="level2" data-number="3.5">
+<h2 data-number="3.5" class="anchored" data-anchor-id="dataset-sizes"><span class="header-section-number">3.5</span> dataset sizes</h2>
+<p>The ‘xz’ compression option of the <code>save</code> command is particularly successful for datasets like the NHS simulation that contain a lot of whole numbers, an rda file containing nhs and nhs2 consumed just under 10 MB of disk space, while the size using default <code>save</code> options was 38 MB. The save operation itself takes longer using xz compression, but reloading the save datasets requires similar time. The SAS dataset for nhs used 290 MB and that for nhs2 505 MB using default options, more knowledgeable SAS coders perhaps could do better.</p>
+</section>
+<section id="the-fast-option" class="level2" data-number="3.6">
+<h2 data-number="3.6" class="anchored" data-anchor-id="the-fast-option"><span class="header-section-number">3.6</span> The FAST option</h2>
+<p>Our 2019 version of phreg now has a <em>FAST</em> option.<br>
+The phreg manual is completely vague about the actual approach:</p>
+<blockquote class="blockquote">
+<blockquote class="blockquote">
+<p>FAST uses an alternative algorithm to speed up the fitting of the Cox regression for a large dataset that has the counting process style of input. Simonsen (2014) has demonstrated the efficiency of this algorithm when the dataset contains a large number of observations and many distinct event times. The algorithm requires only one pass through the data to compute the Breslow or Efron partial log-likelihood function and the corresponding gradient and Hessian. PROC PHREG ignores the FAST option if you specify a TIES= option value other than BRESLOW or EFRON, or if you specify programming statements for time-varying covariates. You might not see much improvement in the optimization time if your dataset has only a moderate number of observations.</p>
+</blockquote>
+</blockquote>
+<p>The reference in the manual is “Simonsen, J. (2014). Statens Serum Institute, Copenhagen. Unpublished SAS macro”, which is not helpful at all. However, someone else pointed us to a web reference which contains a macro that is the purported prototype for the phreg option; it can be found using a web search for the article title “A method for speeding up PROC PHREG when doing a Cox regression”.</p>
+<p>A closer look at the macro brought on a strong case of deja vu. Early in the author’s computing career an analysis dataset would sometimes be too big to fit into memory, and a common work around for a binary outcome was to</p>
+<ol type="1">
+<li>Reduce any predictors to categorical variables of 2–4 levels.</li>
+<li>Create a new dataset with one row for each unique combination of <span class="math inline">\(y\)</span> and the (new) predictors, giving each a case weight equal to the number of observations in the original dataset that fell into that bin.</li>
+<li>Analyze the new dataset, using these case weights.</li>
+</ol>
+<p>Reductions in the dataset size of 20-100 fold were not uncommon.</p>
+<p>The FAST option appears to use essentially the same approach. Say that there are <span class="math inline">\(k\)</span> unique combinations of the categorized covariates. For a Cox model, create an intermediate dataset with 2k observations at each unique event time, one with status=0 and one with status=1, and weights equal to the number of censorings and events in that bin*time combination. Observations with a weight of 0, if any, may be omitted. Then fit an ordinary Cox model to this dataset, stratified by event time and using Surv(dummy, status) as the response, <code>dummy</code> a dummy vector zeros. The compute time will be <span class="math inline">\(O(kd)\)</span>, which is potentially much smaller than the <span class="math inline">\(O(nd)\)</span> computation for the original dataset.<br>
+Creating the collapsed dataset is itself a task that potentially requires <span class="math inline">\(O(nd)\)</span> time, since for each event time the tally needs to check all <span class="math inline">\(n\)</span> observations to see if their (time1, time2) interval includes the given event. However, this is essentially an indexing problem for which there are fast algorithms.</p>
+<p>As someone who often preaches against categorization of predictors, the author does not find this approach attractive.</p>
+</section>
+<section id="summary" class="level2" data-number="3.7">
+<h2 data-number="3.7" class="anchored" data-anchor-id="summary"><span class="header-section-number">3.7</span> Summary</h2>
+<p>Statistical theory tells us that the variance of the coefficients from a Cox model will be of order <span class="math inline">\(V \sum_j (r_j -1)/r_j\)</span>, where <span class="math inline">\(V\)</span> is the variance of the predictors <span class="math inline">\(X\)</span> and <span class="math inline">\(r_j\)</span> is the size of the risk set associated with the <span class="math inline">\(j\)</span>th death. In this dataset with an average risk set size of <span class="math inline">\(&gt;65\)</span> thousand, it should be no surprise that replacing the risk set with a smaller sub-sample has no measurable effect on the estimates; whether that were to be done with a random subsample, stratification on entry date (1/300) or stratification on the 650 ``prior visit’’ dates. A primary lesson for this statistician is that when analysis is slow due to a large dataset, perhaps our first reaction should be the instead of reaching for a bigger hammer.</p>
+<p>For the naive <span class="math inline">\(O(nd)\)</span> algorithm used by phreg, the effect of subsampling is a staggering decrease in the compute time; stratification essentially replaced <span class="math inline">\(n\)</span> with <span class="math inline">\(n/300\)</span>. A clever stratification that allows one to omit time1 gave further improvement.</p>
+<p>Stratification can give a statistical benefit of less biased results as well, not just speed, if the stratification variable is correlated with any unmeasured covariates that are associated with outcome. This is a justification for stratifying on enrolling institution, for instance. In the present case it is hard to argue that either month of enrollment or month of the prior response is anything more than a random partition of the original risk set {all subjects of the same age as the death}. In every statistical aspect it should perform the same as random subsampling of the same size. (But in terms of terms of speeding up SAS phreg it is a <em>very</em> clever idea.)</p>
+<p>I have not been able to replicate any case where phreg is significantly faster than coxph, and in that sense the report of this behavior from the NHS staff remains a mystery.</p>
+</section>
+</section>
+<section id="type-3-tests" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Type 3 tests</h1>
+<p>Another user query has been for “type 3” tests of survival models. Up until the latest release (at our institution) the phreg procedure would automatically produce a “type 3 test” — you couldn’t turn it off in fact.<br>
+The output has now been relabeled as “joint tests” but appear to be the exact same values as before. The primary problem with these is that they depend on the way in which covariates are coded.</p>
+<pre><code>data test;
+input time status x1 $ x2 $;
+cards4;
+ 1 a  A
+ 2 b  B
+10 c  C
+50 a  D
+ 5 b  A
+ 4 c  B
+ 8 a  C
+40 b  D
+60 c  A
+20 a  B
+21 b  C
+22 c  D
+ 3 a  A
+ 5 b  B
+12 c  C
+52 a  D
+ 7 b  A
+ 8 c  B
+16 a  C
+88 a  D
+58 a  A
+28 a  B
+20 a  C
+ 5 a  B
+;;;;
+
+data test2; set test;
+   status =1;  * add a dummy status variable;
+   if (x2= 'A') then x2a="xA"; else x2a=x2; * A is the reference;
+   if (x2= 'B') then x2b="xB"; else x2b=x2; * make B the reference;
+   if (x2= 'C') then x2c="xC"; else x2c=x2; * make C the reference;
+
+proc phreg data = test2;
+   class x1 x2a;
+   model time * status(0) = x1 x2a x1*x2a/ type1;
+
+proc phreg data = test2;
+   class x1 x2b;
+   model time * status(0) = x1 x2b x1*x2b/ type1;
+
+proc phreg data = test2;
+   class x1 x2c;
+   model time * status(0) = x1 x2c x1*x2c / type1;
+
+proc phreg data = test2;
+   class x1 x2d;
+   model time * status(0) = x1 x2c x1*x2c / type1;
+
+proc phreg data= test2;
+    class x1 x2/ param=effect;
+    model time * status(0) = x1 x2 x1*x2 / type1;</code></pre>
+<p>The resulting “joint tests” for covariate <code>x1</code> were 7.9, 5.4, 0.7, 2.4, and 5.3: coding x2 differently changes the results for x1! What are we to make of this? The sequential or “type 1” tests are identical for all 5 runs.</p>
+<section id="linear-models" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="linear-models"><span class="header-section-number">4.1</span> Linear Models</h2>
+<p>Type III tests and sums of squares can be traced back to a 1934 paper by F. Yates <span class="citation" data-cites="Yates34">(<a href="#ref-Yates34" role="doc-biblioref">1934</a>)</span>. For a linear model that was fit to unbalanced data, he proposed using a population estimate for the main effects, where the “population” is an ideal experiment, e.g., a completely balanced factorial study. One can create his proposed estimates by a simple 3 step process.</p>
+<ol type="1">
+<li>Fit a linear model to the data at hand using ordinary least squares.</li>
+<li>For each treatment arm, create the set of predicted values for that treatment, for all combinations of the other factors.</li>
+<li>The average of these values is the estimated overall effect for the treatment.</li>
+</ol>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">with</span>(data1, <span class="fu">table</span>(x1, x2))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   x2
+x1  A B C D
+  a 3 3 3 3
+  b 2 2 1 1
+  c 1 2 2 1</code></pre>
+</div>
+</div>
+<p>In the dataset used above there are four levels for <code>x2</code> for instance, so the effect for <code>x1='a'</code> will involve the average of 4 predicted values. The estimates are a prediction of what the average result for x1 <em>would have been</em> had the original data been balanced. SAS calls these averages <em>least squares means</em>. Modern causal modelers would call this a g-estimation method, though they, in turn, would almost never choose a factorial experiment as the underlying population.</p>
+<p>The next logical step is to compute standard errors for each of these averages, along with a global test of whether the averages for x1=a, x1=b and x1=c are the same. The simplest method is to start by creating a matrix with all of the coefficients for the predicted values as rows, and then use matrix operations.<br>
+This was not feasible in the computing environment of Yates’ day, however, which led to a small industry of shortcut methods for producing a ``Yates’ sum of squares’’. The SAS GLM algorithm is based on a particular one of these, namely that for a balanced factorial design, the sums-of-squares for all of the effects are orthogonal. Therefore, choose contrasts that are orthogonal to the variance matrix we <em>would have had</em> had the data been of this type. It can be reproduced using the following steps:</p>
+<ul>
+<li>Form a <span class="math inline">\(Z'Z\)</span> matrix from a <em>balanced subset</em> of the observations in the dataset,</li>
+<li>create a set of contrasts that are orthogonal to <span class="math inline">\((Z'Z)^{-1}\)</span></li>
+<li>apply those contrasts to the original data and fit, to get sums-of-squares for each term.</li>
+</ul>
+<p>Here is an example of Yates’ tests using a subset of the <code>solder</code> dataset, based on the SAS algorithm. The <code>ctest</code> function contains standard linear models manipulations to compute the SS and test for a contrast.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>ctest <span class="ot">&lt;-</span> <span class="cf">function</span>(contr, fit) {</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>    estimate <span class="ot">&lt;-</span> <span class="fu">drop</span>(contr <span class="sc">%*%</span> <span class="fu">coef</span>(fit))</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>    var.estimate <span class="ot">&lt;-</span> contr <span class="sc">%*%</span> <span class="fu">vcov</span>(fit) <span class="sc">%*%</span> <span class="fu">t</span>(contr)</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>    test <span class="ot">&lt;-</span>  <span class="fu">solve</span>(var.estimate, estimate)<span class="sc">%*%</span> estimate</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">list</span>(<span class="at">estimate=</span> estimate, <span class="at">variance=</span> var.estimate, <span class="at">chisq =</span> <span class="fu">drop</span>(test))</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>test <span class="ot">&lt;-</span> <span class="fu">subset</span>(solder, Mask <span class="sc">!=</span> <span class="st">"A6"</span>)</span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(test<span class="sc">$</span>Opening, test<span class="sc">$</span>Mask)   <span class="co"># the data is unbalanced</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   
+    A1.5  A3  A6  B3  B6
+  L   60 120   0  60  60
+  M   60  60   0  60  60
+  S   60  90   0  60  60</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">lm</span>(skips <span class="sc">~</span> Opening<span class="sc">*</span>Mask, <span class="at">data=</span>test, <span class="at">x=</span><span class="cn">TRUE</span>)  <span class="co"># ordinary linear model</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>z.balance <span class="ot">&lt;-</span> <span class="fu">unique</span>(fit<span class="sc">$</span>x)    <span class="co"># 12 unique combinations of Opening and Mask</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>contr <span class="ot">&lt;-</span> <span class="fu">chol</span>(<span class="fu">crossprod</span>(z.balance))   <span class="co"># cholesky decomposition of Z'Z</span></span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a><span class="fu">ctest</span>(contr[<span class="dv">2</span><span class="sc">:</span><span class="dv">3</span>,], fit)<span class="sc">$</span>chisq         <span class="co"># the test for Opening</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 542.4632</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ctest</span>(contr[<span class="dv">5</span><span class="sc">:</span><span class="dv">8</span>,], fit)<span class="sc">$</span>chisq         <span class="co"># the test for Mask</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 340.7837</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ctest</span>(contr[<span class="dv">9</span><span class="sc">:</span><span class="dv">12</span>,], fit)<span class="sc">$</span>chisq        <span class="co"># the test for Mask:Opening</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 153.7459</code></pre>
+</div>
+</div>
+<p>If <span class="math inline">\(L'L = Z'Z\)</span> is the Cholesky decomposition of <span class="math inline">\(Z'Z\)</span>, then <span class="math inline">\(L(Z'Z)^{-1}L'=I\)</span>, i.e., the Cholesky decomposition was simply a convenient way to create a set of contrasts that are orthogonal with respect to <span class="math inline">\((Z'Z)^{-1}\)</span>. Any full rank contrast matrix <span class="math inline">\(C\)</span> such that <span class="math inline">\(T= C(Z'Z)^-C'\)</span> is block diagonal will give the same sums of squares, i.e., any matrix <span class="math inline">\(C\)</span> such that <span class="math inline">\(T_{ij}=0\)</span> whenever rows <span class="math inline">\(i\)</span> and <span class="math inline">\(j\)</span> correspond to different terms. The equivalence is a consequence of Cochran’s theorem. Goodnight <span class="citation" data-cites="Goodnight78">(<a href="#ref-Goodnight78" role="doc-biblioref">1978</a>)</span> states that any matrix which satisfies this condition defines a set of type 3 tests. The SAS technical report given as the usual reference for type 3 tests <span class="citation" data-cites="SAStype3">(<a href="#ref-SAStype3" role="doc-biblioref">2008</a>)</span> describes a particular algorithm for creating such an orthogonal decomposition; it unfortunately depends on using an <span class="math inline">\(X\)</span> matrix that is in exactly the same internal form as is used by the SAS GLM procedure. (The report is also remarkably opaque about exactly <em>what</em> the algorithm is computing.) Both the Cholesky approach and the SAS GLM are invariant to how categorical factors are represented: first level as reference, last as reference, Helmert coding, etc.; all yield the same values.</p>
+<p>If the linear model has both continuous and categorical predictors, then the <code>z.balance</code> line above needs to be modified to first omit any columns of X corresponding to continuous variables or interactions with continuous variables (but should retain the intercept): SAS “type 3” tests for continuous variables have no connection to Yates’ method or population averages.</p>
+<p>The bugaboo comes when the resulting <span class="math inline">\(Z'Z\)</span> matrix is singular. For example, if we use the entire solder dataset, there are 0 observations in the (Mask=A6, Opening=S) cell, the coefficient vector from the <code>lm</code> fit will have an NA in that position, and an attempted Cholesky decomposition of <span class="math inline">\(Z'Z\)</span> will give an error message. In this case a Yates’ population average for mask A6 is also undefined, since one of the predicted values in the average depends on the NA coefficient; SAS GLM for instance will report a missing value for that element of the least squares means. The Yates’ sum of squares for comparing the 5 mask types is also undefined; nevertheless SAS GLM reports a type 3 sums of squares for the Mask effect!<br>
+What appears to be happening is that SAS GLM is creating contrasts that are orthogonal with respect to a generalized inverse. The problem is that the resulting test statistics depend on exactly which generalized inverse is used; different g-inverse matrices lead to different values. There are an infinite number of generalized inverses for such a problem, the documentation in <span class="citation" data-cites="SAStype3">SAS Institute Inc. (<a href="#ref-SAStype3" role="doc-biblioref">2008</a>)</span> does not give enough detail to exactly replicate the GLM algorithm for this case, and exact mimicry is the only way to exactly reproduce GLM type 3 values for an incomplete design.</p>
+<p>An alternate “type 3” algorithm found outside of SAS is the following.</p>
+<ul>
+<li>Create a design matrix <span class="math inline">\(X\)</span> for the regression in standard order, i.e., from left to right are the intercept, columns for main effects, then 2-way interactions, then 3-way interactions, etc.</li>
+<li>Proceeding from left to right, eliminate any columns which can be expressed as a linear combination of prior columns.</li>
+<li>Define the RSS for any term as the difference between a fit using the full <span class="math inline">\(X\)</span> matrix, and a fit eliminating those (remaining) columns that correspond to the term.</li>
+</ul>
+<p>If the columns of <span class="math inline">\(X\)</span> for the categorical variables in the model are coded using the summation constraint, and the Yates’ SS is well defined (no missing cells), then, rather remarkably, this half-baked approach will re-create the Yates sum-of-squares for each term. If any other method is used to generate the 0/1 columns for a categorical variable the results are meaningless, and in fact will often change by an order of magnitude across different codings. I refer to this as the not-safe type three (NSTT) algorithm. The <code>car</code> package in R uses this approach, for instance, and the package’s documentation clearly states that models need to be fit with R’s <code>contr.sum</code> option in effect.</p>
+<p>Many of us have not seen the sum constraint since graduate school. As a reminder here is the two way form where <span class="math inline">\(\epsilon\)</span> is the residual error.</p>
+<p><span class="math display">\[
+\begin{align*}
+  y_{ijk} &amp;= \mu + \alpha_i + \beta_j + \gamma_{ij} + \epsilon_{ijk} \\
+     0 &amp;= \sum_i \alpha_i
+     0 &amp;= \sum_j \beta_j
+     0 &amp;= \sum_i \gamma_{ij} &amp;= \sum_j \gamma_{ij}
+\end{align*}
+\]</span></p>
+<p>Assume a simple 2 factor model y = trt + x2 + interaction, where treatment has two levels A/B and x2 has <span class="math inline">\(k\)</span> levels. In this simple case one can quickly verify that the the NSTT test for treatment is actually a comparison of A vs.&nbsp;B in the <em>reference</em> level for x2, ignoring all others, leading to <span class="math inline">\(k\)</span> different results as we rotate the choice of reference.<br>
+This is very different than the usual narrative that type 3 is a “global” test. When sum constraints are used the `reference’ for x2 will be an average and the NSTT matches the Yates’ estimate. We suspect that the same general pattern extends to more complex models.</p>
+<p>The flawed NSTT algorithm is, I believe, a primary source of a common critique that type 3 tests not marginal, i.e., that they are a test for main effects in the presence of interactions and are thus invalid.<br>
+This has muddied the discussion of population contrasts terribly, and is in addition to the harm caused by misapplication of the algorithm: sum constraints are not the default in most packages and I daresay that many or even most computations have been wrong. (How many people read directions?)</p>
+</section>
+<section id="type-3-and-phreg" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="type-3-and-phreg"><span class="header-section-number">4.2</span> Type 3 and phreg</h2>
+<p>The NSTT is precisely the algorithm used by the SAS phreg procedure, though without any warning about how to choose the coding for categorical predictors. This can be verified for the test example above by creating the appropriate <code>coxph</code> fits and performing Wald tests. For example, the first two fits below reproduce phreg results that used ‘A’ and ‘D’ as the reference levels. The <code>yates</code> function in the survival package produces Yates’ population contrast; it’s result is identical whether fit1 or fit2 is used as the input. The final phreg fit that used a sum constraint, referred to as ``effects’’ coding in SAS, agreed with the Yates’ result.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>contr.x1 <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="at">nrow=</span><span class="dv">2</span>, <span class="at">ncol=</span><span class="dv">11</span>)</span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>contr.x1[<span class="dv">1</span>,<span class="dv">1</span>] <span class="ot">&lt;-</span> contr.x1[<span class="dv">2</span>,<span class="dv">2</span>] <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>fit1 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(y) <span class="sc">~</span> x1<span class="sc">*</span>x2, <span class="at">data=</span>data1, <span class="at">ties=</span><span class="st">'breslow'</span>)</span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a><span class="fu">ctest</span>(contr.x1, fit1)<span class="sc">$</span>chisq</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 7.93572</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">contrasts=</span><span class="fu">c</span>(<span class="st">'contr.SAS'</span>, <span class="st">'contr.poly'</span>))</span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>fit2 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(y) <span class="sc">~</span> x1<span class="sc">*</span>x2, <span class="at">data=</span>data1, <span class="at">ties=</span><span class="st">'breslow'</span>)</span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ctest</span>(contr.x1, fit2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$estimate
+[1] -2.1617601 -0.6966789
+
+$variance
+         [,1]     [,2]
+[1,] 2.106360 1.246472
+[2,] 1.246472 2.247885
+
+$chisq
+[1] 2.443343</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="fu">yates</span>(fit1, <span class="sc">~</span>x1, <span class="at">population=</span><span class="st">"factorial"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> x1     pmm     std        test chisq df      Pr
+  a 0.27782 0.65627      global 5.293  2 0.07089
+  b 1.85188 1.06082                             
+  c 0.95198 0.97138                             </code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="references" class="level1" data-number="5">
+
+
+
+
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">5 References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-Gail81" class="csl-entry" role="listitem">
+Gail, M. H., J. H. Lubin, and L. V. Rubinstein. 1981. <span>“Likelihood Calculations for Matched Case-Control Studies and Survival Studies with Tied Death Times.”</span> <em>Biometrika</em> 68: 703–7.
+</div>
+<div id="ref-Goodnight78" class="csl-entry" role="listitem">
+Goodnight, J. 1978. <span>“Tests of Hypotheses in Fixed-Effects Linear Models.”</span> Technical Report R-101. SAS Institute, Inc.
+</div>
+<div id="ref-SAStype3" class="csl-entry" role="listitem">
+SAS Institute Inc. 2008. <em>The Four Types of Estimable Functions</em>. Cary, N.C.: <span>SAS</span> Institute, Inc.
+</div>
+<div id="ref-Yates34" class="csl-entry" role="listitem">
+Yates, F. 1934. <span>“The Analysis of Multiple Classifications with Unequal Numbers in the Different Classes.”</span> <em>J. Amer. Stat. Assoc.</em> 29: 51–66.
+</div>
+</div></section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

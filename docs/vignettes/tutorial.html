@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.25">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Terry Therneau, Cynthia Crowson, and Elizabeth Atkinson">
+<meta name="dcterms.date" content="2026-03-26">
+
+<title>Competing Risks and Multistate Models – survivalVignettes</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-0b37c64f34216b628666a8dac638b53b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    </a>
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">survivalVignettes</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-vignettes" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Vignettes</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-vignettes">    
+        <li>
+    <a class="dropdown-item" href="../vignettes/external.html">
+ <span class="dropdown-text">External Validation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../vignettes/pseudo.html">
+ <span class="dropdown-text">Pseudo-values for survival data</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../vignettes/ridge.html">
+ <span class="dropdown-text">The ridge function, matrices, and prediction</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#aid-data-set-competing-risk" id="toc-aid-data-set-competing-risk" class="nav-link active" data-scroll-target="#aid-data-set-competing-risk"><span class="header-section-number">1</span> AID data set, competing risk</a>
+  <ul class="collapse">
+  <li><a href="#aalen-johansen-curves" id="toc-aalen-johansen-curves" class="nav-link" data-scroll-target="#aalen-johansen-curves"><span class="header-section-number">1.1</span> Aalen-Johansen curves</a></li>
+  <li><a href="#proportional-hazards-models" id="toc-proportional-hazards-models" class="nav-link" data-scroll-target="#proportional-hazards-models"><span class="header-section-number">1.2</span> Proportional hazards models</a></li>
+  <li><a href="#predicted-curves" id="toc-predicted-curves" class="nav-link" data-scroll-target="#predicted-curves"><span class="header-section-number">1.3</span> Predicted curves</a></li>
+  <li><a href="#fine-gray-fits" id="toc-fine-gray-fits" class="nav-link" data-scroll-target="#fine-gray-fits"><span class="header-section-number">1.4</span> Fine-Gray fits</a></li>
+  </ul></li>
+  <li><a href="#ebmt-data-set-multistate-model" id="toc-ebmt-data-set-multistate-model" class="nav-link" data-scroll-target="#ebmt-data-set-multistate-model"><span class="header-section-number">2</span> EBMT data set, multistate model</a>
+  <ul class="collapse">
+  <li><a href="#aalen-johansen-curves-1" id="toc-aalen-johansen-curves-1" class="nav-link" data-scroll-target="#aalen-johansen-curves-1"><span class="header-section-number">2.1</span> Aalen-Johansen curves</a></li>
+  <li><a href="#proportional-hazards-models-1" id="toc-proportional-hazards-models-1" class="nav-link" data-scroll-target="#proportional-hazards-models-1"><span class="header-section-number">2.2</span> Proportional hazards models</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Competing Risks and Multistate Models</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Terry Therneau, Cynthia Crowson, and Elizabeth Atkinson </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">March 26, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>An excellent introduction to multistate models is found in Putter, Fiocco and Geskus, <em>Tutorial in biostatistics: Competing risks and multistate models</em> <span class="citation" data-cites="Putter07">H., M., and B. (<a href="#ref-Putter07" role="doc-biblioref">2007</a>)</span>. In this section we recreate the graphs and tables from the paper; it parallels a similar document that is a vignette in the <code>mstate</code> package. This vignette uses newer features of the survival package which directly support multistate models; these features were not available at the time the tutorial paper was written. The vignette will make the most sense if it is read in parallel with the paper.</p>
+<p>The tutorial uses two data sets which are included in the <code>mstate</code> package. The first is data from 329 homosexual men from the Amsterdam Cohort Studies on HIV infection and AIDS. A competing risks analysis is done with the appearance of syncytium inducing (SI) phenotype and AIDS diagnosis as the endpoints. The second data set is from the European Blood and Marrow Transplant (EBMT) registry, and follows 2204 subjects who had a transplant, forward to relapse or death, with platelet recovery as an intermediate state.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(aidssi, <span class="at">package=</span><span class="st">"mstate"</span>)  <span class="co"># AIDS data set</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(ebmt3, <span class="at">package=</span><span class="st">"mstate"</span>)   <span class="co"># transplant data set</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="aid-data-set-competing-risk" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> AID data set, competing risk</h1>
+<p>The first analysis uses the AID data set and a competing risks transition shown in the figure below.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>oldpar <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mar=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>))</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>states <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Event free"</span>, <span class="st">"AIDS"</span>, <span class="st">"SI"</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>smat <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="dv">3</span>, <span class="dv">3</span>, <span class="at">dimnames=</span><span class="fu">list</span>(states, states))</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>smat[<span class="dv">1</span>,<span class="dv">2</span>] <span class="ot">&lt;-</span> smat[<span class="dv">1</span>,<span class="dv">3</span>] <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">statefig</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, smat)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="tutorial_files/figure-html/aids-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="288"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(oldpar)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The <code>statefig</code> routine is designed primarily for ease of use and creates figures that are “good enough” for most uses.</p>
+<section id="aalen-johansen-curves" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="aalen-johansen-curves"><span class="header-section-number">1.1</span> Aalen-Johansen curves</h2>
+<p>We first create a multistate status variable and use it to plot the competing risk curves for the outcome. A key tool for dealing with multistate outcomes is replacement of the usual “status” variable of 0= censored, 1=event (or FALSE=censored TRUE = event) with a factor variable in the Surv function. This allows us to specify not just <em>that</em> an event occurred, but <em>what type</em> of event.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>aidssi<span class="sc">$</span>event <span class="ot">&lt;-</span> <span class="fu">factor</span>(aidssi<span class="sc">$</span>status, <span class="dv">0</span><span class="sc">:</span><span class="dv">2</span>, <span class="fu">c</span>(<span class="st">"censored"</span>, <span class="st">"AIDS"</span>, <span class="st">"SI"</span>))</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># The correct Aalen-Johansen curves</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>ajfit <span class="ot">&lt;-</span> <span class="fu">survfit</span>(<span class="fu">Surv</span>(time, event) <span class="sc">~</span><span class="dv">1</span>, <span class="at">data =</span> aidssi)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>ajfit<span class="sc">$</span>transitions</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       to</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; from   AIDS  SI (censored)</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   (s0)  114 108        107</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   AIDS    0   0          0</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   SI      0   0          0</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(ajfit, <span class="at">xmax =</span> <span class="dv">13</span>, <span class="at">col =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">lwd =</span> <span class="dv">2</span>,</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab =</span> <span class="st">"Years from HIV infection"</span>, <span class="at">ylab =</span> <span class="st">"Probability"</span>)</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="dv">8</span>, .<span class="dv">2</span>, <span class="fu">c</span>(<span class="st">"AIDS"</span>, <span class="st">"SI"</span>), <span class="at">lty =</span> <span class="dv">1</span>, <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">bty =</span> <span class="st">'n'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-putter1" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-putter1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="tutorial_files/figure-html/fig-putter1-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-putter1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Correct Aalen-Johansen curves for the cumulative incidence of AIDS and SI
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Since an initial state was not specified in the data or the survfit call, the function assumes that all subjects started in a common state <em>(s0)</em> = “state 0”. Like the (Intercept) term in a linear model fit, the name created by the survfit function is placed in parenthesis to avoid overlap with any variable names in the data. The transitions matrix shows that 114 subjects transitioned from this initial state to AIDS, 108 transitioned to SI, and 107 were censored.</p>
+<p>A small footnote: The survfit routine in R produces Aalen-Johansen (AJ) estimates, which are applicable to any state space diagram (an arrangement of boxes and arrows). For a simple two state model such as alive &amp; dead, the AJ estimate reduces to a Kaplan-Meier (KM). For a competing risk model such as this, the AJ estimate produces the same values as the <em>cumulative incidence</em> estimator. Put another way, the KM and CI are special cases of the AJ. The tutorial uses all three labels of KM, CI, and AJ.</p>
+<p>We will use “Txx” to stand for figures or page numbers in the tutorial. <a href="#fig-T2" class="quarto-xref">Figure&nbsp;2</a> (T2) shows the two Kaplan-Meier curves, with one going uphill and the other downhill. The estimated fraction with AIDS is the area above the red curve, the fraction with SI the area below the blue one, and the middle part is the fraction with neither. The fact that they cross is used to emphasize the inconsistency of the two estimates, i.e., that they add to more than 1.0.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># re-create figure T2</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co"># KM curves that censor the other endpoint (a bad idea)</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>bad1 <span class="ot">&lt;-</span> <span class="fu">survfit</span>(<span class="fu">Surv</span>(time, event<span class="sc">==</span><span class="st">"AIDS"</span>) <span class="sc">~</span> <span class="dv">1</span>, <span class="at">data =</span> aidssi)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>bad2 <span class="ot">&lt;-</span> <span class="fu">survfit</span>(<span class="fu">Surv</span>(time, event<span class="sc">==</span><span class="st">"SI"</span>) <span class="sc">~</span><span class="dv">1</span>, <span class="at">data =</span> aidssi)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(bad1, <span class="at">conf.int =</span> <span class="cn">FALSE</span>, <span class="at">xmax =</span> <span class="dv">13</span>, </span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab =</span> <span class="st">"Years from HIV infection"</span>, <span class="at">ylab =</span> <span class="st">"Probability"</span>)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(bad2, <span class="at">conf.int =</span> <span class="cn">FALSE</span>, <span class="at">fun =</span> <span class="st">'event'</span>, <span class="at">xmax =</span> <span class="dv">13</span>)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="fu">text</span>(<span class="fu">c</span>(<span class="dv">8</span>,<span class="dv">8</span>), <span class="fu">c</span>(.<span class="dv">8</span>, .<span class="dv">22</span>), <span class="fu">c</span>(<span class="st">"AIDS"</span>, <span class="st">"SI"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-T2" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-T2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="tutorial_files/figure-html/fig-T2-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-T2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: This figure (T2) shows the estimated survival curve for AIDS and probability of SI appearance, based on the naive Kaplan-Meier estimate.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><a href="#fig-T3" class="quarto-xref">Figure&nbsp;3</a> (T3) shows the Aalen-Johansen curves in the same form. The default in the survival package is to plot each curve on the natural axis <span class="math inline">\(p_k(t)\)</span> = probability of being in state <span class="math inline">\(k\)</span> at time <span class="math inline">\(t\)</span>, which is the <code>pstate</code> component of the survfit object. The authors of the tutorial like to use a stacked display: the distance between the horizontal axis and the first curve is the probability of being in state 1, the distance between the first and second lines is the probability of being in state 2, etc. Since <span class="math inline">\(\sum_k p_k(t)=1\)</span> (everyone has to be somewhere), the final curve is a horizontal line at 1. The following helper function <code>pstack</code> for stacked curves draws the plots in this form. At time 0 the two lines are at y= 0 and 1: everyone is in the “neither AIDS or SI” group.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>pstack <span class="ot">&lt;-</span> <span class="cf">function</span>(fit, <span class="at">top=</span><span class="cn">FALSE</span>, ...) {</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    temp <span class="ot">&lt;-</span> <span class="fu">survfit0</span>(fit)   <span class="co"># add the point at time 0</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">is.matrix</span>(temp<span class="sc">$</span>pstate))  <span class="co"># usual case</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>        temp<span class="sc">$</span>pstate <span class="ot">&lt;-</span> <span class="fu">t</span>(<span class="fu">apply</span>(temp<span class="sc">$</span>pstate, <span class="dv">1</span>, cumsum))</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span> <span class="cf">if</span> (<span class="fu">is.array</span>(temp<span class="sc">$</span>pstate)) </span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>        temp<span class="sc">$</span>pstate <span class="ot">&lt;-</span> <span class="fu">aperm</span>(<span class="fu">apply</span>(temp<span class="sc">$</span>pstate, <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, cumsum), <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">1</span>))</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="co"># this works because we don't change any other aspect of the survfit</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">#  object, but only modify the probabilities.</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (top) <span class="fu">plot</span>(temp, <span class="at">noplot=</span><span class="st">""</span>, ...)</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span> <span class="fu">plot</span>(temp, <span class="at">noplot=</span>temp<span class="sc">$</span>states[<span class="fu">length</span>(temp<span class="sc">$</span>states)], ...)</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># re-create figure T3</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">pstack</span>(ajfit[<span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">1</span>,<span class="dv">3</span>)], <span class="at">col=</span><span class="dv">1</span>, <span class="at">xmax=</span><span class="dv">13</span>, <span class="at">lwd=</span><span class="dv">2</span>, </span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab=</span><span class="st">"Years from HIV infection"</span>, <span class="at">ylab=</span><span class="st">"Probability"</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(bad1, <span class="at">conf.int=</span><span class="cn">FALSE</span>, <span class="at">col=</span><span class="st">"lightgray"</span>)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(bad2, <span class="at">conf.int=</span><span class="cn">FALSE</span>, <span class="at">fun=</span><span class="st">'event'</span>, <span class="at">col=</span><span class="st">'lightgray'</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="fu">text</span>(<span class="fu">c</span>(<span class="dv">4</span>, <span class="dv">8</span>,<span class="dv">8</span>), <span class="fu">c</span>(.<span class="dv">5</span>, .<span class="dv">85</span>, .<span class="dv">15</span>), <span class="fu">c</span>(<span class="st">"Event free"</span>, <span class="st">"AIDS"</span>, <span class="st">"SI"</span>), <span class="at">col=</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-T3" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-T3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="tutorial_files/figure-html/fig-T3-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-T3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: This figure (T3) shows estimates of probabilities of AIDS and SI appearance, based on the naive Kaplan-Meier (grey) and on cumulative incidence/Aalen-Johansen functions (black)
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><a href="#fig-T4" class="quarto-xref">Figure&nbsp;4</a> (T4) reorders the states so the event free is the top group. This author prefers the unstacked version (<a href="#fig-putter1" class="quarto-xref">Figure&nbsp;1</a>), which shows more clearly that the probabilities of the two outcomes are very nearly the same.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">pstack</span>(ajfit[<span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">1</span>)], <span class="at">xmax=</span><span class="dv">13</span>, <span class="at">lwd=</span><span class="dv">2</span>, <span class="at">col=</span><span class="dv">1</span>, <span class="at">ylim=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>),</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>        <span class="at">xlab=</span><span class="st">"Years from HIV infection"</span>, <span class="at">ylab=</span><span class="st">"Probability"</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">text</span>(<span class="fu">c</span>(<span class="dv">11</span>, <span class="dv">11</span>, <span class="dv">11</span>), <span class="fu">c</span>(.<span class="dv">2</span>, .<span class="dv">55</span>, .<span class="dv">9</span>), <span class="fu">c</span>(<span class="st">"AIDS"</span>, <span class="st">"SI"</span>, <span class="st">"Event free"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-T4" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-T4-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="tutorial_files/figure-html/fig-T4-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-T4-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: This figure (T4) shows cumulative incidence curves of AIDS and SI appearance. The cumulative incidence functions are stacked; the distance between two curves represent the probability of the different events.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>A last point is to note that for cumulative hazard functions, you <em>can</em> do the estimates separately for each endpoint, censoring the other. In the figure below, the estimates from the joint fit and those from the “bad” fits completely overlay each other.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(ajfit, <span class="at">cumhaz=</span><span class="cn">TRUE</span>, <span class="at">xmax=</span><span class="dv">13</span>, <span class="at">col=</span><span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">lty=</span><span class="dv">2</span>,</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab=</span><span class="st">"Years from HIV infection"</span>, <span class="at">ylab=</span><span class="st">"Cumulative incidence"</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(bad1, <span class="at">cumhaz=</span><span class="cn">TRUE</span>, <span class="at">conf.int=</span><span class="cn">FALSE</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(bad2, <span class="at">cumhaz=</span><span class="cn">TRUE</span>, <span class="at">col=</span><span class="dv">2</span>, <span class="at">conf.int=</span><span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-cuminc" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cuminc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="tutorial_files/figure-html/fig-cuminc-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cuminc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: Cumulative incidence fit using the cumlative hazard function
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="proportional-hazards-models" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="proportional-hazards-models"><span class="header-section-number">1.2</span> Proportional hazards models</h2>
+<p>The code below first fits a joint model for the two endpoints, followed by individual models for the two rates, each of which treats the other endpoint as censored.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>cfit0 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, event) <span class="sc">~</span> ccr5, <span class="at">data =</span> aidssi, <span class="at">id =</span> patnr)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(cfit0, <span class="at">digits=</span><span class="dv">2</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; coxph(formula = Surv(time, event) ~ ccr5, data = aidssi, id = patnr)</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;         </span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1:2       coef exp(coef) se(coef) robust se    z     p</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   ccr5WM -1.24      0.29     0.31      0.30 -4.2 3e-05</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;         </span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1:3       coef exp(coef) se(coef) robust se    z   p</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   ccr5WM -0.25      0.78     0.24      0.23 -1.1 0.3</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  States:  1= (s0), 2= AIDS, 3= SI </span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Likelihood ratio test=23  on 2 df, p=9.3e-06</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; n= 324, unique id= 324, number of events= 220 </span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    (5 observations deleted due to missingness)</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>cfit1 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, event<span class="sc">==</span><span class="st">"AIDS"</span>) <span class="sc">~</span> ccr5, <span class="at">data =</span> aidssi)</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(cfit1, <span class="at">digits=</span><span class="dv">2</span>)</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; coxph(formula = Surv(time, event == "AIDS") ~ ccr5, data = aidssi)</span></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;         coef exp(coef) se(coef)  z     p</span></span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ccr5WM -1.24      0.29     0.31 -4 6e-05</span></span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Likelihood ratio test=22  on 1 df, p=2.8e-06</span></span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; n= 324, number of events= 113 </span></span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    (5 observations deleted due to missingness)</span></span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>cfit2 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, event<span class="sc">==</span><span class="st">"SI"</span>) <span class="sc">~</span> ccr5, <span class="at">data =</span> aidssi)</span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(cfit2, <span class="at">digits=</span><span class="dv">2</span>)</span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; coxph(formula = Surv(time, event == "SI") ~ ccr5, data = aidssi)</span></span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;         coef exp(coef) se(coef)    z   p</span></span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ccr5WM -0.25      0.78     0.24 -1.1 0.3</span></span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Likelihood ratio test=1.2  on 1 df, p=0.27</span></span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; n= 324, number of events= 107 </span></span>
+<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    (5 observations deleted due to missingness)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Notice that the coefficients for the joint fit are identical to those where each endpoint is fit separately. This highlights a basic fact of multistate models</p>
+<ol type="1">
+<li>Item hazards and cumulative hazards can be estimated one by one.</li>
+<li>Probability in state (absolute risk) must be estimated jointly.</li>
+</ol>
+<p>The Cox model is a model for the hazards, and the separability allows for a lot of freedom in how code and data sets are constructed. (It also gives more opportunity for error, and for this reason the authors prefer the joint approach of <code>cfit0</code>). The tutorial fits separate Cox models, page T2404, of the form found in <code>cfit1</code> and <code>cfit2</code>. We can also fit the joint model ‘by hand’ using a stacked data set, which will have 329 rows = number of subjects for the AIDS endpoint, followed by 329 rows for the SI endpoint. We had to be a bit cautious since the tutorial uses “cause” for the event type and the data set aidsii already has a variable by that name; hence the initial subset call.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>temp <span class="ot">&lt;-</span> <span class="fu">subset</span>(aidssi, <span class="at">select=</span> <span class="fu">c</span>(patnr, time, ccr5))</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>temp1 <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(temp, <span class="at">status=</span> <span class="dv">1</span><span class="sc">*</span>(aidssi<span class="sc">$</span>event<span class="sc">==</span><span class="st">"AIDS"</span>), <span class="at">cause=</span><span class="st">"AIDS"</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>temp2 <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(temp, <span class="at">status=</span> <span class="dv">1</span><span class="sc">*</span>(aidssi<span class="sc">$</span>event<span class="sc">==</span><span class="st">"SI"</span>),   <span class="at">cause=</span><span class="st">"SI"</span>)</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>stack <span class="ot">&lt;-</span> <span class="fu">rbind</span>(temp1, temp2)</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>cfit3 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> ccr5 <span class="sc">*</span> <span class="fu">strata</span>(cause), <span class="at">data=</span>stack)</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(cfit3, <span class="at">digits=</span><span class="dv">2</span>)</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; coxph(formula = Surv(time, status) ~ ccr5 * strata(cause), data = stack)</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                         coef exp(coef) se(coef)    z     p</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ccr5WM                 -1.24      0.29     0.31 -4.0 6e-05</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ccr5WM:strata(cause)SI  0.98      2.67     0.39  2.5  0.01</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Likelihood ratio test=23  on 2 df, p=9.3e-06</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; n= 648, number of events= 220 </span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    (10 observations deleted due to missingness)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The use of an interaction term gives a different form for the coefficients; the second is now the difference in CCR-5 effect between the two endpoints. Which form one prefers is a matter of taste. In the tutorial they used the equation <code>Surv(time, status) ~ ccr5*cause + strata(cause)</code>, which leads to a redundant variable in the <span class="math inline">\(X\)</span> matrix of the regression and a consequent NA coefficient in the data set, but does not otherwise affect the results. We can also add individual indicator variables to the stacked data set for <code>ccr</code> within type, which gives yet another way of writing the same model. Last, we verify that the partial likelihoods for our three versions are all identical.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>stack<span class="sc">$</span>ccr5<span class="fl">.1</span> <span class="ot">&lt;-</span> (stack<span class="sc">$</span>ccr5<span class="sc">==</span><span class="st">"WM"</span>) <span class="sc">*</span> (stack<span class="sc">$</span>cause <span class="sc">==</span> <span class="st">"AIDS"</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>stack<span class="sc">$</span>ccr5<span class="fl">.2</span> <span class="ot">&lt;-</span> (stack<span class="sc">$</span>ccr5<span class="sc">==</span><span class="st">"WM"</span>) <span class="sc">*</span> (stack<span class="sc">$</span>cause <span class="sc">==</span> <span class="st">"SI"</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>cfit3b <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> ccr5<span class="fl">.1</span> <span class="sc">+</span> ccr5<span class="fl">.2</span> <span class="sc">+</span> <span class="fu">strata</span>(cause), <span class="at">data =</span> stack)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>cfit3b<span class="sc">$</span>coef</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     ccr5.1     ccr5.2 </span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; -1.2358147 -0.2542042</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>temp <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="at">cfit0=</span>cfit0<span class="sc">$</span>loglik, <span class="at">cfit3=</span>cfit3<span class="sc">$</span>loglik, <span class="at">cfit3b=</span>cfit3b<span class="sc">$</span>loglik)</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(temp) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"beta=0"</span>, <span class="st">"beta=final"</span>)</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>temp</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                cfit0     cfit3    cfit3b</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; beta=0     -1116.693 -1116.689 -1116.689</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; beta=final -1105.107 -1105.102 -1105.102</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We can also fit a models where the effect of ccr5 on the two types of outcome is assumed to be equal. (We agree with the tutorial that there is not good medical reason for such an assumption, the model is simply for illustration.) Not surprisingly, the realized coefficient is midway between the estimates of the ccr effect on the two separate endpoints. The second fit uses the joint model approach by adding a constraint. In this case the formula argument for <code>coxph</code> is a list. The first element of the list is a standard formula containing the response and a set of covariates, and later elements, and the second, third, etc. elements of the list are of the form state1:state2 ~ covariates. These later element modify the formula for selected pairs of states. In this case the second element specifies transitions from state 1 to 2 and 1:3 should share a common ccr5 coefficient.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>common1 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> ccr5 <span class="sc">+</span> <span class="fu">strata</span>(cause), <span class="at">data=</span>stack)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(common1, <span class="at">digits=</span><span class="dv">2</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; coxph(formula = Surv(time, status) ~ ccr5 + strata(cause), data = stack)</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;         coef exp(coef) se(coef)    z     p</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ccr5WM -0.70      0.50     0.19 -3.8 2e-04</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Likelihood ratio test=16  on 1 df, p=5e-05</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; n= 648, number of events= 220 </span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    (10 observations deleted due to missingness)</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>common1b <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">list</span>( <span class="fu">Surv</span>(time, event) <span class="sc">~</span> <span class="dv">1</span>, </span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>                        <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span> <span class="sc">+</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span> <span class="sc">~</span> ccr5<span class="sc">/</span>common ),</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>                  <span class="at">data=</span>aidssi, <span class="at">id=</span>patnr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>At this point the tutorial explores an approach that we find problematic, which is to fit models to the stacked data set <em>without</em> including the stratum. The partial likelihood for the Cox model has a term for each event time, each term is a ratio that compares the risk score of the event (numerator) to the sum of risk scores for all subjects who were at risk for the event (denominator). When the <code>stack</code> data set is fit without a strata statement, like below, then at each event time the “risk set” will have 2 clones of each subject, one labeled with covariate cause = AIDS and the other as SI. If we look closely, the estimated coefficient from this second fit is almost identical to the stratified fit <code>common1</code>, however.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>common2 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> ccr5, <span class="at">data =</span> stack)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">all.equal</span>(common2<span class="sc">$</span>coef, common1<span class="sc">$</span>coef)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] "Mean relative difference: 8.40399e-05"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>In fact, if the Breslow approximation is used for ties, one can show that the partial likelihood (PL) values for the two fits will satisfy the identity PL(common2) = PL(common1) - d log(2), where <span class="math inline">\(d\)</span> is the total number of events. Since the two partial likelihoods differ by a constant, they will maximize at the same location, i.e., give exactly the same coefficient estimates. One can further show that if <code>cause</code> is added to the second model as a covariate, that this will not change the ccr5 coefficient, while adding an estimate of the relative proportion of events of each type.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># reprise common1 and common2, using the breslow option</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>test1 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> ccr5 <span class="sc">+</span> <span class="fu">strata</span>(cause), stack,</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>               <span class="at">ties=</span><span class="st">'breslow'</span>)</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>test2 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> ccr5, stack, <span class="at">ties=</span><span class="st">'breslow'</span>)</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="fu">all.equal</span>(test2<span class="sc">$</span>loglik <span class="sc">+</span> test2<span class="sc">$</span>nevent <span class="sc">*</span> <span class="fu">log</span>(<span class="dv">2</span>),  test1<span class="sc">$</span>loglik)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="fu">all.equal</span>(test2<span class="sc">$</span>coef, test1<span class="sc">$</span>coef)</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>test3 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> ccr5 <span class="sc">+</span> cause, stack, <span class="at">ties=</span><span class="st">'breslow'</span>)</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>test3</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; coxph(formula = Surv(time, status) ~ ccr5 + cause, data = stack, </span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     ties = "breslow")</span></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             coef exp(coef) se(coef)      z        p</span></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ccr5WM  -0.70115   0.49601  0.18597 -3.770 0.000163</span></span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; causeSI -0.05456   0.94690  0.13489 -0.404 0.685867</span></span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Likelihood ratio test=16.62  on 2 df, p=0.0002459</span></span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; n= 648, number of events= 220 </span></span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    (10 observations deleted due to missingness)</span></span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a><span class="fu">all.equal</span>(test3<span class="sc">$</span>coef[<span class="dv">1</span>], test1<span class="sc">$</span>coef)</span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>These identities do not assure the author that this <em>pseudo risk set</em> approach, where subjects are duplicated, is a valid way to estimate the ccr5 effect under the assumption of a common baseline hazard. The first model <code>common1</code> can be directly fit in the multistate framework by adding the constraint of a common ccr5 effect for the two transitions; this is found above as <code>common1b</code>. One can not directly fit a version of <code>test2</code> using the multistate model, however, as the underlying code for multistate fits rigorously enforces a “one copy” principle: during the entire period of time that a subject is at risk, there should be exactly one copy of that subject present in the data set. See the survcheck routine for a more detailed discussion.</p>
+</section>
+<section id="predicted-curves" class="level2" data-number="1.3">
+<h2 data-number="1.3" class="anchored" data-anchor-id="predicted-curves"><span class="header-section-number">1.3</span> Predicted curves</h2>
+<p>We can now generate predicted Aalen-Johansen curves from the Cox model fits. As with any Cox model, this starts by deciding <em>who</em> to predict, i.e.&nbsp;the set of covariate values at which to obtain a prediction. For a model with a single binary variable this is an easy task.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># re-create figure T5 in a single panel</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>dummy <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">ccr5=</span><span class="fu">c</span>(<span class="st">"WW"</span>, <span class="st">"WM"</span>))</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>pred.aj <span class="ot">&lt;-</span> <span class="fu">survfit</span>(cfit0, <span class="at">newdata=</span>dummy)</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(pred.aj)</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   data states </span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      2      3</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>pred.aj<span class="sc">$</span>states</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] "(s0)" "AIDS" "SI"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The resulting curves have an apparent dimension of (number of strata, number of covariate patterns, number of states). We plot subsets of the curves by using subscripts. (When there are no strata in the coxph fit (1 stratum) the code allows one to omit the first subscript.)</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>oldpar <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mfrow=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>))</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(pred.aj[,,<span class="st">"AIDS"</span>], <span class="at">lwd=</span><span class="dv">2</span>, <span class="at">col=</span><span class="fu">c</span>(<span class="st">"black"</span>, <span class="st">"gray"</span>), </span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>     <span class="at">xmax=</span><span class="dv">13</span>, <span class="at">ylim=</span><span class="fu">c</span>(<span class="dv">0</span>,.<span class="dv">5</span>),</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab=</span><span class="st">"Years from HIV infection"</span>, <span class="at">ylab=</span><span class="st">"Probability of AIDS"</span>)</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="fu">text</span>(<span class="fu">c</span>(<span class="fl">9.5</span>, <span class="dv">10</span>), <span class="fu">c</span>(.<span class="dv">3</span>, .<span class="dv">1</span>), <span class="fu">c</span>(<span class="st">"WW"</span>, <span class="st">"WM"</span>))</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(pred.aj[,,<span class="st">"SI"</span>], <span class="at">lwd=</span><span class="dv">2</span>, <span class="at">col=</span><span class="fu">c</span>(<span class="st">"black"</span>, <span class="st">"gray"</span>), </span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">xmax=</span><span class="dv">13</span>, <span class="at">ylim=</span><span class="fu">c</span>(<span class="dv">0</span>,.<span class="dv">5</span>),</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">xlab=</span><span class="st">"Years from HIV infection"</span>, <span class="at">ylab=</span><span class="st">"Probability of SI"</span>)</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a><span class="fu">text</span>(<span class="fu">c</span>(<span class="fl">8.5</span>, <span class="dv">9</span>), <span class="fu">c</span>(.<span class="dv">33</span>, .<span class="dv">25</span>), <span class="fu">c</span>(<span class="st">"WW"</span>, <span class="st">"WM"</span>))</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(oldpar)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-T5" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-T5-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="tutorial_files/figure-html/fig-T5-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-T5-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6: Figure T5 showing predicted curves for AIDS and SI stratified by subjects with CCR5 wild-type (WW) and mutant (WM).
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Predicted survival curves from the two fits to individual endpoints suffer from the same issue as the individual Kaplan-Meier curves <code>bad1</code> and <code>bad2</code>: the predicted risk risk of having either AIDS or SI will be greater than 1 for some time points, which is clearly impossible. Absolute risk estimates must be done jointly. The tutorial at this point uses simulation data to further elucidate the underlying issues between per-endpoint and joint estimates, which we will not replicate.</p>
+</section>
+<section id="fine-gray-fits" class="level2" data-number="1.4">
+<h2 data-number="1.4" class="anchored" data-anchor-id="fine-gray-fits"><span class="header-section-number">1.4</span> Fine-Gray fits</h2>
+<p>We can also fit Fine-Gray models for AIDS and SI appearance. In the survival package this is done by creating a special data set - one for each endpoint. Ordinary Cox model code can then be applied to those data sets.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>fdata1 <span class="ot">&lt;-</span> <span class="fu">finegray</span>(<span class="fu">Surv</span>(time, event) <span class="sc">~</span> ., <span class="at">data =</span> aidssi, <span class="at">etype =</span> <span class="st">'AIDS'</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>fgfit1 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(fgstart, fgstop, fgstatus) <span class="sc">~</span> ccr5, <span class="at">data =</span> fdata1,</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>                <span class="at">weight =</span> fgwt)</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>fgfit1</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; coxph(formula = Surv(fgstart, fgstop, fgstatus) ~ ccr5, data = fdata1, </span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     weights = fgwt)</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;           coef exp(coef) se(coef) robust se      z        p</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ccr5WM -1.0043    0.3663   0.3059    0.2830 -3.549 0.000387</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Likelihood ratio test=13.94  on 1 df, p=0.000189</span></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; n= 2668, number of events= 113 </span></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    (21 observations deleted due to missingness)</span></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>fdata2 <span class="ot">&lt;-</span> <span class="fu">finegray</span>(<span class="fu">Surv</span>(time, event) <span class="sc">~</span>., aidssi, <span class="at">etype=</span><span class="st">"SI"</span>)</span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>fgfit2 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(fgstart, fgstop, fgstatus) <span class="sc">~</span> ccr5, fdata2,</span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>                <span class="at">weight =</span> fgwt)</span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>fgfit2</span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; coxph(formula = Surv(fgstart, fgstop, fgstatus) ~ ccr5, data = fdata2, </span></span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     weights = fgwt)</span></span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;           coef exp(coef) se(coef) robust se     z     p</span></span>
+<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ccr5WM 0.02366   1.02394  0.23554   0.21832 0.108 0.914</span></span>
+<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Likelihood ratio test=0.01  on 1 df, p=0.9202</span></span>
+<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; n= 2195, number of events= 107 </span></span>
+<span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    (31 observations deleted due to missingness)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The predicted curves based on the Fine-Gray model @ref(fig:fig-T8) (T8) use the ordinary survival tools (not Aalen-Johansen), since they are ordinary Cox models on a special data set.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># re-create figure T8: Fine-Gray curves</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>fgsurv1<span class="ot">&lt;-</span><span class="fu">survfit</span>(fgfit1, <span class="at">newdata=</span>dummy)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>fgsurv2<span class="ot">&lt;-</span><span class="fu">survfit</span>(fgfit2, <span class="at">newdata=</span>dummy)</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>oldpar <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mfrow=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>), <span class="at">mar=</span><span class="fu">c</span>(<span class="fl">4.1</span>, <span class="fl">3.1</span>, <span class="fl">3.1</span>, <span class="dv">1</span>)) <span class="co">#leave room for title</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(fgsurv1, <span class="at">col=</span><span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">lty=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">2</span>), <span class="at">lwd=</span><span class="dv">2</span>, <span class="at">xmax=</span><span class="dv">13</span>,</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>     <span class="at">ylim=</span><span class="fu">c</span>(<span class="dv">0</span>, .<span class="dv">5</span>),<span class="at">fun=</span><span class="st">'event'</span>,</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab=</span><span class="st">"Years from HIV infection"</span>, <span class="at">ylab=</span><span class="st">"Probability"</span>)</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a><span class="fu">title</span>(<span class="st">"AIDS"</span>)</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(fgsurv2, <span class="at">col=</span><span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">lty=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">2</span>), <span class="at">lwd=</span><span class="dv">2</span>, <span class="at">xmax=</span><span class="dv">13</span>,</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>     <span class="at">ylim=</span><span class="fu">c</span>(<span class="dv">0</span>, .<span class="dv">5</span>), <span class="at">fun=</span><span class="st">'event'</span>,</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab=</span><span class="st">"Years from HIV infection"</span>, <span class="at">ylab=</span><span class="st">"Probability"</span>)</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a><span class="fu">title</span>(<span class="st">"SI appearance"</span>)    </span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(oldpar)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-T8" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-T8-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="tutorial_files/figure-html/fig-T8-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-T8-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: Reproduction of Figure T8 showing cumulative incidence functions for AIDS (left) and SI appearance (right), for CCR5 wild-type (WW) and mutant (WM), based on the Fine and Gray model.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The last <a href="#fig-T9" class="quarto-xref">Figure&nbsp;8</a> (T9) in this section of the tutorial contains the Aalen-Johansen non-parametric fits stratified by CCR5 status.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># re-create figure T9: curves by CCR type</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>aj2 <span class="ot">&lt;-</span> <span class="fu">survfit</span>(<span class="fu">Surv</span>(time, event) <span class="sc">~</span> ccr5, <span class="at">data =</span> aidssi)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>oldpar <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mfrow=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>))</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(aj2[,<span class="st">"AIDS"</span>], <span class="at">xmax=</span><span class="dv">13</span>, <span class="at">col=</span><span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">lwd=</span><span class="dv">2</span>, <span class="at">ylim=</span><span class="fu">c</span>(<span class="dv">0</span>, .<span class="dv">5</span>),</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab=</span><span class="st">"Years from HIV infection"</span>, <span class="at">ylab=</span><span class="st">"Probability of AIDS"</span>)</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="fu">text</span>(<span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">10</span>), <span class="fu">c</span>(.<span class="dv">35</span>, .<span class="dv">07</span>), <span class="fu">c</span>(<span class="st">"WW"</span>, <span class="st">"WM"</span>))</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(aj2[,<span class="st">"SI"</span>], <span class="at">xmax=</span><span class="dv">13</span>, <span class="at">col=</span><span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">lwd=</span><span class="dv">2</span>, <span class="at">ylim=</span><span class="fu">c</span>(<span class="dv">0</span>, .<span class="dv">5</span>), </span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab=</span><span class="st">"Years from HIV infection"</span>, <span class="at">ylab=</span><span class="st">"Probability of SI"</span>)</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a><span class="fu">text</span>(<span class="fu">c</span>(<span class="dv">8</span>, <span class="dv">8</span>), <span class="fu">c</span>(.<span class="dv">34</span>, .<span class="dv">18</span>), <span class="fu">c</span>(<span class="st">"WW"</span>, <span class="st">"WM"</span>))</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(oldpar)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-T9" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-T9-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="tutorial_files/figure-html/fig-T9-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-T9-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8: Reproduction of Figure T9 showing non-parametric cumulative incidence functions for AIDS (left) and SI appearance (right), for CCR5 wild-type (WW) and mutant (WM)
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="ebmt-data-set-multistate-model" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> EBMT data set, multistate model</h1>
+<p>The multistate model is based on patients from the European Blood and Marrow Transplant registry. The initial state for each subject is bone marrow transplant after which they may have platelet recovery (PR); the end stage is relapse or death. Important covariates are the disease classification of AML, ALL or CML, age at transplant (3 groups), whether T-cell depletion was done, and whether donor and recipient are sex matched.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>oldpar <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mar=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>))</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>states <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Transplant"</span>, <span class="st">"Platelet recovery"</span>, </span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>            <span class="st">"Relapse or death"</span>)</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>tmat <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="dv">3</span>,<span class="dv">3</span>, <span class="at">dimnames=</span><span class="fu">list</span>(states, states))</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>tmat[<span class="dv">1</span>,<span class="dv">2</span>] <span class="ot">&lt;-</span> tmat[<span class="dv">1</span>,<span class="dv">3</span>] <span class="ot">&lt;-</span> tmat[<span class="dv">2</span>,<span class="dv">3</span>] <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="co"># arrows</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="fu">statefig</span>(<span class="fu">cbind</span>((<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>)<span class="sc">/</span><span class="dv">4</span>, <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">3</span>,<span class="dv">1</span>)<span class="sc">/</span><span class="dv">4</span>), tmat)</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="fu">text</span>(<span class="fu">c</span>(.<span class="dv">3</span>, .<span class="dv">5</span>, .<span class="dv">7</span>), <span class="fu">c</span>(.<span class="dv">5</span>, .<span class="dv">3</span>, .<span class="dv">5</span>), <span class="fu">c</span>(<span class="dv">1169</span>, <span class="dv">458</span>, <span class="dv">383</span>))</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(oldpar)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-T13" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-T13-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="tutorial_files/figure-html/fig-T13-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="384">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-T13-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9: Reproduce Figure T13
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<section id="aalen-johansen-curves-1" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="aalen-johansen-curves-1"><span class="header-section-number">2.1</span> Aalen-Johansen curves</h2>
+<p>We first reprise table T2 to verify that we have the same data set.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(ebmt3<span class="sc">$</span>dissub)</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; AML ALL CML </span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 853 447 904</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(ebmt3<span class="sc">$</span>drmatch)</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; No gender mismatch    Gender mismatch </span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;               1648                556</span></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(ebmt3<span class="sc">$</span>tcd)</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; No TCD    TCD </span></span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   1928    276</span></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(ebmt3<span class="sc">$</span>age)</span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  &lt;=20 20-40   &gt;40 </span></span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   419  1057   728</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Next create the analysis data set <code>edata</code>. The <code>tmerge</code> function creates the basic time course data set that tracks a subject from state to state using (tstart, tstop) intervals of time. We also shorten one of the factor labels so as to better fit the printout on a page. Printout of a subset of rows shows that subjects 8 and 11 achieve PR, subject 9 is censored at 3.5 years (1264/365), and subject 10 dies at about 1 year. Note that the variable for prior platelet recovery (priorpr) lags the platelet recovery event. The <code>survcheck</code> call is an important check of the data set. The transitions table shows that about 28% (577/2204) of the subjects had neither platelet recover or failure by the end of follow-up while 383 experienced both. Most important is that the routine reported no errors in the data.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>temp <span class="ot">&lt;-</span> <span class="fu">subset</span>(ebmt3, <span class="at">select =</span> <span class="sc">-</span><span class="fu">c</span>(prtime, prstat, rfstime, rfsstat))</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>edata <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(temp, ebmt3, id, </span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>                <span class="at">rstat =</span> <span class="fu">event</span>(rfstime, rfsstat),</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">pstat =</span> <span class="fu">event</span>(prtime, prstat),</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>                <span class="at">priorpr =</span> <span class="fu">tdc</span>(prtime))</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(edata[<span class="dv">15</span><span class="sc">:</span><span class="dv">20</span>,<span class="sc">-</span>(<span class="dv">3</span><span class="sc">:</span><span class="dv">5</span>)])</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    id dissub tstart tstop rstat pstat priorpr</span></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 15  8    ALL      0    35     0     1       0</span></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 16  8    ALL     35  1448     0     0       1</span></span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 17  9    AML      0  1264     0     0       0</span></span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 18 10    CML      0   338     1     0       0</span></span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 19 11    AML      0    50     0     1       0</span></span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 20 11    AML     50    84     1     0       1</span></span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Check that no one had recovery and death on the same day</span></span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a><span class="fu">with</span>(edata, <span class="fu">table</span>(rstat, pstat))</span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      pstat</span></span>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; rstat    0    1</span></span>
+<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     0 1363 1169</span></span>
+<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     1  841    0</span></span>
+<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the factor outcome</span></span>
+<span id="cb23-23"><a href="#cb23-23" aria-hidden="true" tabindex="-1"></a>edata<span class="sc">$</span>event <span class="ot">&lt;-</span> <span class="fu">with</span>(edata, <span class="fu">factor</span>(pstat <span class="sc">+</span> <span class="dv">2</span><span class="sc">*</span>rstat, <span class="dv">0</span><span class="sc">:</span><span class="dv">2</span>,</span>
+<span id="cb23-24"><a href="#cb23-24" aria-hidden="true" tabindex="-1"></a>                           <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"censor"</span>, <span class="st">"PR"</span>, <span class="st">"RelDeath"</span>)))</span>
+<span id="cb23-25"><a href="#cb23-25" aria-hidden="true" tabindex="-1"></a><span class="fu">levels</span>(edata<span class="sc">$</span>drmatch) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Match"</span>, <span class="st">"Mismatch"</span>)</span>
+<span id="cb23-26"><a href="#cb23-26" aria-hidden="true" tabindex="-1"></a><span class="fu">survcheck</span>(<span class="fu">Surv</span>(tstart, tstop, event) <span class="sc">~</span><span class="dv">1</span>, edata, <span class="at">id=</span>id)</span>
+<span id="cb23-27"><a href="#cb23-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb23-28"><a href="#cb23-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; survcheck(formula = Surv(tstart, tstop, event) ~ 1, data = edata, </span></span>
+<span id="cb23-29"><a href="#cb23-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     id = id)</span></span>
+<span id="cb23-30"><a href="#cb23-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb23-31"><a href="#cb23-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Unique identifiers       Observations        Transitions </span></span>
+<span id="cb23-32"><a href="#cb23-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;               2204               3373               2010 </span></span>
+<span id="cb23-33"><a href="#cb23-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb23-34"><a href="#cb23-34" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Transitions table:</span></span>
+<span id="cb23-35"><a href="#cb23-35" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;           to</span></span>
+<span id="cb23-36"><a href="#cb23-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; from         PR RelDeath (censored)</span></span>
+<span id="cb23-37"><a href="#cb23-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   (s0)     1169      458        577</span></span>
+<span id="cb23-38"><a href="#cb23-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   PR          0      383        786</span></span>
+<span id="cb23-39"><a href="#cb23-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   RelDeath    0        0          0</span></span>
+<span id="cb23-40"><a href="#cb23-40" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb23-41"><a href="#cb23-41" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Number of subjects with 0, 1, ... transitions to each state:</span></span>
+<span id="cb23-42"><a href="#cb23-42" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;           count</span></span>
+<span id="cb23-43"><a href="#cb23-43" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; state         0    1   2</span></span>
+<span id="cb23-44"><a href="#cb23-44" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   PR       1035 1169   0</span></span>
+<span id="cb23-45"><a href="#cb23-45" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   RelDeath 1363  841   0</span></span>
+<span id="cb23-46"><a href="#cb23-46" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   (any)     577 1244 383</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We then generate the multistate <span class="math inline">\(P(t)\)</span> curves, a plot that does not appear in the tutorial. It shows the rapid onset of platelet recovery followed by a slow but steady conversion of these patients to relapse or death.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>surv1 <span class="ot">&lt;-</span> <span class="fu">survfit</span>(<span class="fu">Surv</span>(tstart, tstop, event) <span class="sc">~</span> <span class="dv">1</span>, edata, <span class="at">id=</span>id)</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>surv1<span class="sc">$</span>transitions   <span class="co"># matches the Frequencies on page C5</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;           to</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; from         PR RelDeath (censored)</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   (s0)     1169      458        577</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   PR          0      383        786</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   RelDeath    0        0          0</span></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(surv1, <span class="at">col=</span><span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">xscale=</span><span class="fl">365.25</span>, <span class="at">lwd=</span><span class="dv">2</span>, </span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab=</span><span class="st">"Years since transplant"</span>, <span class="at">ylab=</span><span class="st">"Fraction in state"</span>)</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="dv">1000</span>, .<span class="dv">2</span>, <span class="fu">c</span>(<span class="st">"Platelet recovery"</span>, <span class="st">"Death or Relapse"</span>), </span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>       <span class="at">lty=</span><span class="dv">1</span>, <span class="at">col=</span><span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">lwd=</span><span class="dv">2</span>, <span class="at">bty=</span><span class="st">'n'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-data1b" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center" width="672">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-data1b-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="tutorial_files/figure-html/fig-data1b-1.png" id="fig-data1b" class="img-fluid quarto-figure quarto-figure-center anchored figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-data1b-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="proportional-hazards-models-1" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="proportional-hazards-models-1"><span class="header-section-number">2.2</span> Proportional hazards models</h2>
+<p>The default fit has separate baseline hazards and separate coefficients for each transition, and is given below. We have used the Breslow approximation for ties so as to exactly match the paper. By default the program uses a robust standard error to account for the fact that some subjects have multiple events. This reproduces the results in the first column of table III.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>efit1 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(tstart, tstop, event) <span class="sc">~</span> dissub <span class="sc">+</span> age <span class="sc">+</span> drmatch <span class="sc">+</span> tcd,</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">id=</span>id, <span class="at">data=</span>edata, <span class="at">ties=</span><span class="st">'breslow'</span>)</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(efit1, <span class="at">digits=</span><span class="dv">2</span>)</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; coxph(formula = Surv(tstart, tstop, event) ~ dissub + age + drmatch + </span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     tcd, data = edata, ties = "breslow", id = id)</span></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                  </span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1:2                 coef exp(coef) se(coef) robust se    z     p</span></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   dissubALL       -0.044     0.957    0.078     0.074 -0.6  0.55</span></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   dissubCML       -0.297     0.743    0.068     0.068 -4.4 1e-05</span></span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   age20-40        -0.165     0.848    0.079     0.076 -2.2  0.03</span></span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   age&gt;40          -0.090     0.914    0.086     0.083 -1.1  0.28</span></span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   drmatchMismatch  0.046     1.047    0.067     0.064  0.7  0.47</span></span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   tcdTCD           0.429     1.536    0.080     0.075  5.7 1e-08</span></span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                  </span></span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1:3                 coef exp(coef) se(coef) robust se    z     p</span></span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   dissubALL        0.256     1.292    0.135     0.139  1.8  0.07</span></span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   dissubCML        0.017     1.017    0.108     0.109  0.2  0.88</span></span>
+<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   age20-40         0.255     1.291    0.151     0.149  1.7  0.09</span></span>
+<span id="cb25-22"><a href="#cb25-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   age&gt;40           0.526     1.693    0.158     0.157  3.4 8e-04</span></span>
+<span id="cb25-23"><a href="#cb25-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   drmatchMismatch -0.075     0.928    0.110     0.108 -0.7  0.49</span></span>
+<span id="cb25-24"><a href="#cb25-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   tcdTCD           0.297     1.345    0.150     0.145  2.0  0.04</span></span>
+<span id="cb25-25"><a href="#cb25-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb25-26"><a href="#cb25-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                  </span></span>
+<span id="cb25-27"><a href="#cb25-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2:3                coef exp(coef) se(coef) robust se   z     p</span></span>
+<span id="cb25-28"><a href="#cb25-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   dissubALL       0.136     1.146    0.148     0.153 0.9  0.37</span></span>
+<span id="cb25-29"><a href="#cb25-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   dissubCML       0.247     1.280    0.117     0.117 2.1  0.04</span></span>
+<span id="cb25-30"><a href="#cb25-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   age20-40        0.062     1.063    0.153     0.155 0.4  0.69</span></span>
+<span id="cb25-31"><a href="#cb25-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   age&gt;40          0.581     1.787    0.160     0.164 3.5 4e-04</span></span>
+<span id="cb25-32"><a href="#cb25-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   drmatchMismatch 0.173     1.189    0.115     0.113 1.5  0.13</span></span>
+<span id="cb25-33"><a href="#cb25-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   tcdTCD          0.201     1.222    0.126     0.120 1.7  0.09</span></span>
+<span id="cb25-34"><a href="#cb25-34" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb25-35"><a href="#cb25-35" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  States:  1= (s0), 2= PR, 3= RelDeath </span></span>
+<span id="cb25-36"><a href="#cb25-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb25-37"><a href="#cb25-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Likelihood ratio test=118  on 18 df, p=&lt;2e-16</span></span>
+<span id="cb25-38"><a href="#cb25-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; n= 3373, unique id= 2204, number of events= 2010</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Now draw <a href="#fig-T14" class="quarto-xref">Figure&nbsp;11</a> (T14) for baseline hazards.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># a data set containing the "reference" categories </span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>rdata <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">dissub=</span><span class="st">"AML"</span>, <span class="at">age=</span><span class="st">"&lt;=20"</span>, <span class="at">drmatch=</span><span class="st">"Match"</span>, <span class="at">tcd=</span><span class="st">"No TCD"</span>)</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>esurv1 <span class="ot">&lt;-</span> <span class="fu">survfit</span>(efit1, <span class="at">newdata=</span>rdata)</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(esurv1, <span class="at">cumhaz=</span><span class="cn">TRUE</span>, <span class="at">lty=</span><span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, <span class="at">xscale=</span><span class="fl">365.25</span>, <span class="at">xmax=</span><span class="dv">7</span><span class="sc">*</span><span class="fl">365.35</span>,</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab=</span><span class="st">"Years since transplant"</span>, <span class="at">ylab=</span><span class="st">"Cumulative hazard"</span>)</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="dv">365</span>, .<span class="dv">8</span>, <span class="fu">c</span>(<span class="st">"Transplant to platelet recovery (1:2)"</span>,</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>                <span class="st">"Transplant to death (1:3)"</span>,</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>                <span class="st">"Platelet recovery to death (2:3)"</span>), <span class="at">lty=</span><span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, <span class="at">bty=</span><span class="st">'n'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-T14" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-T14-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="tutorial_files/figure-html/fig-T14-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-T14-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;11: Reproduce Figure T14
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>From the figure, proportional hazards for the two transitions to death could be As we noted before, the partial likelihood construction forces separate baseline hazards for transitions that emanate from a given state, i.e.&nbsp;the 1:2 and 1:3 pair in this case. However, it does allow a shared baseline hazard for transitions that terminate in the same state, i.e., 1:3 and 2:3. The fit below does adds this constraint. The resulting fit replicates coefficients in the “proportional hazards” columns of table T3.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>efit2 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">list</span>(<span class="fu">Surv</span>(tstart, tstop, event) <span class="sc">~</span> dissub <span class="sc">+</span> age <span class="sc">+</span> drmatch <span class="sc">+</span> tcd,</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>                    <span class="dv">0</span><span class="sc">:</span><span class="fu">state</span>(<span class="st">"RelDeath"</span>) <span class="sc">~</span> <span class="dv">1</span> <span class="sc">/</span> shared),</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>                    <span class="at">id=</span>id, <span class="at">data=</span>edata, <span class="at">ties=</span><span class="st">'breslow'</span>)</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">coef</span>(efit2, <span class="at">type=</span><span class="st">'matrix'</span>), <span class="at">digits=</span><span class="dv">2</span>)</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       dissubALL_1:2       dissubCML_1:2        age20-40_1:2 </span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             -0.0436             -0.2972             -0.1646 </span></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;          age&gt;40_1:2 drmatchMismatch_1:2          tcdTCD_1:2 </span></span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             -0.0898              0.0458              0.4291 </span></span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       dissubALL_1:3       dissubCML_1:3        age20-40_1:3 </span></span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;              0.2610              0.0036              0.2509 </span></span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;          age&gt;40_1:3 drmatchMismatch_1:3          tcdTCD_1:3 </span></span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;              0.5258             -0.0721              0.3185 </span></span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       dissubALL_2:3       dissubCML_2:3        age20-40_2:3 </span></span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;              0.1398              0.2503              0.0556 </span></span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;          age&gt;40_2:3 drmatchMismatch_2:3          tcdTCD_2:3 </span></span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;              0.5625              0.1691              0.2110 </span></span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;         ph(2:3/1:3) </span></span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             -0.3786</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The last model of table 3 adds a term for the time until platelet recovery. This variable is only defined for subjects who enter state 2.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>prtime <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(edata<span class="sc">$</span>priorpr<span class="sc">==</span><span class="dv">1</span>, edata<span class="sc">$</span>tstart, <span class="dv">0</span>)<span class="sc">/</span><span class="fl">365.25</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>efit3 <span class="ot">&lt;-</span>  <span class="fu">coxph</span>(<span class="fu">list</span>(<span class="fu">Surv</span>(tstart, tstop, event) <span class="sc">~</span> dissub <span class="sc">+</span> age <span class="sc">+</span> drmatch <span class="sc">+</span> tcd,</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>                    <span class="dv">0</span><span class="sc">:</span><span class="fu">state</span>(<span class="st">"RelDeath"</span>) <span class="sc">~</span> <span class="dv">1</span><span class="sc">/</span> shared,</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"PR"</span><span class="sc">:</span><span class="st">"RelDeath"</span> <span class="sc">~</span> prtime), </span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>                    <span class="at">id=</span>id, <span class="at">data=</span>edata, <span class="at">ties=</span><span class="st">'breslow'</span>)</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">coef</span>(efit3, <span class="at">type=</span><span class="st">'matrix'</span>), <span class="at">digits=</span><span class="dv">2</span>)</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       dissubALL_1:2       dissubCML_1:2        age20-40_1:2 </span></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             -0.0436             -0.2972             -0.1646 </span></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;          age&gt;40_1:2 drmatchMismatch_1:2          tcdTCD_1:2 </span></span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             -0.0898              0.0458              0.4291 </span></span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       dissubALL_1:3       dissubCML_1:3        age20-40_1:3 </span></span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;              0.2609              0.0038              0.2510 </span></span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;          age&gt;40_1:3 drmatchMismatch_1:3          tcdTCD_1:3 </span></span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;              0.5258             -0.0721              0.3182 </span></span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       dissubALL_2:3       dissubCML_2:3        age20-40_2:3 </span></span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;              0.1320              0.2518              0.0582 </span></span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;          age&gt;40_2:3 drmatchMismatch_2:3          tcdTCD_2:3 </span></span>
+<span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;              0.5658              0.1668              0.2074 </span></span>
+<span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;              prtime         ph(2:3/1:3) </span></span>
+<span id="cb28-20"><a href="#cb28-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;              0.2952             -0.4069</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We have purposely used a mix of state:state notations in the above call for illustration.</p>
+<ul>
+<li>0 is a shorthand for ``any state’’</li>
+<li>state(a, b, c) is a way to give a list of states, using the state labels</li>
+<li>a single state can be identified by its label.</li>
+</ul>
+<p>A line can refer to state pairs that do not exist, without harm; a last step in the processing subsets to transitions that actually occur in the data. The first line implicitly includes ‘RelDeath’:‘RelDeath’ for instance.</p>
+<p>Table T4 of the tutorial reruns these three models using a “clock reset” time scale. Code will be the same as before but with <code>Surv(tstop - tstart, event)</code> in the coxph calls.</p>
+<p>We now predict the future state of a patient, using as our reference set two subjects who are &lt;= 20 years old, gender matched, AML, with and without T-cell depletion. We will use the fit from column 2 of table T3, which has proportional hazards for the transitions to Relapse/Death and a separate baseline hazard for the PR transition.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>edummy <span class="ot">&lt;-</span> <span class="fu">expand.grid</span>(<span class="at">age=</span><span class="st">"&lt;=20"</span>, <span class="at">dissub=</span><span class="st">"AML"</span>, <span class="at">drmatch=</span><span class="st">"Mismatch"</span>,</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>                      <span class="at">tcd=</span><span class="fu">c</span>(<span class="st">"No TCD"</span>, <span class="st">"TCD"</span>), <span class="at">priorpr=</span><span class="dv">1</span>)</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>ecurve2 <span class="ot">&lt;-</span> <span class="fu">survfit</span>(efit2, <span class="at">newdata=</span> edummy)</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(ecurve2, <span class="at">col=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">3</span>), <span class="at">lty=</span><span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">lwd=</span><span class="dv">2</span>, <span class="at">xscale=</span><span class="fl">365.25</span>,</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>     <span class="at">noplot=</span><span class="cn">NULL</span>, </span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab=</span><span class="st">"Years since transplant"</span>, <span class="at">ylab=</span><span class="st">"Predicted probabilities"</span>)</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="dv">700</span>, .<span class="dv">9</span>, <span class="fu">c</span>(<span class="st">"Currently alive in remission, no PR"</span>, <span class="st">"Currently in PR"</span>,</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>               <span class="st">"Relapse or death"</span>), <span class="at">col=</span><span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, <span class="at">lwd=</span><span class="dv">2</span>, <span class="at">bty=</span><span class="st">'n'</span>)</span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a><span class="fu">text</span>(<span class="dv">700</span>, .<span class="dv">95</span>, <span class="st">"Solid= No TCD, dashed = TCD"</span>, <span class="at">adj=</span><span class="dv">0</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="tutorial_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The predicted effect of TCD is to increase the occupancy of both the PR and remission/death states, at the expense of the unchanged state.</p>
+<p><a href="#fig-T15" class="quarto-xref">Figure&nbsp;12</a> (T15) separates the remission/death state into two portions, those who had prior PR and those who did not. To create this set of curves we set up the data as the four state models shown below.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>oldpar <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mar=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>))</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>state4 <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Transplant"</span>, <span class="st">"Platelet recovery"</span>, <span class="st">"Relapse or death (1)"</span>,</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>            <span class="st">"Relapse or death (2)"</span>)</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>cmat <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="dv">4</span>, <span class="dv">4</span>, <span class="at">dimnames =</span> <span class="fu">list</span>(state4, state4))</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>cmat[<span class="dv">1</span>,<span class="dv">2</span>] <span class="ot">&lt;-</span> cmat[<span class="dv">1</span>,<span class="dv">3</span>] <span class="ot">&lt;-</span> cmat[<span class="dv">2</span>,<span class="dv">4</span>] <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a><span class="fu">statefig</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">1</span>), cmat)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="tutorial_files/figure-html/fourstate-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="480"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(oldpar)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>etemp <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(edata<span class="sc">$</span>event)</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>etemp <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(etemp<span class="sc">==</span><span class="dv">3</span> <span class="sc">&amp;</span> edata<span class="sc">$</span>priorpr<span class="sc">==</span><span class="dv">1</span>, <span class="dv">4</span>, etemp)</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>edata<span class="sc">$</span>event4 <span class="ot">&lt;-</span> <span class="fu">factor</span>(etemp, <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>, <span class="fu">c</span>(<span class="st">"censor"</span>, <span class="st">"PR"</span>, <span class="st">"RelDeath1"</span>, </span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>                                     <span class="st">"RelDeath2"</span>)) </span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="fu">survcheck</span>(<span class="fu">Surv</span>(tstart, tstop, event4) <span class="sc">~</span> <span class="dv">1</span>, edata, <span class="at">id=</span>id)</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; survcheck(formula = Surv(tstart, tstop, event4) ~ 1, data = edata, </span></span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     id = id)</span></span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Unique identifiers       Observations        Transitions </span></span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;               2204               3373               2010 </span></span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Transitions table:</span></span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;            to</span></span>
+<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; from          PR RelDeath1 RelDeath2 (censored)</span></span>
+<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   (s0)      1169       458         0        577</span></span>
+<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   PR           0         0       383        786</span></span>
+<span id="cb32-18"><a href="#cb32-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   RelDeath1    0         0         0          0</span></span>
+<span id="cb32-19"><a href="#cb32-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   RelDeath2    0         0         0          0</span></span>
+<span id="cb32-20"><a href="#cb32-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb32-21"><a href="#cb32-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Number of subjects with 0, 1, ... transitions to each state:</span></span>
+<span id="cb32-22"><a href="#cb32-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;            count</span></span>
+<span id="cb32-23"><a href="#cb32-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; state          0    1   2</span></span>
+<span id="cb32-24"><a href="#cb32-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   PR        1035 1169   0</span></span>
+<span id="cb32-25"><a href="#cb32-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   RelDeath1 1746  458   0</span></span>
+<span id="cb32-26"><a href="#cb32-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   RelDeath2 1821  383   0</span></span>
+<span id="cb32-27"><a href="#cb32-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   (any)      577 1244 383</span></span>
+<span id="cb32-28"><a href="#cb32-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-29"><a href="#cb32-29" aria-hidden="true" tabindex="-1"></a>efit4 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">list</span>(<span class="fu">Surv</span>(tstart, tstop, event4) <span class="sc">~</span> dissub <span class="sc">+</span> age <span class="sc">+</span> drmatch <span class="sc">+</span> tcd,</span>
+<span id="cb32-30"><a href="#cb32-30" aria-hidden="true" tabindex="-1"></a>                    <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span> <span class="sc">+</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">4</span> <span class="sc">~</span> <span class="dv">1</span><span class="sc">/</span> shared),</span>
+<span id="cb32-31"><a href="#cb32-31" aria-hidden="true" tabindex="-1"></a>                    <span class="at">id=</span>id, <span class="at">data=</span>edata, <span class="at">ties=</span><span class="st">'breslow'</span>)</span>
+<span id="cb32-32"><a href="#cb32-32" aria-hidden="true" tabindex="-1"></a>efit4<span class="sc">$</span>cmap</span>
+<span id="cb32-33"><a href="#cb32-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                 1:2 1:3 2:4</span></span>
+<span id="cb32-34"><a href="#cb32-34" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; dissubALL         1   7  13</span></span>
+<span id="cb32-35"><a href="#cb32-35" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; dissubCML         2   8  14</span></span>
+<span id="cb32-36"><a href="#cb32-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; age20-40          3   9  15</span></span>
+<span id="cb32-37"><a href="#cb32-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; age&gt;40            4  10  16</span></span>
+<span id="cb32-38"><a href="#cb32-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; drmatchMismatch   5  11  17</span></span>
+<span id="cb32-39"><a href="#cb32-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; tcdTCD            6  12  18</span></span>
+<span id="cb32-40"><a href="#cb32-40" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ph(1:3)           0   0  19</span></span>
+<span id="cb32-41"><a href="#cb32-41" aria-hidden="true" tabindex="-1"></a><span class="co"># some of the coefficient names change, but not the values</span></span>
+<span id="cb32-42"><a href="#cb32-42" aria-hidden="true" tabindex="-1"></a><span class="fu">all.equal</span>(<span class="fu">coef</span>(efit4), <span class="fu">coef</span>(efit2), <span class="at">check.attributes=</span> <span class="cn">FALSE</span>)</span>
+<span id="cb32-43"><a href="#cb32-43" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The coefficient map (cmap) component of the fit verifies that the final model has a shared baseline for the 1:3 and 2:4 transitions, and separate coefficients for all the others. (The cmap matrix serves as a table of contents for the 19 coefficients in the model. It is used by the print routine to control layout, for instance.) We also verify that this simple relabeling of states has not changed the estimated transition rates.</p>
+<p>Last, we redraw this figure as a stacked diagram. We split it as two figures because the version with both TCD and no TCD together had too many crossing lines. <a href="#fig-T15" class="quarto-xref">Figure&nbsp;12</a> (T15) corresponds to the left panel.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>edummy <span class="ot">&lt;-</span> <span class="fu">expand.grid</span>(<span class="at">dissub=</span><span class="st">"AML"</span>, <span class="at">age=</span> <span class="st">"&lt;=20"</span>, <span class="at">drmatch=</span><span class="st">"Match"</span>,</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>                      <span class="at">tcd=</span><span class="fu">c</span>(<span class="st">"No TCD"</span>, <span class="st">"TCD"</span>), <span class="at">priorpr=</span><span class="dv">1</span>)</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>ecurve4 <span class="ot">&lt;-</span> <span class="fu">survfit</span>(efit4, <span class="at">newdata=</span>edummy)</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>oldpar <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mfrow=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>), <span class="at">mar=</span><span class="fu">c</span>(<span class="fl">4.1</span>, <span class="fl">3.1</span>, <span class="fl">3.1</span>, .<span class="dv">1</span>))</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a><span class="fu">pstack</span>(ecurve4[,<span class="dv">1</span>,<span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">3</span>,<span class="dv">1</span>)],</span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>       <span class="at">xscale=</span><span class="fl">365.25</span>, <span class="at">ylim=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>),</span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>       <span class="at">xlab=</span><span class="st">"Years since transplant"</span>, <span class="at">ylab=</span><span class="st">"Predicted probabilities"</span>)</span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a><span class="fu">text</span>(<span class="fu">rep</span>(<span class="dv">4</span><span class="sc">*</span><span class="dv">365</span>, <span class="dv">4</span>), <span class="fu">c</span>(.<span class="dv">35</span>, .<span class="dv">54</span>, .<span class="dv">66</span>, .<span class="dv">9</span>), <span class="at">cex=</span>.<span class="dv">7</span>, </span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a>     <span class="fu">c</span>(<span class="st">"Alive in remission, PR"</span>, <span class="st">"Relapse or death after PR"</span>,</span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a>       <span class="st">"Relapse or death without PR"</span>, <span class="st">"Alive in remission, no PR"</span>))</span>
+<span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a><span class="fu">title</span>(<span class="st">"No TCD"</span>)</span>
+<span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-15"><a href="#cb33-15" aria-hidden="true" tabindex="-1"></a><span class="fu">pstack</span>(ecurve4[,<span class="dv">2</span>,<span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">3</span>,<span class="dv">1</span>)],</span>
+<span id="cb33-16"><a href="#cb33-16" aria-hidden="true" tabindex="-1"></a>       <span class="at">xscale=</span><span class="fl">365.25</span>, <span class="at">ylim=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>),</span>
+<span id="cb33-17"><a href="#cb33-17" aria-hidden="true" tabindex="-1"></a>       <span class="at">xlab=</span><span class="st">"Years since transplant"</span>, <span class="at">ylab=</span><span class="st">"Predicted probabilities"</span>)</span>
+<span id="cb33-18"><a href="#cb33-18" aria-hidden="true" tabindex="-1"></a><span class="fu">text</span>(<span class="fu">rep</span>(<span class="dv">4</span><span class="sc">*</span><span class="dv">365</span>, <span class="dv">4</span>), <span class="fu">c</span>(.<span class="dv">35</span>, .<span class="dv">65</span>, .<span class="dv">8</span>, .<span class="dv">95</span>), <span class="at">cex=</span>.<span class="dv">7</span>, </span>
+<span id="cb33-19"><a href="#cb33-19" aria-hidden="true" tabindex="-1"></a>     <span class="fu">c</span>(<span class="st">"Alive in remission, PR"</span>, <span class="st">"Relapse or death after PR"</span>,</span>
+<span id="cb33-20"><a href="#cb33-20" aria-hidden="true" tabindex="-1"></a>       <span class="st">"Relapse or death without PR"</span>, <span class="st">"Alive in remission, no PR"</span>))</span>
+<span id="cb33-21"><a href="#cb33-21" aria-hidden="true" tabindex="-1"></a><span class="fu">title</span>(<span class="st">"TCD"</span>)</span>
+<span id="cb33-22"><a href="#cb33-22" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(oldpar)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-T15" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-T15-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="tutorial_files/figure-html/fig-T15-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-T15-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;12: Figure T15
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+
+
+
+</section>
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-Putter07" class="csl-entry" role="listitem">
+H., Putter, Fiocco M., and Geskus R. B. 2007. <span>“Tutorial in Biostatistics: Competing Risk and Multi-State Models.”</span> <em>Stat. In Medicine</em> 26: 2389–2430.
+</div>
+</div></section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

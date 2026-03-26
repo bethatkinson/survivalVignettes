@@ -1,0 +1,2082 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.25">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Terry Therneau, Elizabeth Atkinson and Cynthia Crowson">
+<meta name="dcterms.date" content="2026-03-26">
+
+<title>Using Time-Dependent Covariates in the Cox Model – survivalVignettes</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-0b37c64f34216b628666a8dac638b53b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    </a>
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">survivalVignettes</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-vignettes" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Vignettes</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-vignettes">    
+        <li>
+    <a class="dropdown-item" href="../vignettes/external.html">
+ <span class="dropdown-text">External Validation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../vignettes/pseudo.html">
+ <span class="dropdown-text">Pseudo-values for survival data</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../vignettes/ridge.html">
+ <span class="dropdown-text">The ridge function, matrices, and prediction</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction"><span class="header-section-number">1</span> Introduction</a></li>
+  <li><a href="#time-dependent-covariates" id="toc-time-dependent-covariates" class="nav-link" data-scroll-target="#time-dependent-covariates"><span class="header-section-number">2</span> Time-dependent covariates</a></li>
+  <li><a href="#building-time-dependent-sets-with-tmerge" id="toc-building-time-dependent-sets-with-tmerge" class="nav-link" data-scroll-target="#building-time-dependent-sets-with-tmerge"><span class="header-section-number">3</span> Building time-dependent sets with tmerge</a>
+  <ul class="collapse">
+  <li><a href="#the-function" id="toc-the-function" class="nav-link" data-scroll-target="#the-function"><span class="header-section-number">3.1</span> The function</a></li>
+  <li><a href="#cgd-dataset" id="toc-cgd-dataset" class="nav-link" data-scroll-target="#cgd-dataset"><span class="header-section-number">3.2</span> CGD dataset</a></li>
+  <li><a href="#stanford-heart-transplant" id="toc-stanford-heart-transplant" class="nav-link" data-scroll-target="#stanford-heart-transplant"><span class="header-section-number">3.3</span> Stanford heart transplant</a></li>
+  <li><a href="#pbc-data" id="toc-pbc-data" class="nav-link" data-scroll-target="#pbc-data"><span class="header-section-number">3.4</span> PBC data</a></li>
+  <li><a href="#time-delay-and-other-options" id="toc-time-delay-and-other-options" class="nav-link" data-scroll-target="#time-delay-and-other-options"><span class="header-section-number">3.5</span> Time delay and other options</a></li>
+  <li><a href="#cumulative-events" id="toc-cumulative-events" class="nav-link" data-scroll-target="#cumulative-events"><span class="header-section-number">3.6</span> Cumulative events</a>
+  <ul class="collapse">
+  <li><a href="#rep" id="toc-rep" class="nav-link" data-scroll-target="#rep"><span class="header-section-number">3.6.1</span> REP</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#time-dependent-coefficients" id="toc-time-dependent-coefficients" class="nav-link" data-scroll-target="#time-dependent-coefficients"><span class="header-section-number">4</span> Time-dependent coefficients</a>
+  <ul class="collapse">
+  <li><a href="#step-functions" id="toc-step-functions" class="nav-link" data-scroll-target="#step-functions"><span class="header-section-number">4.1</span> Step functions</a></li>
+  <li><a href="#continuous-time-dependent-coefficients" id="toc-continuous-time-dependent-coefficients" class="nav-link" data-scroll-target="#continuous-time-dependent-coefficients"><span class="header-section-number">4.2</span> Continuous time-dependent coefficients</a></li>
+  </ul></li>
+  <li><a href="#predictable-time-dependent-covariates" id="toc-predictable-time-dependent-covariates" class="nav-link" data-scroll-target="#predictable-time-dependent-covariates"><span class="header-section-number">5</span> Predictable time-dependent covariates</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references"><span class="header-section-number">6</span> References</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Using Time-Dependent Covariates in the Cox Model</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Terry Therneau, Elizabeth Atkinson and Cynthia Crowson </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">March 26, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introduction" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Introduction</h1>
+<p>This vignette covers 3 different but interrelated concepts:</p>
+<ul>
+<li>An introduction to time-dependent covariates, along with some of the most common mistakes.</li>
+<li>Tools for creating time-dependent covariates, or rather the datasets used to encode them.</li>
+<li>Time-dependent coefficients.</li>
+</ul>
+</section>
+<section id="time-dependent-covariates" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Time-dependent covariates</h1>
+<p>One of the strengths of the Cox model is its ability to encompass covariates that change over time. The practical reason that time-dependent covariates work is based on the underlying way in which the Cox model works: at each event time the program compares the current covariate values of the subject who had the event to the current values of all others who were at risk at that time. One can think of it as a lottery model, where at each death time there is a drawing to decide which subject “wins” the event. Each subject’s risk score <span class="math inline">\(\exp(X\beta)\)</span> determines how likely they are to win, e.g., how many “tickets” they have purchased for the drawing. The model tries to assign a risk score to each subject that best predicts the outcome of each drawing based on</p>
+<ul>
+<li>The risk set: which subjects are present for each event; the set of those able to “win the prize”.</li>
+<li>The covariate values of each subject just prior to the event time.</li>
+</ul>
+<p>The model has a theoretical foundation in martingale theory, a mathematical construct which arose out of the study of games of chance. A key underlying condition for a martingale-like game is that present actions depend only on the past. The decision of whether to play (is one in the risk set or not) and the size of a bet (covariates) can depend in any way on prior bets and patterns of won/lost, but cannot look into the future. If this holds then multiple properties can be proven about the resulting process.</p>
+<p>A simple way to code time-dependent covariates uses intervals of time. Consider a subject with follow-up from time 0 to death at 185 days, and assume that we have a time-dependent covariate (creatinine) that was measured at day 0, 90 and 120 with values of 0.9, 1.5, and 1.2 mg/dl. A way to encode that data for the computer is to break the subject’s time into 3 time intervals 0-90, 90-120, 120-185, with one row of data for each interval. The data might look like the following</p>
+<div class="cell" data-layout-align="center">
+<pre><code>#&gt;   subject time1 time2 death creatinine
+#&gt; 1       5     0    90     0        0.9
+#&gt; 2       5    90   120     0        1.5
+#&gt; 3       5   120   185     1        1.2</code></pre>
+</div>
+<p>We read this as stating that over the interval from 0 to 90 the creatinine for subject “5” was 0.9 (last known level), and that this interval did not end in a death. The underlying code treats intervals as open on the left and closed on the right, e.g.&nbsp;the creatinine on exactly day 90 is 0.9. One way to think of this is that all changes for a given day (covariates or status) are recorded at the start of the next interval.</p>
+<p>The key rule for time-dependent covariates in a Cox model is simple and essentially the same as that for gambling: <em>you cannot look into the future</em>. A covariate may change in any way based on past data or outcomes, but it may not reach forward in time. In the above simple dataset this means that we cannot add a linear interpolation between the creatinine values 0.9 and 1.5 to get a predicted value of 1.2 on day 45; on day 45 the later value of 1.5 has not yet been seen. Covariate values start at the beginning of the interval while endpoints happen at the end of the interval.</p>
+<p>As an example consider the Mayo Clinic Study of Aging (MCSA) study which enrolled a stratified random sample from the population of Olmsted County and then followed them forward in time. Consider a table which compares baseline covariates for those who were identified as having mild cognitive impairment (MCI) at baseline versus those who were cognitively normal. This is a legal table. However, a table that compared subjects who did or did not progress to MCI during follow-up would be invalid.</p>
+<p>One of the more well known examples of this error is analysis by treatment response: at the end of a trial a survival curve is made comparing those who had an early response to treatment (shrinkage of tumor, lowering of cholesterol, or whatever) to those who did not, and it discovered that responders have a better curve. A Cox model fit to the same data will demonstrate a strong “significant” effect. The problem arises because any early deaths, those that occur before response can be assessed, will all be assigned to the non-responder group, even deaths that have nothing to do with the condition under study. Below is a simple example based on the advanced lung cancer dataset. Assume that subjects came in monthly for 12 cycles of treatment, and randomly declare a “response” for 5% of the subjects at each visit.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1953</span>)  <span class="co"># a good year</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>nvisit <span class="ot">&lt;-</span> <span class="fu">floor</span>(<span class="fu">pmin</span>(lung<span class="sc">$</span>time<span class="sc">/</span><span class="fl">30.5</span>, <span class="dv">12</span>))</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>response <span class="ot">&lt;-</span> <span class="fu">rbinom</span>(<span class="fu">nrow</span>(lung), nvisit, .<span class="dv">05</span>) <span class="sc">&gt;</span> <span class="dv">0</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>badfit <span class="ot">&lt;-</span> <span class="fu">survfit</span>(<span class="fu">Surv</span>(time<span class="sc">/</span><span class="fl">365.25</span>, status) <span class="sc">~</span> response, <span class="at">data=</span>lung)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(badfit, <span class="at">mark.time=</span><span class="cn">FALSE</span>, <span class="at">lty=</span><span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, </span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab=</span><span class="st">"Years post diagnosis"</span>, <span class="at">ylab=</span><span class="st">"Survival"</span>)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="fl">1.5</span>, .<span class="dv">85</span>, <span class="fu">c</span>(<span class="st">"Responders"</span>, <span class="st">"Non-responders"</span>), </span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>       <span class="at">lty=</span><span class="dv">2</span><span class="sc">:</span><span class="dv">1</span>, <span class="at">bty=</span><span class="st">'n'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="timedep_files/figure-html/fake-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>What is most surprising about this error is the <em>size</em> of the false effect that is produced. A Cox model using the above data reports a hazard ratio of 1.9 fold with a p-value of less than 1 in 1000.</p>
+<p>The alarm about this incorrect approach has been sounded often <span class="citation" data-cites="Anderson83 Buyse96 Suissa08">(<a href="#ref-Anderson83" role="doc-biblioref">1983</a>; <a href="#ref-Buyse96" role="doc-biblioref">1996</a>; <a href="#ref-Suissa08" role="doc-biblioref">2008</a>)</span> but the analysis is routinely re-discovered. A slightly subtler form of the error is discussed in Redmond et al. <span class="citation" data-cites="Redmond83">(<a href="#ref-Redmond83" role="doc-biblioref">1983</a>)</span>. The exploration was motivated by a flawed analysis presented in Bonadonna et al. <span class="citation" data-cites="Bonadonna81">(<a href="#ref-Bonadonna81" role="doc-biblioref">1981</a>)</span>. Breast cancer chemotherapy patients were divided into three groups based on whether the patient eventually received &gt;85%, 65–85% or &lt;65% of the dose planned at the start of their treatment. This approach leads to a severe bias since early deaths do not finish all their cycles of chemotherapy and hence by definition get a lower dose. It is early death which predicts a low total dose, and not vice-versa. A proportional hazards model using total dose received shows a very strong effect for dose, so much so that it could encourage a treating physician to defer necessary dose reductions in response to treatment toxicity. This false result actively harmed patients.</p>
+<p>Redmond also looked at a further variant of this: create a variable <span class="math inline">\(p\)</span> for each subject which is the fraction of the the target dose, received <em>up to</em> the last entry for that subject. A subject who died after receiving only 6 weeks of a planned 12 week regimen could still score 100%. This looks like it should cure the bias issue, but it turns out to give bias in the other direction. The reason is that dose reductions due to toxicity occur more often in the later cycles of treatment, and thus living longer leads to smaller values of <span class="math inline">\(p\)</span>. A proportional hazards regression fit to <span class="math inline">\(p\)</span> implies that a smaller dose is protective! The proper approach is to code the predictor as a time-dependent covariate. For treatment response this will be a variable that starts at 0 for all subjects and is recoded to 1 only when the response occurs. For dose it would measure cumulative dose to date.</p>
+<p>There are many variations on the error: interpolation of the values of a laboratory test linearly between observation times, removing subjects who do not finish the treatment plan, imputing the date of an adverse event as midway between observation times, etc. Using future data will often generate large positive or negative bias in the coefficients, but sometimes it generates little bias at all. It is nearly impossible to predict a priori which of these will occur in any given dataset. Using such a covariate is similar to jogging across a Los Angeles freeway: disaster is not guaranteed — but it is likely.</p>
+<p>The most common way to encode time-dependent covariates is to use the (start, stop] form of the model.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(time1, time2, status) <span class="sc">~</span> age <span class="sc">+</span> creatinine, </span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>             <span class="at">data=</span>mydata)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>In dataset <code>mydata</code> a patient might have the following observations</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>subject</th>
+<th>time1</th>
+<th>time2</th>
+<th>status</th>
+<th>age</th>
+<th>creatinine</th>
+<th>…</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>0</td>
+<td>15</td>
+<td>0</td>
+<td>25</td>
+<td>1.3</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>15</td>
+<td>46</td>
+<td>0</td>
+<td>25</td>
+<td>1.5</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>1</td>
+<td>46</td>
+<td>73</td>
+<td>0</td>
+<td>25</td>
+<td>1.4</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>73</td>
+<td>100</td>
+<td>1</td>
+<td>25</td>
+<td>1.6</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>In this case the variable <code>age</code> = age at entry to the study stays the same from line to line, while the value of <code>creatinine</code> varies and is treated as 1.3 over the interval <span class="math inline">\((0, 15]\)</span>, 1.5 over <span class="math inline">\((15, 46]\)</span>, etc. The intervals are open on the left and closed on the right, which means that the creatinine is taken to be 1.3 on day 15. The <code>status</code> variable describes whether or not each interval ends in an event.</p>
+<p>One common question with this data setup is whether we need to worry about correlated data, since a given subject has multiple observations. The answer is no, we do not. The reason is that this representation is simply a programming trick. The likelihood equations at any time point use only one copy of any subject, the program picks out the correct row of data at each time. There two exceptions to this rule:</p>
+<ul>
+<li>When subjects have multiple events, then the rows for the events are correlated within subject and a cluster variance is needed.</li>
+<li>When a subject appears in overlapping intervals. This however is almost always a data error, since it corresponds to two copies of the subject being present in the same strata at the same time, e.g., she could meet herself at a party.</li>
+</ul>
+<p>A subject can be at risk in multiple strata at the same time, however. This corresponds to being simultaneously at risk for two distinct outcomes.</p>
+</section>
+<section id="building-time-dependent-sets-with-tmerge" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Building time-dependent sets with tmerge</h1>
+<section id="the-function" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="the-function"><span class="header-section-number">3.1</span> The function</h2>
+<p>A useful function for building datasets is <code>tmerge</code>, which is part of the survival library. The idea is to build up a time-dependent dataset one endpoint at a time. The primary arguments are</p>
+<ul>
+<li>data1: the base dataset that will be added onto</li>
+<li>data2: the source for new information</li>
+<li>id: the subject identifier in the new data</li>
+<li><span class="math inline">\(\ldots\)</span>: additional arguments that add variables to the dataset</li>
+<li>tstart, tstop: used to set the time range for each subject</li>
+<li>options</li>
+</ul>
+<p>The created dataset has three new variables (at least), which are <code>id</code>, <code>tstart</code> and <code>tstop</code>.</p>
+<p>The key part of the call are the “<span class="math inline">\(\ldots\)</span>” arguments which each can be one of four types: <code>tdc()</code> and <code>cumtdc()</code> add a time-dependent variable, <code>event()</code> and <code>cumevent()</code> add a new endpoint. In the survival routines time intervals are open on the left and closed on the right, i.e., <code>(tstart, tstop]</code>. Time-dependent covariates apply from the start of an interval and events occur at the end of an interval. If a dataset already had intervals of (0,10] and (10, 14] a new time dependent covariate or event at time 8 would lead to three intervals of (0,8], (8,10], and (10,14]; the new time-dependent covariate value would be added to the second interval, a new event would be added to the first one.</p>
+<p>The basic form of the function is</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>newdata <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(data1, data2, id, <span class="at">newvar=</span><span class="fu">tdc</span>(time, value), ...)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Where <code>data1</code> is the starting dataset and additions to the data are taken from <code>data2</code>. The idea behind the function is that each addition will be “slipped in” to the original data in the same way that one would add a new folder into a file cabinet. It is a complex function, and we illustrate it below with a set of examples that sequentially reveal its features.</p>
+</section>
+<section id="cgd-dataset" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="cgd-dataset"><span class="header-section-number">3.2</span> CGD dataset</h2>
+<p>Chronic granulomatous disease (CGD) is a heterogeneous group of uncommon inherited disorders characterized by recurrent pyogenic infections that usually begin early in life and may lead to death in childhood. In 1986, Genentech, Inc. conducted a randomized, double-blind, placebo-controlled trial in 128 CGD patients who received Genentech’s humanized interferon gamma (rIFN-g) or placebo three times daily for a year. Data were collected on all serious infections until the end of followup, which occurred before day 400 for most patients. One patient was taken off on the day of his last infection; all others have some followup after their last episode.</p>
+<p>Below are the first 10 observations, see the help page for <code>cgd0</code> for the full list of variable names. The last few columns contain the duration of follow-up for the subject followed by infection times. Subject 1 was followed for 414 days and had infections on days 219 and 373, subject 2 had 7 infections and subject 3 had none.</p>
+<pre><code>  1 204 082888 1 2 12 147.0  62.0 2 2 2 2 414 219 373
+  2 204 082888 0 1 15 159.0  47.5 2 2 1 2 439   8  26 152 241 249 322 350
+  3 204 082988 1 1 19 171.0  72.7 1 2 1 2 382
+  4 204 091388 1 1 12 142.0  34.0 1 2 1 2 388
+  5 238 092888 0 1 17 162.5  52.7 1 2 1 1 383 246 253
+  6 245 093088 1 2 44 153.3  45.0 2 2 2 2 364
+  7 245 093088 0 1 22 175.0  59.7 1 2 1 2 364 292
+  8 245 093088 1 1  7 111.0  17.4 1 2 1 2 363
+  9 238 100488 0 1 27 176.0  82.8 2 2 1 1 349 294
+ 10 238 100488 1 1  5 113.0  19.5 1 2 1 1 371</code></pre>
+<p>The dataset is included as <code>cgd0</code> in the survival library. Here is the R printout of the first four subjects.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>cgd0[<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>,]</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   id center random treat sex age height weight inherit steroids</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1  1    204  82888     1   2  12    147   62.0       2        2</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2  2    204  82888     0   1  15    159   47.5       2        2</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3  3    204  82988     1   1  19    171   72.7       1        2</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4  4    204  91388     1   1  12    142   34.0       1        2</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   propylac hos.cat futime etime1 etime2 etime3 etime4 etime5 etime6</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1        2       2    414    219    373     NA     NA     NA     NA</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2        1       2    439      8     26    152    241    249    322</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3        1       2    382     NA     NA     NA     NA     NA     NA</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4        1       2    388     NA     NA     NA     NA     NA     NA</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   etime7</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1     NA</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2    350</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3     NA</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4     NA</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We want to turn this into a dataset that has survival in a counting process form.</p>
+<ul>
+<li>Each row of the resulting dataset represents a time interval (time1, time2] which is open on the left and closed on the right. Covariate values for each row are the covariate values that apply over that interval.</li>
+<li>The event variable for each row <span class="math inline">\(i\)</span> is 1 if the time interval ends with an event and 0 otherwise.</li>
+</ul>
+<p>We don’t need variables etime1–etime7 in the final dataset, so they are left out of the data1 argument in the first call.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(cgd0)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 128  20</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>newcgd <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(<span class="at">data1=</span>cgd0[, <span class="dv">1</span><span class="sc">:</span><span class="dv">13</span>], <span class="at">data2=</span>cgd0, <span class="at">id=</span>id, <span class="at">tstop=</span>futime)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>newcgd <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(newcgd, cgd0, <span class="at">id=</span>id, <span class="at">infect =</span> <span class="fu">event</span>(etime1)) </span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>newcgd <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(newcgd, cgd0, <span class="at">id=</span>id, <span class="at">infect =</span> <span class="fu">event</span>(etime2)) </span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>newcgd <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(newcgd, cgd0, <span class="at">id=</span>id, <span class="at">infect =</span> <span class="fu">event</span>(etime3)) </span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>newcgd <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(newcgd, cgd0, <span class="at">id=</span>id, <span class="at">infect =</span> <span class="fu">event</span>(etime4)) </span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>newcgd <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(newcgd, cgd0, <span class="at">id=</span>id, <span class="at">infect =</span> <span class="fu">event</span>(etime5)) </span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>newcgd <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(newcgd, cgd0, <span class="at">id=</span>id, <span class="at">infect =</span> <span class="fu">event</span>(etime6)) </span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>newcgd <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(newcgd, cgd0, <span class="at">id=</span>id, <span class="at">infect =</span> <span class="fu">event</span>(etime7)) </span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>newcgd <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(newcgd, newcgd, id, <span class="at">enum=</span><span class="fu">cumtdc</span>(tstart))</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(newcgd)</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 203  17</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>newcgd[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>,<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">4</span><span class="sc">:</span><span class="dv">6</span>, <span class="dv">13</span><span class="sc">:</span><span class="dv">17</span>)]</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   id treat sex age futime tstart tstop infect enum</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1  1     1   2  12    414      0   219      1    1</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2  1     1   2  12    414    219   373      1    2</span></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3  1     1   2  12    414    373   414      0    3</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4  2     0   1  15    439      0     8      1    1</span></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5  2     0   1  15    439      8    26      1    2</span></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(newcgd)</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; tmerge(data1 = newcgd, data2 = newcgd, id = id, enum = cumtdc(tstart))</span></span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        early late gap within boundary leading trailing tied missid</span></span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; infect     0    0   0     44        0       0        0    0      0</span></span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; infect     0    0   0     16        0       0        1    0      0</span></span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; infect     0    0   0      8        0       0        0    0      0</span></span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; infect     0    0   0      3        0       0        0    0      0</span></span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; infect     0    0   0      2        0       0        0    0      0</span></span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; infect     0    0   0      1        0       0        0    0      0</span></span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; infect     0    0   0      1        0       0        0    0      0</span></span>
+<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; enum       0    0   0      0       75     128        0    0      0</span></span>
+<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a><span class="fu">coxph</span>(<span class="fu">Surv</span>(tstart, tstop, infect) <span class="sc">~</span> treat <span class="sc">+</span> inherit <span class="sc">+</span> steroids,</span>
+<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a>      <span class="at">data =</span>newcgd, <span class="at">cluster =</span> id)</span>
+<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; coxph(formula = Surv(tstart, tstop, infect) ~ treat + inherit + </span></span>
+<span id="cb7-38"><a href="#cb7-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     steroids, data = newcgd, cluster = id)</span></span>
+<span id="cb7-39"><a href="#cb7-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb7-40"><a href="#cb7-40" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             coef exp(coef) se(coef) robust se      z        p</span></span>
+<span id="cb7-41"><a href="#cb7-41" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; treat    -1.0722    0.3422   0.2619    0.3118 -3.438 0.000585</span></span>
+<span id="cb7-42"><a href="#cb7-42" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; inherit   0.1777    1.1944   0.2356    0.3180  0.559 0.576395</span></span>
+<span id="cb7-43"><a href="#cb7-43" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; steroids -0.7726    0.4618   0.5169    0.4687 -1.648 0.099310</span></span>
+<span id="cb7-44"><a href="#cb7-44" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb7-45"><a href="#cb7-45" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Likelihood ratio test=22.49  on 3 df, p=5.149e-05</span></span>
+<span id="cb7-46"><a href="#cb7-46" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; n= 203, number of events= 76</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>These lines show the canonical way to use tmerge: each call adds one more bit of information to the dataset.</p>
+<ul>
+<li>The first call sets the <em>time range</em> for each subject to be from 0 (default) to last follow-up. If a later call tried to add an event outside that range, at time = -2 say, that addition would be ignored. The range can be set explicitly by using the tstop and (optional) tstart arguments, or implicitly as will be done in the heart transplant example below. This first result has 128 rows, the same number as <code>cgd0</code>.</li>
+<li>Each additional call then adds either an endpoint or a covariate, splitting individual rows of the input into two as necessary. An <code>event</code> or <code>cumevent</code> directive adds events, while a <code>tdc</code> or <code>cumtdc</code> command adds a time-dependent covariate. Events happen at the ends of intervals and time-dependent covariates change at the start of an interval.<br>
+</li>
+<li>Additions from <code>data2</code> with a missing time value are ignored.</li>
+<li>The result of <code>tmerge</code> is a data frame with a few extra attributes. One of these, tcount, is designed to help visualize the process, it is printed out by the summary function. Assume that a subject already had 3 intervals of (2,5), (5,10) and (14,40). A new event added at time 1 would be “early” while one at time 50 is after any interval and would be recorded as “late”. An event at time 3 is within an interval, one at 5 is on the border of two intervals, one at 14 is at the leading edge of an interval, one at time 10 in on the trailing edge, and one at time 11 is in a gap. In this dataset all new additions fell strictly within prior intervals. We also see that etime6 and etime7 each added only a single event to the data. Only one subject had more than 5 infections.</li>
+<li>If two observations in data2 for a single person share exactly the same time, the created value will be the later contribution for <code>tdc()</code> or <code>event()</code> calls, <code>cumtdc()</code> and <code>cumevent()</code> will add. The “tied” column tells how often this happened; in some datasets this behavior might not be desired and one would need to break the ties before calling tmerge.</li>
+<li>If there are observations in <code>data2</code> that do not match any of the identifiers in <code>data1</code> they count in the `missid’ column.</li>
+<li>The last tmerge call adds a simple time-dependent variable <code>enum</code> which is a running observation count for each subject. This can often be a useful variable in later models or processing, e.g.&nbsp;<code>enum==1</code> selects off the first row for each subject.</li>
+<li>The extra attributes of the data frame are ephemeral: they will be lost as soon as any further manipulation is done. This is intentional. The reason is that these may be invalid if, for instance, a subset of the data was selected.</li>
+<li>One can verify that the resulting dataset is equivalent to <code>cgd</code>, a (start, stop] version of the CGD data in the survival library, which had been created by hand several years earlier.</li>
+</ul>
+<p>The <code>tmerge</code> function processes arguments sequentially, and the above example can be rewritten as below. There is no computational advantage of one form versus the other.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>test  <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(cgd0[, <span class="dv">1</span><span class="sc">:</span><span class="dv">13</span>], cgd0, <span class="at">id=</span>id, <span class="at">tstop=</span>futime,</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>                 <span class="at">infect =</span> <span class="fu">event</span>(etime1), <span class="at">infect=</span> <span class="fu">event</span>(etime2),</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">infect =</span> <span class="fu">event</span>(etime3), <span class="at">infect=</span> <span class="fu">event</span>(etime4),</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>                 <span class="at">infect =</span> <span class="fu">event</span>(etime5), <span class="at">infect=</span> <span class="fu">event</span>(etime6),</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>                 <span class="at">infect =</span> <span class="fu">event</span>(etime7))</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>test <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(test, test,  <span class="at">id=</span> id, <span class="at">enum =</span> <span class="fu">cumtdc</span>(tstart))</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="fu">all.equal</span>(newcgd, test)</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] "Attributes: &lt; Component \"call\": target, current do not match when deparsed &gt;"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>This example is atypical in that we have used a <em>wide</em> dataset, one with multiple outcomes per subject on a single line. The <code>tmerge</code> function was primarily designed to work with long data. An underlying issue is that when you create a new variable with <code>tmerge</code> from multiple source variables, and those variables are not of exactly the same structure, then <code>tmerge</code> can become confused. If <code>etime1</code> was numeric and <code>etime2</code> had a difftime class for example. If issues arise create a long form dataset and merge that in, as shown below. Both the data.table and tidyr libraries have well regarded functions to do this; below we use the reshape function from base R.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># create a long dataset with the recurrences</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>temp <span class="ot">&lt;-</span> <span class="fu">reshape</span>(cgd0[<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">14</span><span class="sc">:</span><span class="dv">20</span>)], <span class="at">varying=</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">8</span>, <span class="at">v.names=</span><span class="st">"etime"</span>,</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">idvar=</span><span class="st">"id"</span>, <span class="at">direction=</span><span class="st">"long"</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>cgdrecur <span class="ot">&lt;-</span> <span class="fu">subset</span>(temp, <span class="sc">!</span><span class="fu">is.na</span>(etime))  <span class="co"># toss missings (not essential)</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>newcgd <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(<span class="at">data1=</span>cgd0[, <span class="dv">1</span><span class="sc">:</span><span class="dv">13</span>], <span class="at">data2=</span>cgd0, <span class="at">id=</span>id, <span class="at">tstop=</span>futime)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>newcgd <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(newcgd, cgdrecur, <span class="at">id=</span>id, <span class="at">infect=</span> <span class="fu">event</span>(etime))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="stanford-heart-transplant" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="stanford-heart-transplant"><span class="header-section-number">3.3</span> Stanford heart transplant</h2>
+<p>The <code>jasa</code> dataset contains information from the Stanford heart transplant study, in the form that it appeared in the J American Statistical Association paper of Crowley and Hu <span class="citation" data-cites="Crowley77">(<a href="#ref-Crowley77" role="doc-biblioref">1977</a>)</span>. The dataset has one line per subject which contains the baseline covariates along with dates of enrollment, transplant, and death or last follow-up. We want to create <code>transplant</code> as a time-dependent covariate. As is often the case with real data, this dataset contains a few anomalies that need to be dealt with when setting up an analysis dataset.</p>
+<ol type="1">
+<li><p>One subject died on the day of entry. However (0,0) is an illegal time interval for the <code>coxph</code> routine.<br>
+It suffices to have them die on day 0.5. An alternative is to add 1 day to everyone’s follow-up, e.g., subject 2 who enrolled on Jan 2 1968 and died on Jan 7 would be credited with 6 days. (This is what Kalbfleisch and Prentice do in their textbook.) The result of the final <code>coxph</code> call is the same from either strategy.</p></li>
+<li><p>A subject transplanted on day 10 is considered to have been on medical treatment for days 1–10 and as transplanted starting on day 11. That is, except for patient 38 who died on the same day as their procedure. They should be treated as a transplant death; the problem is resolved by moving this forward in time by .5 day.</p></li>
+<li><p>The treatment coefficients in table 6.1 of the definitive analysis found in Kalbfleisch and Prentice <span class="citation" data-cites="Kalbfleisch02">(<a href="#ref-Kalbfleisch02" role="doc-biblioref">2002</a>)</span> will only be obtained if covariates are defined in precisely the same way, since their models include interactions. (Table 5.2 in the original edition of the book). For age this is (age in days)/ 365.25 - 48 years, and for year of enrollment it is the number of years since the start of the study: (entry date - 1967/10/1)/365.25. (Until I figured this out I would get occasional “why is coxph giving the wrong answers” emails.)</p></li>
+</ol>
+<p>Since time is in days the fractional time of 0.5 could be any value between 0 and 1, our choice will not affect the results.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>jasa<span class="sc">$</span>subject <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(jasa)  <span class="co">#we need an identifier variable</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>tdata <span class="ot">&lt;-</span> <span class="fu">with</span>(jasa, <span class="fu">data.frame</span>(<span class="at">subject =</span> subject,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>                               <span class="at">futime=</span> <span class="fu">pmax</span>(.<span class="dv">5</span>, fu.date <span class="sc">-</span> accept.dt),</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>                               <span class="at">txtime=</span> <span class="fu">ifelse</span>(tx.date<span class="sc">==</span> fu.date,</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>                                              (tx.date <span class="sc">-</span>accept.dt) <span class="sc">-</span>.<span class="dv">5</span>,</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>                                              (tx.date <span class="sc">-</span> accept.dt)),</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>                               <span class="at">fustat =</span> fustat</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>                             ))</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>xdata <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(jasa, tdata, <span class="at">id=</span>subject,</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>                  <span class="at">death =</span> <span class="fu">event</span>(futime, fustat),</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>                  <span class="at">transplant   =</span>  <span class="fu">tdc</span>(txtime), </span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>                  <span class="at">options=</span> <span class="fu">list</span>(<span class="at">idname=</span><span class="st">"subject"</span>))</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>sdata <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(jasa, tdata, <span class="at">id=</span>subject,</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>                  <span class="at">death =</span> <span class="fu">event</span>(futime, fustat),</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>                  <span class="at">trt   =</span>  <span class="fu">tdc</span>(txtime), </span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>                  <span class="at">options=</span> <span class="fu">list</span>(<span class="at">idname=</span><span class="st">"subject"</span>))</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(sdata)</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; tmerge(data1 = jasa, data2 = tdata, id = subject, death = event(futime, </span></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     fustat), trt = tdc(txtime), options = list(idname = "subject"))</span></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       early late gap within boundary leading trailing tied missid</span></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; death     0    0   0      0        0       0      103    0      0</span></span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; trt       0    0   0     67        0       2        0    0      0</span></span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>sdata<span class="sc">$</span>age <span class="ot">&lt;-</span> sdata<span class="sc">$</span>age <span class="sc">-</span><span class="dv">48</span></span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>sdata<span class="sc">$</span>year <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(sdata<span class="sc">$</span>accept.dt <span class="sc">-</span> <span class="fu">as.Date</span>(<span class="st">"1967-10-01"</span>))<span class="sc">/</span><span class="fl">365.25</span></span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a><span class="co"># model 6 of the table in K&amp;P</span></span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a><span class="fu">coxph</span>(<span class="fu">Surv</span>(tstart, tstop, death) <span class="sc">~</span> age<span class="sc">*</span>trt <span class="sc">+</span> surgery <span class="sc">+</span> year, </span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>      <span class="at">data=</span> sdata, <span class="at">ties=</span><span class="st">"breslow"</span>)</span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; coxph(formula = Surv(tstart, tstop, death) ~ age * trt + surgery + </span></span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     year, data = sdata, ties = "breslow")</span></span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             coef exp(coef) se(coef)      z      p</span></span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; age      0.01527   1.01539  0.01750  0.873 0.3828</span></span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; trt      0.04457   1.04558  0.32171  0.139 0.8898</span></span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; surgery -0.62113   0.53734  0.36786 -1.688 0.0913</span></span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; year    -0.13608   0.87278  0.07090 -1.919 0.0550</span></span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; age:trt  0.02703   1.02740  0.02714  0.996 0.3193</span></span>
+<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Likelihood ratio test=16.06  on 5 df, p=0.006687</span></span>
+<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; n= 170, number of events= 75</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>This example shows a special case for the <code>tmerge</code> function that is quite common: if the first created variable is an event then the time range for each subject is inferred to be from 0 to that event time: explicit <code>tstop</code> and <code>tstart</code> arguments are not required. It also makes use of a two argument form of <code>event</code>. Each of the <code>event</code> and <code>cumevent</code> functions may have a second argument, which if present will be used as the value for the event code. If this second argument is not present a value of 1 is used. If an event variable is already a part of data1, then our updates make changes to that variable, possibly adding more events. This feature is what allowed for the <code>infection</code> indicator to be build up incrementally in the cgd example above.</p>
+<p>The <code>tdc</code> and <code>cumtdc</code> arguments can have 1, 2 or three arguments. The first is always the time point, the second, if present, is the value to be inserted, and an optional third argument is the initial value. If the <code>tdc</code> call has a single argument the result is always a 0/1 variable, 0 before the time point and 1 after. For the 2 or three argument form, the starting value <em>before</em> the first definition of the new variable (before the first time point) will be the initial value. The default for the initial value is NA, the value of the <code>tdcstart</code> option. If the <code>tdc</code> variable being created is already a part of data1, the old value is replaced wholesale, it is not updated. This differs from the behavior for events. Although there is a use case for updating an existing time-dependent value, say from a new data source, our experience had been that the much more common case was accidental reuse of an existing name, resulting in a chimeric mishmash between an existing baseline covariate and the additions, and creating a column which was valid for neither. Equally, some examples showed that we can not reliably update a tdc, i.e., cases where the correct answer is unclear.</p>
+<p>The <code>tcount</code> table for the above fit shows all the deaths at the trailing edge of their interval, which is expected since the time of death or last follow-up was used to define each subject’s interval of risk. Two of the transplants happened on day 0 and are listed as occurring on the leading edge of the first follow-up interval for the subject. The other 67 transplants were strictly within the (0, last follow up) interval of each subject.</p>
+<p>The <code>tcount</code> summary table has the following columns:</p>
+<ul>
+<li>early: occurs prior to the start of the subject’s timeframe.</li>
+<li>late: occurs after the end of a subjects timeframe.</li>
+<li>gap: occurs in a gap between intervals at risk. If someone is at risk of the event from day 0 to 30, and then from day 50 to day 70. A count would occur under <code>gap</code>, if the covariate changed on day 40.</li>
+<li>within: in an existing time interval.</li>
+<li>boundary: at the same time as the beginning/end of an interval pair such as (0,10), (10, 25).</li>
+<li>leading: occurs at the start of an interval.<br>
+</li>
+<li>trailing: occurs at the end of an interval.</li>
+<li>tied: two values of the same covariate, at the same time, for the same subject (e.g., multiple blood pressure values on the same day).</li>
+<li>missid: subjects in the second dataset that are not in the first dataset.</li>
+</ul>
+<p>Requirements for the final analysis dataset:</p>
+<ol type="1">
+<li>Each subject’s timeline is well defined.
+<ul>
+<li>If the subject is at risk at some time t, the dataset contains an interval for them that includes t.</li>
+<li>Only 1 copy of the subject exists at any given time, i.e., there are no overlapping intervals.</li>
+</ul></li>
+<li>All intervals are of positive length (start_time <span class="math inline">\(\neq\)</span> stop_time).</li>
+<li>Outcomes are distinct; a subject cannot have two events at the same time.</li>
+</ol>
+<p>Things to remember when interpreting the <code>tcount</code> summary:</p>
+<ul>
+<li>Time-dependent covariates that occur before the defined follow-up interval (i.e., early) or during a gap in time do not generate new splits, but do set the covariate for future times. Rationale: if diabetes was diagnosed when the patient was not under observation, the patient will still have diabetes when s/he returns to observation.</li>
+<li>Events that are early, in a gap, or late are not used in the analysis. The rationale for this is that we don’t know who the appropriate comparison group is for these events, so they must be ignored.<br>
+</li>
+<li>Date errors are one of the more common causes for early/late events; so they are always worth checking.<br>
+</li>
+<li>“Tied” values, i.e., values measured at the same time for the same subject, are also noted. For instance, assume that the input dataset has two triglyceride observations, for the same subject Smith, on day 135. Since we can’t create a data row with times (135, 135) only the second triglyceride value will be retained.</li>
+<li>Missing times are ignored since the split location is unknown. Missing values for a tdc covariate are also ignored, resulting in “last value carried forward” as the default behavior. (There are arguments to override the default and allow a covariate to revert to missing.)</li>
+</ul>
+</section>
+<section id="pbc-data" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="pbc-data"><span class="header-section-number">3.4</span> PBC data</h2>
+<p>The <code>pbc</code> dataset contains baseline data and follow-up status for a set of subjects with primary biliary cirrhosis, while the <code>pbcseq</code> dataset contains repeated laboratory values for those subjects.<br>
+The first dataset contains data on 312 subjects in a clinical trial plus 106 that agreed to be followed off protocol, the second dataset has data only on the trial subjects.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>temp <span class="ot">&lt;-</span> <span class="fu">subset</span>(pbc, id <span class="sc">&lt;=</span> <span class="dv">312</span>, <span class="at">select=</span><span class="fu">c</span>(id<span class="sc">:</span>sex, stage)) <span class="co"># baseline</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>pbc2 <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(temp, temp, <span class="at">id=</span>id, <span class="at">death =</span> <span class="fu">event</span>(time, status)) <span class="co">#set range</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>pbc2 <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(pbc2, pbcseq, <span class="at">id=</span>id, <span class="at">ascites =</span> <span class="fu">tdc</span>(day, ascites),</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>               <span class="at">bili =</span> <span class="fu">tdc</span>(day, bili), <span class="at">albumin =</span> <span class="fu">tdc</span>(day, albumin),</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>               <span class="at">protime =</span> <span class="fu">tdc</span>(day, protime), <span class="at">alk.phos =</span> <span class="fu">tdc</span>(day, alk.phos))</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>fit1 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status<span class="sc">==</span><span class="dv">2</span>) <span class="sc">~</span> <span class="fu">log</span>(bili) <span class="sc">+</span> <span class="fu">log</span>(protime), pbc)</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>fit2 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(tstart, tstop, death<span class="sc">==</span><span class="dv">2</span>) <span class="sc">~</span> <span class="fu">log</span>(bili) <span class="sc">+</span> <span class="fu">log</span>(protime), pbc2)</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="fu">rbind</span>(<span class="st">'baseline fit'</span> <span class="ot">=</span> <span class="fu">coef</span>(fit1),</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>      <span class="st">'time-dependent'</span> <span class="ot">=</span> <span class="fu">coef</span>(fit2))</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                log(bili) log(protime)</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; baseline fit    0.930592     2.890573</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; time-dependent  1.241214     3.983400</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We start the build with a baseline dataset that has a subset of the variables. This is due to my own frugality — I happen to like datasets that are more trim. It is not a requirement of the tmerge function, however, and a user is certainly free to skip the first step above and build <code>pbc2</code> directly from dataset <code>pbc</code>.</p>
+<p>The coefficients of bilirubin and prothrombin time are somewhat larger in the time-dependent analysis than the fit using only baseline values. In this autoimmune disease there is steady progression of liver damage, accompanied by a steady rise in these two markers of dysfunction. The baseline analysis captures patients’ disease status at the start, the time-dependent analysis is able to account for those who progress more quickly. In the pbc dataset the status variable is 0= censored, 1= liver transplant and 2= death; the above analyses were models of time to death, censoring at transplant. (At the time of the PBC study liver transplantation was still in its infancy and it is fair to view the 19/312 subjects who received the procedure as a random sample. In the modern era there are far more waiting recipients than organs and available livers are directed to those patients who illness is most dire; censoring at transplant would not lead to an interpretable result.)</p>
+<p>By default <code>tmerge</code> ignores any updates from <code>data2</code> that have a missing value for either the time or the value. In the pbcseq dataset there are several observations with a missing alkaline phosphotase value. A consequence of this behavior is that the pbc2 dataset effectively uses “last value carried forward” values for alk.phos, replacing those missing values. Subject 6 for instance has a total follow-up of 2503, and alk.phos values of 682 and NA on days 1492 and 2453, respectively; in the final dataset it is coded 682 from day 1492 until last follow up. One can change this default by adding <code>options=list(na.rm=FALSE)</code> to the second call above, in which case the alkaline phosphotase value over the interval (2453, 2503] will become missing. Any <code>tdc</code> calls with a missing time are still ignored, independent of the na.rm value, since we would not know where to insert them.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Can also use summary(pbc2)</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">attr</span>(pbc2, <span class="st">"tcount"</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;          early late gap within boundary leading trailing tied missid</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; death        0    0   0      0        0       0      312    0      0</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ascites      0  131   0   1442        0     312        0    0      0</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; bili         0  138   0     53     1442     312        0    0      0</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; albumin      0  138   0      0     1495     312        0    0      0</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; protime      0  138   0      0     1495     312        0    0      0</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; alk.phos     0  131   0      0     1442     312        0    0      0</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The tcount results are interesting. For the first addition of ascites we have 312 observations on a leading edge of follow up, which is all of the baseline lab values at time 0, and 1442 further additions within the subjects’ follow-up interval. The latter cause a new break point to be added at each of these intermediate laboratory dates, for subsequent additions these 1442 times lie on a boundary of two intervals. Another 131 non-missing alkaline phosphotase values occurred after the last follow-up date of the pbc dataset and are ignored. Bilirubin is missing on no subjects, so its addition creates a few more unique break points in the follow-up, namely those clinical visits for which the ascites value was missing.</p>
+<p>The data for the pbcseq dataset was assembled at a later calendar time than the primary dataset. Since having lab test results is a certain marker that the patient is still alive, would a better analysis have used this test information to extend the last follow-up date for these 138 “late” subjects with a later laboratory date? Not necessarily.</p>
+<p>Odd things happen in survival analysis when risk sets are extended piecemeal. A basic tenet of the Cox model is that if someone is marked as being “at risk” over some interval <span class="math inline">\((s, t)\)</span>, this means that “if they had had an event over that interval, we would have recorded it.” Say someone ended their initial follow-up time at 3000 days and then had a lab test at 3350 days (subjects returned about once a year). If we only extend the time of those who had a test, then saying that this subject was at risk during the interval (3000, 3350) is false: if they had died in that interval, they would not have had the lab test and would not obtained the extension, nor would their death have been updated in the original <code>pbc</code> dataset. The cutoff rule of <code>tmerge</code> is purposefully conservative to avoid creating such anomalies.</p>
+<p>In the case of the PBC dataset this author happens to know that active follow-up <em>was</em> continued for all subjects, both those that did and did not return for further laboratory tests. This updated follow-up information is included in the pbcseq data and could have been used to set a wider time range. Such is not always the case, however. Automatic additions to a dataset via electronic systems can be particularly troublesome. One case from the author’s experience involved a study of patient outcomes after organ transplant. Cases were actively followed up for 3 years, at which time priorities shifted and the clerical staff responsible for the active follow-up were reassigned. Automatic updates from a state death index continued to accumulate, however. A Kaplan-Meier curve computed at 5 years showed the remarkable result of a 3 year survival of .9 followed by a precipitous drop to 0 at 5 years! This is because there was, by definition, 100% mortality in all those subjects with more than 3 years of supposed follow-up.</p>
+</section>
+<section id="time-delay-and-other-options" class="level2" data-number="3.5">
+<h2 data-number="3.5" class="anchored" data-anchor-id="time-delay-and-other-options"><span class="header-section-number">3.5</span> Time delay and other options</h2>
+<p>The <code>options</code> argument to the tmerge routine is a list with one or more of the following five elements, listed below along with their default values.</p>
+<ul>
+<li>idname = ‘id’</li>
+<li>tstartname = ‘tstart’</li>
+<li>tstopname = ‘tstop’</li>
+<li>na.rm = TRUE</li>
+<li>delay = 0</li>
+</ul>
+<p>The first three of these are the variable names that will be used for the identifier, start, and stop variables which are added to the output dataset. They only need to be specified one time within a series of tmerge calls in order to effect a change. The na.rm option has been discussed above; it affects <code>tdc()</code> and <code>cumtdc()</code> directives within a single tmerge call. The delay option causes any tdc or cumtdc action in the tmerge call to be delayed by a fixed amount. The final two tmerge calls below are <em>almost</em> identical in their action:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>temp <span class="ot">&lt;-</span> <span class="fu">subset</span>(pbc, id <span class="sc">&lt;=</span> <span class="dv">312</span>, <span class="at">select=</span><span class="fu">c</span>(id<span class="sc">:</span>sex, stage))</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>pbc2 <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(temp, temp, <span class="at">id=</span>id, <span class="at">death =</span> <span class="fu">event</span>(time, status))</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>pbc2a <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(pbc2, pbcseq, <span class="at">id=</span>id, <span class="at">ascites =</span> <span class="fu">tdc</span>(day, ascites),</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>               <span class="at">bili =</span> <span class="fu">tdc</span>(day, bili), <span class="at">options=</span> <span class="fu">list</span>(<span class="at">delay=</span><span class="dv">14</span>))</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>pbc2b <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(pbc2, pbcseq, <span class="at">id=</span>id, <span class="at">ascites =</span> <span class="fu">tdc</span>(day<span class="sc">+</span><span class="dv">14</span>, ascites),</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>               <span class="at">bili =</span> <span class="fu">tdc</span>(day<span class="sc">+</span><span class="dv">14</span>, bili))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The difference between<code>pbc2a</code> and <code>pbc2b</code> is that the first call does not defer baseline values for each subject, i.e., any value with a time that is on or before the the subject’s first time point, as that will introduce intervals with a missing value into the result.</p>
+<p>The more important question is <em>why</em> one would wish to delay or lag a time dependent covariate. One reason is to check for cases of reverse causality. It is sometimes the case that a covariate measured soon before death is not a predictor of death but rather is simply a marker for an event that is already in progress. A simple example would the the time-dependent covariate “have called the family for a final visit”. A less obvious one from the author’s experience occurs when a clinical visit spans more than one day, the endpoint is progression, and one or more laboratory results that were used to define “progression” get recorded in the dataset 1-2 days before the progression event. (They were perhaps pulled automatically from a laboratory information system). One then ends up with the tautology of a test value predicting its own result.</p>
+<p>Even more subtle biases can occur via coding errors. For any dataset containing constructed time-dependent covariates, it has become the author’s practice to re-run the analyses after adding a 7-14 day lag to key variables. When the results show a substantial change, and this is not infrequent, understanding why this occurred is an critical step. Even if there is not an actual error, one has to question the value of a covariate that can predict death within the next week but fails for a longer horizon.</p>
+</section>
+<section id="cumulative-events" class="level2" data-number="3.6">
+<h2 data-number="3.6" class="anchored" data-anchor-id="cumulative-events"><span class="header-section-number">3.6</span> Cumulative events</h2>
+<p>The action of the <code>cumevent</code> operator is different than <code>cumtdc</code> in several ways. Say that we have a subject with outcomes of one type at times 5, 10, and 15 and another type at times 6 and 15, with a follow-up interval of 0 to 20. For illustration I’ll call the first event ‘asthma’ and the second ‘IBD’ (a disease flare in inflammatory bowel disease). A resulting dataset would have the following form:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">interval=</span><span class="fu">c</span>(<span class="st">'(0,5]'</span>,<span class="st">'(5,6]'</span>,<span class="st">'(6,10]'</span>,<span class="st">'(10,15]'</span>,<span class="st">'(15,20]'</span>),</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>                  <span class="at">asthma1=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>),<span class="at">IBD1=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">2</span>),</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>                  <span class="at">asthma2=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">0</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">0</span>),<span class="at">IBD2=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="dv">0</span>,<span class="dv">2</span>,<span class="dv">0</span>))</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="fu">gt</span>(dat) <span class="sc">|&gt;</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tab_spanner</span>(<span class="at">label=</span><span class="st">"cumtdc"</span>,</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>              <span class="at">columns =</span> <span class="fu">c</span>(asthma1, IBD1)) <span class="sc">|&gt;</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tab_spanner</span>(<span class="at">label=</span><span class="st">"cumevent"</span>,</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>              <span class="at">columns=</span><span class="fu">c</span>(asthma2,IBD2)) <span class="sc">|&gt;</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cols_label</span>(<span class="at">asthma1=</span><span class="st">"asthma"</span>,<span class="at">IBD1=</span><span class="st">"IBD"</span>,</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>             <span class="at">asthma2=</span><span class="st">"asthma"</span>,<span class="at">IBD2=</span><span class="st">"IBD"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="retjfcxrae" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#retjfcxrae table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#retjfcxrae thead, #retjfcxrae tbody, #retjfcxrae tfoot, #retjfcxrae tr, #retjfcxrae td, #retjfcxrae th {
+  border-style: none;
+}
+
+#retjfcxrae p {
+  margin: 0;
+  padding: 0;
+}
+
+#retjfcxrae .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#retjfcxrae .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#retjfcxrae .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#retjfcxrae .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#retjfcxrae .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#retjfcxrae .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#retjfcxrae .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#retjfcxrae .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#retjfcxrae .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#retjfcxrae .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#retjfcxrae .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#retjfcxrae .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#retjfcxrae .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#retjfcxrae .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#retjfcxrae .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#retjfcxrae .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#retjfcxrae .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#retjfcxrae .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#retjfcxrae .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#retjfcxrae .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#retjfcxrae .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#retjfcxrae .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#retjfcxrae .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#retjfcxrae .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#retjfcxrae .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#retjfcxrae .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#retjfcxrae .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#retjfcxrae .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#retjfcxrae .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#retjfcxrae .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#retjfcxrae .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#retjfcxrae .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#retjfcxrae .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#retjfcxrae .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#retjfcxrae .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#retjfcxrae .gt_left {
+  text-align: left;
+}
+
+#retjfcxrae .gt_center {
+  text-align: center;
+}
+
+#retjfcxrae .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#retjfcxrae .gt_font_normal {
+  font-weight: normal;
+}
+
+#retjfcxrae .gt_font_bold {
+  font-weight: bold;
+}
+
+#retjfcxrae .gt_font_italic {
+  font-style: italic;
+}
+
+#retjfcxrae .gt_super {
+  font-size: 65%;
+}
+
+#retjfcxrae .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#retjfcxrae .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#retjfcxrae .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#retjfcxrae .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#retjfcxrae .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#retjfcxrae .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#retjfcxrae .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#retjfcxrae .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#retjfcxrae div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+
+<table class="gt_table caption-top table table-sm table-striped small" data-quarto-bootstrap="false">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="gt_col_headings gt_spanner_row header">
+<th rowspan="2" id="interval" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">interval</th>
+<th colspan="2" id="cumtdc" class="gt_center gt_columns_top_border gt_column_spanner_outer" data-quarto-table-cell-role="th" scope="colgroup"><div class="gt_column_spanner">
+cumtdc
+</div></th>
+<th colspan="2" id="cumevent" class="gt_center gt_columns_top_border gt_column_spanner_outer" data-quarto-table-cell-role="th" scope="colgroup"><div class="gt_column_spanner">
+cumevent
+</div></th>
+</tr>
+<tr class="gt_col_headings even">
+<th id="asthma1" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">asthma</th>
+<th id="IBD1" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">IBD</th>
+<th id="asthma2" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">asthma</th>
+<th id="IBD2" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">IBD</th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+<tr class="odd">
+<td class="gt_row gt_left" headers="interval">(0,5]</td>
+<td class="gt_row gt_right" headers="asthma1">0</td>
+<td class="gt_row gt_right" headers="IBD1">0</td>
+<td class="gt_row gt_right" headers="asthma2">1</td>
+<td class="gt_row gt_right" headers="IBD2">0</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="interval">(5,6]</td>
+<td class="gt_row gt_right" headers="asthma1">1</td>
+<td class="gt_row gt_right" headers="IBD1">0</td>
+<td class="gt_row gt_right" headers="asthma2">0</td>
+<td class="gt_row gt_right" headers="IBD2">1</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="interval">(6,10]</td>
+<td class="gt_row gt_right" headers="asthma1">1</td>
+<td class="gt_row gt_right" headers="IBD1">1</td>
+<td class="gt_row gt_right" headers="asthma2">2</td>
+<td class="gt_row gt_right" headers="IBD2">0</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="interval">(10,15]</td>
+<td class="gt_row gt_right" headers="asthma1">2</td>
+<td class="gt_row gt_right" headers="IBD1">1</td>
+<td class="gt_row gt_right" headers="asthma2">3</td>
+<td class="gt_row gt_right" headers="IBD2">2</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="interval">(15,20]</td>
+<td class="gt_row gt_right" headers="asthma1">3</td>
+<td class="gt_row gt_right" headers="IBD1">2</td>
+<td class="gt_row gt_right" headers="asthma2">0</td>
+<td class="gt_row gt_right" headers="IBD2">0</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>Events happen at the ends of an interval and time-dependent covariates change the following intervals. More importantly, time-dependent covariates persist while events do not, a <code>cumevent</code> action simply changes the label attached to an event.</p>
+<section id="rep" class="level3" data-number="3.6.1">
+<h3 data-number="3.6.1" class="anchored" data-anchor-id="rep"><span class="header-section-number">3.6.1</span> REP</h3>
+<p>The motivating case for <code>tmerge</code> came from a particular problem: the Rochester Epidemiology Project has tracked all subjects living in Olmsted County, Minnesota, from 1965 to the present. For an investigation of cumulative comorbidity we had three datasets</p>
+<ul>
+<li>base: demographic data such as sex and birth date</li>
+<li>timeline: one or more rows for each subject containing age intervals during which they were a resident of the county.<br>
+The important variables are id, age1 and age2; each (age1, age2) pair marks an interval of residence. Disjoint intervals are not uncommon.</li>
+<li>outcome: one row for the first occurrence of each outcome of interest.<br>
+The outcomes were 20 comorbid conditions as defined by a particular research initiative from the National Institutes of Health.</li>
+</ul>
+<p>The structure for building the data is shown below. (The data for this example unfortunately cannot be included with the survival library so the code is shown but not executed.)</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>newd <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(<span class="at">data1=</span>base, <span class="at">data2=</span>timeline, <span class="at">id=</span>repid, <span class="at">tstart=</span>age1, </span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">tstop=</span>age2, <span class="fu">options</span>(<span class="at">id=</span><span class="st">"repid"</span>))</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>newd <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(newd, outcome, <span class="at">id=</span>repid, <span class="at">mcount =</span> <span class="fu">cumtdc</span>(age))</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>newd <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(newd, <span class="fu">subset</span>(outcome, <span class="at">event=</span><span class="st">'diabetes'</span>), </span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>               <span class="at">diabetes=</span> <span class="fu">tdc</span>(age))</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>newd <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(newd, <span class="fu">subset</span>(outcome, <span class="at">event=</span><span class="st">'arthritis'</span>), </span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>               <span class="at">arthritis=</span> <span class="fu">tdc</span>(age))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The first call to tmerge adds the time line for each observation to the baseline data. For this first call both data1 and data2 must contain a copy of the id variable (here <code>repid</code>), and data1 is constrained to have only a single line for each id value. (Subjects have a single baseline.) Each subsequent call adds a new variable to the dataset. The second line creates a covariate which is a cumulative count of the number of comorbidities thus far for each subject. The third line creates a time-dependent covariate (tdc) which will be 0 until the age of diabetes and is 1 thereafter, the fourth line creates a time-dependent variable for the presence of arthritis.</p>
+<p>Time-dependent covariates that occur before the start of a subject’s follow-up interval or during a gap in time do not generate a new time point, but they do set the value of that covariate for future times. Events that occur in a gap are not counted. The rationale is that during a subject’s time within the county we would like the variable “prior diagnosis of diabetes” to be accurate, even if that diagnosis occurred during a prior period when the subject was not a resident. For events outside of the time line, we have no way to know who the appropriate comparison group is, and so must ignore those events. (Formally, the risk set would be the set of all non-residents who, if they were to have had an event at the same age, we would find out about it because they will later move to the county, have a medical encounter here, and have that event written into the “prior conditions” section of their medical record.)</p>
+</section>
+</section>
+</section>
+<section id="time-dependent-coefficients" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Time-dependent coefficients</h1>
+<p>Time-dependent covariates and time-dependent coefficients are two different extensions of a Cox model, as shown in the two equations below.</p>
+<p><span id="eq-tdcovar"><span class="math display">\[
+  \lambda(t) = \lambda_0(t) e^{\beta X(t)}  
+\tag{1}\]</span></span> <span id="eq-tdbeta"><span class="math display">\[
+  \lambda(t) = \lambda_0(t) e^{\beta(t) X}  
+\tag{2}\]</span></span></p>
+<p><a href="#eq-tdcovar" class="quarto-xref">Equation&nbsp;1</a> is a time-dependent covariate, a common and well understood usage. <a href="#eq-tdbeta" class="quarto-xref">Equation&nbsp;2</a> has a time-dependent coefficient. These models are much less common, but represent one way to deal with non-proportional hazards – the proportional hazard assumption is precisely that <span class="math inline">\(\beta(t) = \beta\)</span>, i.e., the coefficient does not change over time. The <code>cox.zph</code> function will plot an estimate of <span class="math inline">\(\beta(t)\)</span> for a study and is used to diagnose and understand non-proportional hazards. The code below shows a test case using the veterans cancer data, with the results plotted in Figure <a href="#fig-veteran1b" class="quarto-xref">Figure&nbsp;1</a>.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">show.signif.stars =</span> <span class="cn">FALSE</span>)  <span class="co"># display statistical intelligence</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>vfit <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> trt <span class="sc">+</span> prior <span class="sc">+</span> karno, veteran)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>vfit</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; coxph(formula = Surv(time, status) ~ trt + prior + karno, data = veteran)</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;            coef exp(coef)  se(coef)      z     p</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; trt    0.180197  1.197453  0.183468  0.982 0.326</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; prior -0.005551  0.994464  0.020225 -0.274 0.784</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; karno -0.033771  0.966793  0.005114 -6.604 4e-11</span></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Likelihood ratio test=43.04  on 3 df, p=2.41e-09</span></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; n= 137, number of events= 128</span></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a><span class="fu">quantile</span>(veteran<span class="sc">$</span>karno)</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   0%  25%  50%  75% 100% </span></span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   10   40   60   75   99</span></span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>zp <span class="ot">&lt;-</span> <span class="fu">cox.zph</span>(vfit, <span class="at">transform=</span> <span class="cf">function</span>(time) <span class="fu">log</span>(time <span class="sc">+</span><span class="dv">20</span>))</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>zp</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;         chisq df       p</span></span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; trt     0.271  1 0.60247</span></span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; prior   2.260  1 0.13275</span></span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; karno  10.694  1 0.00107</span></span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; GLOBAL 16.881  3 0.00075</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div id="fig-veteran1b" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-veteran1b-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="timedep_files/figure-html/fig-veteran1b-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-veteran1b-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Solid line = the estimated effect if Karnofsy score, versus time, in the Veterans cancer dataset, as estimated by cox.zph, along with confidence intervals. Dotted lines are the overall estimate from a Cox model with karno as a time-fixed effect, and a reference line at 0.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Karnofsky score is a very important predictor, but its effect is not constant over time as shown by both the test and the plot. Early on it has a large negative effect: the risk for someone at the first quartile is approximately exp(35*.05) = 5.7 fold times that of someone at the third quartile, but by 200 days this has waned and is not much different from one. One explanation is that, in this very acute illness, any measure that is over 6 months old is no longer relevant. Another is that a large portion of subjects with the lowest Karnofsky values have been lost; at 200 days 4% of the remaining subjects had a initial value <span class="math inline">\(\le 40\)</span> versus 28% at the start.</p>
+<p>The proportional hazards model estimates an average hazard over time, the value of which is shown by the dotted horizontal line. The use of an average hazard is often reasonable, the proportional hazards assumption is after all never precisely true. In this case, however, the departure is quite large and a time dependent coefficient is a more useful summary of the actual state. The cox.zph plot is excellent for diagnosis but does not, however, produce a formal fit of <span class="math inline">\(\beta(t)\)</span>. What if we want to fit the model?</p>
+<section id="step-functions" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="step-functions"><span class="header-section-number">4.1</span> Step functions</h2>
+<p>One of the simplest extensions is a step function for <span class="math inline">\(\beta(t)\)</span>, i.e., different coefficients over different time intervals. An easy way to do this is to use the <code>survSplit</code> function to break the dataset into time-dependent parts. We will arbitrarily divide the veteran’s data into 3 epochs of the first 3 months, 3-6 months, and greater than 6 months.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>vet2 <span class="ot">&lt;-</span> <span class="fu">survSplit</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> ., <span class="at">data=</span> veteran, <span class="at">cut=</span><span class="fu">c</span>(<span class="dv">90</span>, <span class="dv">180</span>), </span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>                  <span class="at">episode=</span> <span class="st">"tgroup"</span>, <span class="at">id=</span><span class="st">"id"</span>)</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>vet2[<span class="dv">1</span><span class="sc">:</span><span class="dv">7</span>, <span class="fu">c</span>(<span class="st">"id"</span>, <span class="st">"tstart"</span>, <span class="st">"time"</span>, <span class="st">"status"</span>, <span class="st">"tgroup"</span>, <span class="st">"age"</span>, <span class="st">"karno"</span>)]</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   id tstart time status tgroup age karno</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1  1      0   72      1      1  69    60</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2  2      0   90      0      1  64    70</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3  2     90  180      0      2  64    70</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4  2    180  411      1      3  64    70</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5  3      0   90      0      1  38    60</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6  3     90  180      0      2  38    60</span></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 7  3    180  228      1      3  38    60</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The first subject died at 72 days, his data is unchanged. The second and third subjects contribute time to each of the three intervals.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>vfit2 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(tstart, time, status) <span class="sc">~</span> trt <span class="sc">+</span> prior <span class="sc">+</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>                  karno<span class="sc">:</span><span class="fu">strata</span>(tgroup), <span class="at">data=</span>vet2)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>vfit2</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; coxph(formula = Surv(tstart, time, status) ~ trt + prior + karno:strata(tgroup), </span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     data = vet2)</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                                   coef exp(coef)  se(coef)      z</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; trt                          -0.011025  0.989035  0.189062 -0.058</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; prior                        -0.006107  0.993912  0.020355 -0.300</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; karno:strata(tgroup)tgroup=1 -0.048755  0.952414  0.006222 -7.836</span></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; karno:strata(tgroup)tgroup=2  0.008050  1.008083  0.012823  0.628</span></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; karno:strata(tgroup)tgroup=3 -0.008349  0.991686  0.014620 -0.571</span></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                                     p</span></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; trt                             0.953</span></span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; prior                           0.764</span></span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; karno:strata(tgroup)tgroup=1 4.64e-15</span></span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; karno:strata(tgroup)tgroup=2    0.530</span></span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; karno:strata(tgroup)tgroup=3    0.568</span></span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Likelihood ratio test=63.04  on 5 df, p=2.857e-12</span></span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; n= 225, number of events= 128</span></span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a><span class="fu">cox.zph</span>(vfit2)</span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                      chisq df     p</span></span>
+<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; trt                   1.72  1 0.189</span></span>
+<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; prior                 3.81  1 0.051</span></span>
+<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; karno:strata(tgroup)  3.04  3 0.385</span></span>
+<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; GLOBAL                8.03  5 0.154</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>A fit to the revised data shows that the effect of baseline Karnofsky score is essentially limited to the first two months. The <code>cox.zph</code> function shows no further time-dependent effect of Karnofsky score. This last is of course no surprise, since we used the original graph to pick the cut points. A “test” that the coefficients for the three intervals are different will be biased by this sequential process and should be viewed with caution.</p>
+<p>Survival curves post fit require a little more care. The default curve uses the mean covariate values, which is always problematic and completely useless in this case. Look at the set of saved means for the model:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>vfit2<span class="sc">$</span>means</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                          trt                        prior </span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                     1.471111                     2.977778 </span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; karno:strata(tgroup)tgroup=1 karno:strata(tgroup)tgroup=2 </span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                    35.662222                    19.022222 </span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; karno:strata(tgroup)tgroup=3 </span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                     8.444444</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The default curve will be for someone on treatment arm 1.47 % which applies to no one, and a single set of “blended” values of the Karnofsky score, each times the three Karnofsky coefficients. This is rectified by creating a new dataset with time intervals. We create two hypothetical subjects labeled as “curve 1” and “curve 2”. One has a Karnofsky of 40 and the other a Karnofsky of 75, both on treatment 1 and with no prior therapy. Each has the appropriate values for the time-dependent covariate <code>tgroup</code>, which is 1, 2, 3 over 0–90, 90–180 and 180+ days, respectively. We will draw curves for the first year.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">quantile</span>(veteran<span class="sc">$</span>karno)</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   0%  25%  50%  75% 100% </span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   10   40   60   75   99</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>cdata <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">tstart=</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">90</span>,<span class="dv">180</span>), <span class="dv">2</span>),</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>                    <span class="at">time =</span>  <span class="fu">rep</span>(<span class="fu">c</span>(<span class="dv">90</span>,<span class="dv">180</span>, <span class="dv">365</span>), <span class="dv">2</span>),</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>                    <span class="at">status=</span> <span class="fu">rep</span>(<span class="dv">0</span>,<span class="dv">6</span>),   <span class="co">#necessary, but ignored</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>                    <span class="at">tgroup=</span> <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, <span class="dv">2</span>),</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>                    <span class="at">trt  =</span>  <span class="fu">rep</span>(<span class="dv">1</span>,<span class="dv">6</span>),</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>                    <span class="at">prior=</span>  <span class="fu">rep</span>(<span class="dv">0</span>,<span class="dv">6</span>),</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>                    <span class="at">karno=</span>  <span class="fu">rep</span>(<span class="fu">c</span>(<span class="dv">40</span>, <span class="dv">75</span>), <span class="at">each=</span><span class="dv">3</span>),</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>                    <span class="at">curve=</span>  <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">each=</span><span class="dv">3</span>))</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>cdata</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   tstart time status tgroup trt prior karno curve</span></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1      0   90      0      1   1     0    40     1</span></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2     90  180      0      2   1     0    40     1</span></span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3    180  365      0      3   1     0    40     1</span></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4      0   90      0      1   1     0    75     2</span></span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5     90  180      0      2   1     0    75     2</span></span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6    180  365      0      3   1     0    75     2</span></span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>sfit <span class="ot">&lt;-</span> <span class="fu">survfit</span>(vfit2, <span class="at">newdata=</span>cdata, <span class="at">id=</span>curve)</span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>km <span class="ot">&lt;-</span> <span class="fu">survfit</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> <span class="fu">I</span>(karno<span class="sc">&gt;</span><span class="dv">60</span>), veteran)</span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(km, <span class="at">xmax=</span> <span class="dv">365</span>, <span class="at">col=</span><span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">lwd=</span><span class="dv">2</span>, </span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab=</span><span class="st">"Days from enrollment"</span>, <span class="at">ylab=</span><span class="st">"Survival"</span>)</span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(sfit, <span class="at">col=</span><span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">lty=</span><span class="dv">2</span>, <span class="at">lwd=</span><span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="timedep_files/figure-html/split4-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The default behavior for survival curves based on a coxph model is to create one curve for each line in the input data; the <code>id</code> option causes it to use a set of lines for each curve. Karnofsky scores at the 25th and 75th percentiles roughly represent the average score for the lower half of the subjects and that for the upper half, respectively, and are plotted over the top of the Kaplan-Meier curves for those below and above the median.</p>
+</section>
+<section id="continuous-time-dependent-coefficients" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="continuous-time-dependent-coefficients"><span class="header-section-number">4.2</span> Continuous time-dependent coefficients</h2>
+<p>If <span class="math inline">\(\beta(t)\)</span> is assumed to have a simple functional form we can fool an ordinary Cox model program in to doing the fit. The particular form <span class="math inline">\(\beta(t) =
+a + b\log(t)\)</span> has for instance often been assumed. Then <span class="math inline">\(\beta(t) x = ax + b
+\log(t) x = ax + b z\)</span> for the special time dependent covariate <span class="math inline">\(z = \log(t) x\)</span>. The time scale for the <code>cox.zph</code> plot used further above of <span class="math inline">\(\log(t + 20)\)</span> was chosen to make the first 200 days of the plot roughly linear. Per the figure this simple linear model does not fit over the entire range, but we will forge ahead and use it as an example anyway. (After all, most users who fit the log(t) form, based on seeing it a paper, don’t bother to even look at a plot.) An obvious but incorrect approach is</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>vfit3 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> trt <span class="sc">+</span> prior <span class="sc">+</span> karno <span class="sc">+</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>                <span class="fu">I</span>(karno <span class="sc">*</span> <span class="fu">log</span>(time <span class="sc">+</span> <span class="dv">20</span>)), <span class="at">data=</span>veteran)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>This mistake has been made often enough the <code>coxph</code> routine has been updated to print an error message for such attempts. The issue is that the above code does not actually create a time-dependent covariate, rather it creates a time-static value for each subject based on their value for the covariate <code>time</code>; no differently than if we had constructed the variable outside of a <code>coxph</code> call. This variable most definitely breaks the rule about not looking into the future, and one would quickly find the circularity: large values of <code>time</code> appear to predict long survival because long survival leads to large values for <code>time</code>.</p>
+<p>A true time-dependent covariate can be constructed using the <em>time-transform</em> functionality of coxph.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>vfit3 <span class="ot">&lt;-</span>  <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> trt <span class="sc">+</span> prior <span class="sc">+</span> karno <span class="sc">+</span> <span class="fu">tt</span>(karno),</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>                <span class="at">data=</span>veteran,</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>                <span class="at">tt =</span> <span class="cf">function</span>(x, t, ...) x <span class="sc">*</span> <span class="fu">log</span>(t<span class="sc">+</span><span class="dv">20</span>))</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>vfit3</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; coxph(formula = Surv(time, status) ~ trt + prior + karno + tt(karno), </span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     data = veteran, tt = function(x, t, ...) x * log(t + 20))</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                coef exp(coef)  se(coef)      z        p</span></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; trt        0.016478  1.016614  0.190707  0.086  0.93115</span></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; prior     -0.009317  0.990726  0.020296 -0.459  0.64619</span></span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; karno     -0.124662  0.882795  0.028785 -4.331 1.49e-05</span></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; tt(karno)  0.021310  1.021538  0.006607  3.225  0.00126</span></span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Likelihood ratio test=53.84  on 4 df, p=5.698e-11</span></span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; n= 137, number of events= 128</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The time-dependent coefficient is estimated to be <span class="math inline">\(\beta(t) =\)</span> -0.125 + 0.021 * log(t + 20). We can add said line to the <code>cox.zph</code> plot. Not surprisingly, the result is rather too high for time <span class="math inline">\(&gt;\)</span> 200 and underestimates the initial slope. Still the fit is better than a horizontal line, as confirmed by the p-value for the slope term in <code>vfit3</code>. (The p-value for that term from <code>cox.zph</code> is nearly identical, as it must be, since the tests in <code>cox.zph</code> are for a linear effect on the chosen time scale.)</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(zp[<span class="dv">3</span>])</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="fu">coef</span>(vfit3)[<span class="dv">3</span><span class="sc">:</span><span class="dv">4</span>], <span class="at">lwd=</span><span class="dv">2</span>, <span class="at">lty=</span><span class="dv">3</span>, <span class="at">col=</span><span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="timedep_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>This same coding dichotomy exists in SAS phreg, by the way. Adding <code>time</code> to the right hand side of the model statement will create the time-fixed (incorrect) variable, while a programming statement within phreg that uses <code>time</code> as a variable will generate time-dependent objects. The error is less likely there because phreg’s model statement is less flexible than R, i.e., you cannot simply write “log(time)” on the right hand side of a formula.</p>
+<p>A more general approach is to allow a flexible fit on the right hand side, as shown in the following code. (The Boundary.knots=FALSE argument simply says that the <code>knots</code> argument contains <em>all</em> the knots, i.e., don’t separate them into two sets.)</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>vfit4 <span class="ot">&lt;-</span>  <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> trt <span class="sc">+</span> prior <span class="sc">+</span> karno <span class="sc">+</span> <span class="fu">tt</span>(karno),</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>                <span class="at">data=</span>veteran,</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>                <span class="at">tt =</span> <span class="cf">function</span>(x, t, ...) x<span class="sc">*</span><span class="fu">nsk</span>(t, <span class="at">knots=</span><span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">100</span>, <span class="dv">200</span>, <span class="dv">400</span>),</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>                                               <span class="at">Boundary.knots=</span><span class="cn">FALSE</span>))</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>vfit4</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; coxph(formula = Surv(time, status) ~ trt + prior + karno + tt(karno), </span></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     data = veteran, tt = function(x, t, ...) x * nsk(t, knots = c(5, </span></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;         100, 200, 400), Boundary.knots = FALSE))</span></span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                 coef exp(coef)  se(coef)      z        p</span></span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; trt        -0.025937  0.974397  0.191034 -0.136 0.892003</span></span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; prior      -0.005787  0.994229  0.020299 -0.285 0.775556</span></span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; karno      -0.059583  0.942157  0.009414 -6.329 2.46e-10</span></span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; tt(karno)1  0.048253  1.049436  0.016281  2.964 0.003039</span></span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; tt(karno)2  0.062323  1.064306  0.016736  3.724 0.000196</span></span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; tt(karno)3  0.040798  1.041642  0.020558  1.985 0.047197</span></span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Likelihood ratio test=59.02  on 6 df, p=7.111e-11</span></span>
+<span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; n= 137, number of events= 128</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The <code>nsk</code> function is a variant if <code>ns</code> such that the coefficients are the predicted values at knots 2, 3, … - the predicted value at knot 1, the <code>Boundary= FALSE</code> argument omits addition of extra knots at the boundary times of t=1 and 999. We see a large decrease in effect from time= 5 to time 100, a coefficient of essentially -.060 + .048 = -.012 for Karnofsky at this later point, with minimal changes thereafter. Unfortunately, follow-on functions such as <code>cox.zph</code> within the survival package do not work reliably. We will come back to this example in the next section, using another approach.</p>
+<p>The use of programming statements to create a yes/no variable deserves extra comment because of a common error. Assume one has a dataset with two time variables: the time from enrollment to last follow up and the time to diabetes, say, and we want to use the presence of diabetes as time-dependent covariate. Here is a small made up example.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>data1 <span class="ot">&lt;-</span> <span class="fu">read.table</span>(<span class="at">col.names=</span><span class="fu">c</span>(<span class="st">"id"</span>, <span class="st">"diabetes"</span>, <span class="st">"lfu"</span>, <span class="st">"status"</span>),</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>                          <span class="at">header=</span><span class="cn">FALSE</span>, <span class="at">text=</span><span class="st">"</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="st">1   5 30  1</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="st">2  10 15  1</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="st">3  NA 60  0</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a><span class="st">4  NA 80  1</span></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a><span class="st">5  10 80  0</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a><span class="st">6  NA 90  1</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a><span class="st">7  30 95  1</span></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a><span class="st">"</span>)</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>data1<span class="sc">$</span>d2 <span class="ot">&lt;-</span> <span class="fu">pmin</span>(data1<span class="sc">$</span>diabetes, <span class="dv">300</span>, <span class="at">na.rm=</span><span class="cn">TRUE</span>) <span class="co">#replace NA with 300</span></span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>fit1 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(lfu, status) <span class="sc">~</span> <span class="fu">tt</span>(d2), <span class="at">data=</span>data1,</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>              <span class="at">tt =</span> <span class="cf">function</span>(d2, t, ...) <span class="fu">ifelse</span>(t <span class="sc">&gt;</span> d2, <span class="dv">1</span>, <span class="dv">0</span>))</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>fit2 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(lfu, status) <span class="sc">~</span> <span class="fu">tt</span>(d2), <span class="at">data=</span>data1,</span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>              <span class="at">tt =</span> <span class="cf">function</span>(d2, t, ...) <span class="fu">ifelse</span>(t <span class="sc">&lt;</span> d2, <span class="dv">0</span>, <span class="dv">1</span>))</span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a><span class="fu">c</span>(<span class="fu">coef</span>(fit1), <span class="fu">coef</span>(fit2))</span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     tt(d2)     tt(d2) </span></span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.24395607 0.07173475</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>One might have expected fit1 and fit2 to give the same coefficient but they are completely different. The issue is subject 7 whose time to diabetes falls exactly at one of the event times. In fit1 their diabetes covariate effectively changes just after the event at time 30, in fit2 it changes at the event. The second is incorrect. Stated in the gambling context, all roulette bets must be placed <em>before</em> the ball lands in the slot, or they apply to the next spin of the wheel. Likewise, a change in diabetes status needs to apply to the next event time.</p>
+<p>When a dataset is expanded into a start, stop format using the <code>tmerge</code> function ties are dealt with correctly.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>data2 <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(data1, data1, <span class="at">id=</span>id, <span class="at">dstat=</span><span class="fu">event</span>(lfu, status),</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>                <span class="at">diab =</span> <span class="fu">tdc</span>(diabetes))</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="fu">subset</span>(data2, id <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">7</span>), <span class="fu">c</span>(id, tstart<span class="sc">:</span>diab))               </span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    id tstart tstop dstat diab</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1   1      0     5     0    0</span></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2   1      5    30     1    1</span></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10  7      0    30     0    0</span></span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 11  7     30    95     1    1</span></span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>fit3 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(tstart, tstop, dstat) <span class="sc">~</span> diab, data2)</span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a><span class="fu">c</span>(<span class="fu">coef</span>(fit1), <span class="fu">coef</span>(fit2), <span class="fu">coef</span>(fit3))</span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     tt(d2)     tt(d2)       diab </span></span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.24395607 0.07173475 0.24395607</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+</section>
+<section id="predictable-time-dependent-covariates" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Predictable time-dependent covariates</h1>
+<p>Occasionally one has a time-dependent covariate whose values in the future are predictable. The most obvious of these is patient age, occasionally this may also be true for the cumulative dose of a drug; say that subjects are assigned to take one 5mg tablet a day (and they keep their schedule). If age is entered as a linear term in the model, then the effect of changing age can be ignored in a Cox model, due to the structure of the partial likelihood. Assume that subject <span class="math inline">\(i\)</span> has an event at time <span class="math inline">\(t_i\)</span>, with other subject <span class="math inline">\(j \in R_i\)</span> at risk at that time, with <span class="math inline">\(a\)</span> denoting age. The partial likelihood term is</p>
+<p><span class="math display">\[\begin{equation*}
+  \frac{e^{\beta * a_i}}{\sum_{j \in R_i} e^{\beta* a_j}} =
+  \frac{e^{\beta * (a_i + t_i)}}{\sum_{j \in R_i} e^{\beta* (a_j + t_i)}}
+\end{equation*}\]</span></p>
+<p>We see that using current age (the right hand version) or age at baseline (left hand), the partial likelihood term is identical since <span class="math inline">\(\exp(\beta t_i)\)</span> cancels out of the fraction. However, if the effect of age on risk is <em>non-linear</em>, this cancellation does not occur.</p>
+<p>Since age changes continuously, we would in theory need a very large dataset to completely capture the effect, one interval per day to match the usual resolution for death times. In practice this level of resolution is not necessary; though we all grow older, risk does not increase so rapidly that we need to know our age to the day.</p>
+<p>One method to create a time-changing covariate is to use the <em>time-transform</em> feature of coxph. Below is an example using the pbc dataset. The longest follow-up time in that data set is over 13 years, follow-up time is in days, and we might worry that the intermediate dataset would be huge. The program only needs the value of the time-dependent covariate(s) for each subject at the times of events, however, so the maximum number of rows in the intermediate dataset is the number of subjects times the number of unique event times.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>pfit1 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status<span class="sc">==</span><span class="dv">2</span>) <span class="sc">~</span> <span class="fu">log</span>(bili) <span class="sc">+</span> ascites <span class="sc">+</span> age, pbc)</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>pfit2 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status<span class="sc">==</span><span class="dv">2</span>) <span class="sc">~</span> <span class="fu">log</span>(bili) <span class="sc">+</span> ascites <span class="sc">+</span> <span class="fu">tt</span>(age),</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>                <span class="at">data=</span>pbc,</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">tt=</span><span class="cf">function</span>(x, t, ...) {</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>                    age <span class="ot">&lt;-</span> x <span class="sc">+</span> t<span class="sc">/</span><span class="fl">365.25</span> </span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">cbind</span>(<span class="at">cage=</span>age, <span class="at">cage2=</span> (age<span class="dv">-50</span>)<span class="sc">^</span><span class="dv">2</span>, <span class="at">cage3=</span> (age<span class="dv">-50</span>)<span class="sc">^</span><span class="dv">3</span>)</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>                })</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>pfit2</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; coxph(formula = Surv(time, status == 2) ~ log(bili) + ascites + </span></span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     tt(age), data = pbc, tt = function(x, t, ...) {</span></span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     age &lt;- x + t/365.25</span></span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     cbind(cage = age, cage2 = (age - 50)^2, cage3 = (age - 50)^3)</span></span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; })</span></span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                    coef  exp(coef)   se(coef)      z        p</span></span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; log(bili)     1.049e+00  2.854e+00  9.453e-02 11.093  &lt; 2e-16</span></span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ascites       1.291e+00  3.635e+00  2.629e-01  4.909 9.15e-07</span></span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; tt(age)cage   6.660e-02  1.069e+00  1.469e-02  4.533 5.82e-06</span></span>
+<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; tt(age)cage2  3.040e-04  1.000e+00  1.241e-03  0.245   0.8065</span></span>
+<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; tt(age)cage3 -9.171e-05  9.999e-01  4.998e-05 -1.835   0.0665</span></span>
+<span id="cb27-22"><a href="#cb27-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb27-23"><a href="#cb27-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Likelihood ratio test=178.9  on 5 df, p=&lt; 2.2e-16</span></span>
+<span id="cb27-24"><a href="#cb27-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; n= 312, number of events= 125 </span></span>
+<span id="cb27-25"><a href="#cb27-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    (106 observations deleted due to missingness)</span></span>
+<span id="cb27-26"><a href="#cb27-26" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(pfit2)</span>
+<span id="cb27-27"><a href="#cb27-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Analysis of Deviance Table</span></span>
+<span id="cb27-28"><a href="#cb27-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  Cox model: response is Surv(time, status == 2)</span></span>
+<span id="cb27-29"><a href="#cb27-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Terms added sequentially (first to last)</span></span>
+<span id="cb27-30"><a href="#cb27-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb27-31"><a href="#cb27-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;            loglik    Chisq Df Pr(&gt;|Chi|)</span></span>
+<span id="cb27-32"><a href="#cb27-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; NULL      -639.97                       </span></span>
+<span id="cb27-33"><a href="#cb27-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; log(bili) -956.62 -633.304  1          1</span></span>
+<span id="cb27-34"><a href="#cb27-34" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ascites   -939.07   35.098  1  3.135e-09</span></span>
+<span id="cb27-35"><a href="#cb27-35" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; tt(age)   -550.50  777.133  3  &lt; 2.2e-16</span></span>
+<span id="cb27-36"><a href="#cb27-36" aria-hidden="true" tabindex="-1"></a><span class="co"># anova(pfit1, pfit2)  #this fails</span></span>
+<span id="cb27-37"><a href="#cb27-37" aria-hidden="true" tabindex="-1"></a><span class="dv">2</span><span class="sc">*</span>(pfit2<span class="sc">$</span>loglik <span class="sc">-</span> pfit1<span class="sc">$</span>loglik)[<span class="dv">2</span>]</span>
+<span id="cb27-38"><a href="#cb27-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 10.80621</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Since initial age is in years and time is in days, it was important to scale within the <code>tt</code> function. The likelihood ratio of 10.8 on 2 degrees of freedom shows that the additional terms are mildly significant.</p>
+<p>When there are one or more terms on the right hand side of the equation marked with the <code>tt()</code> operator, the program will pre-compute the values of that variable for each unique event time. A user-defined function is called with arguments of</p>
+<ul>
+<li>the covariate: whatever is inside the <code>tt()</code> call</li>
+<li>the event time</li>
+<li>the event number: if there are multiple strata and the same event time occurs in two of them, they can be treated separately</li>
+<li>the weight for the observation, if the call used weights</li>
+</ul>
+<p>The underlying code constructs a single call to the function with a large <span class="math inline">\(x\)</span> vector, it contains an element for each subject at risk at each event time. If there are multiple <code>tt()</code> terms in the formula, then the tt argument should be a list of functions with the requisite number of elements. One footnote to this, however, is that you cannot have a formula like <code>log(bili) + tt(age) + tt(age)</code>. The reason is that the R formula parser removes redundant terms before the result even gets to the <code>coxph</code> function. (This is a convenience for users so that <code>y ~ x1 + x2 + x1</code> won’t generate redundant columns in an X matrix.)</p>
+<p>An alternate way to fit the above model is to create the expanded data set directly and then do an ordinary <code>coxph</code> call on the expanded data. The disadvantage of this is the very large dataset, of course, but it is no larger than the internal one created by the <code>tt</code> call. An advantage is that further processing of the model is available, such as residuals, the anova function, or survival curves. The following reprises the above <code>tt</code> call.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>dtimes <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(<span class="fu">with</span>(pbc, time[status<span class="sc">==</span><span class="dv">2</span>])))</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>tdata <span class="ot">&lt;-</span> <span class="fu">survSplit</span>(<span class="fu">Surv</span>(time, status<span class="sc">==</span><span class="dv">2</span>) <span class="sc">~</span>., pbc, <span class="at">cut=</span>dtimes)</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>tdata<span class="sc">$</span>c.age <span class="ot">&lt;-</span> tdata<span class="sc">$</span>age <span class="sc">+</span> tdata<span class="sc">$</span>time<span class="sc">/</span><span class="fl">365.25</span> <span class="sc">-</span><span class="dv">50</span>  <span class="co">#current age, centered at 50</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>pfit3 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(tstart, time, event) <span class="sc">~</span> <span class="fu">log</span>(bili) <span class="sc">+</span> ascites <span class="sc">+</span> c.age <span class="sc">+</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">I</span>(c.age<span class="sc">^</span><span class="dv">2</span>) <span class="sc">+</span> <span class="fu">I</span>(c.age<span class="sc">^</span><span class="dv">3</span>), <span class="at">data=</span>tdata)</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a><span class="fu">rbind</span>(<span class="fu">coef</span>(pfit2), <span class="fu">coef</span>(pfit3))</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      log(bili)  ascites tt(age)cage tt(age)cage2  tt(age)cage3</span></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1,]  1.048684 1.290612  0.06659921  0.000303968 -9.170991e-05</span></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [2,]  1.048684 1.290612  0.06659921  0.000303968 -9.170991e-05</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The above expansion has resulted in a dataset of 42401 observations, as compared to the 418 observations of the starting <code>pbc</code> data.</p>
+<p>A sensible fit can often be obtained with a coarser time grid: in the pbc data there is an event on day 41 and 43, is it really necessary to update all the subject ages by 2/365 at the second of these to reflect an increased risk? Instead divide the <code>max(dtimes)/365.25</code> = 11.5 years of total follow up into single years.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>dtime2 <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">11</span> <span class="sc">*</span> <span class="fl">365.25</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>tdata2 <span class="ot">&lt;-</span><span class="fu">survSplit</span>(<span class="fu">Surv</span>(time, status<span class="sc">==</span><span class="dv">2</span>) <span class="sc">~</span>., pbc, <span class="at">cut=</span>dtime2)</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>tdata2<span class="sc">$</span>c.age <span class="ot">&lt;-</span> tdata2<span class="sc">$</span>age <span class="sc">+</span> tdata2<span class="sc">$</span>time<span class="sc">/</span><span class="fl">365.25</span> <span class="sc">-</span><span class="dv">50</span>  <span class="co">#current age, centered at 50</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>pfit4 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(tstart, time, event) <span class="sc">~</span> <span class="fu">log</span>(bili) <span class="sc">+</span> ascites <span class="sc">+</span> c.age <span class="sc">+</span> </span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">I</span>(c.age<span class="sc">^</span><span class="dv">2</span>) <span class="sc">+</span> <span class="fu">I</span>(c.age<span class="sc">^</span><span class="dv">3</span>), <span class="at">data=</span>tdata2)</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a><span class="fu">rbind</span>(<span class="st">'1 day grid'</span><span class="ot">=</span> <span class="fu">coef</span>(pfit3), <span class="st">'1 year grid'</span><span class="ot">=</span> <span class="fu">coef</span>(pfit4))</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             log(bili)  ascites      c.age  I(c.age^2)    I(c.age^3)</span></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 day grid   1.048684 1.290612 0.06659921 0.000303968 -9.170991e-05</span></span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 year grid  1.048569 1.326749 0.06250009 0.000519069 -9.719282e-05</span></span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a><span class="fu">c</span>(<span class="at">tdata=</span><span class="fu">nrow</span>(tdata), <span class="at">tdata2=</span><span class="fu">nrow</span>(tdata2)) </span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  tdata tdata2 </span></span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  42401   2393</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We have almost the same result but at 1/20th the dataset size. This can make a substantial difference in compute time for large datasets. Exactly how much to “thin down” the list of cutpoints can be based on subject specific knowledge, one could choose selected points based on a <code>cox.zph</code> plot, or start with a very coarse time grid and then sequentially refine it. In this dataset we reasoned that although risk increases with age, a age change of less than one year would have minimal impact.</p>
+<p>For the veteran dataset 131/137 of the observation times are 13 months or less. Look at cutting this into 14 different points:the interval starting at 0, at 1 month, at 2 months, … , 13 for construction of the time-dependent Karnofsy coefficient. This does not categorize the follow-up times themselves, only the time-dependent effect, so we don’t lose precision in the response.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>dtime <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">13</span> <span class="sc">*</span> <span class="fl">30.5</span>)</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>vdata2 <span class="ot">&lt;-</span> <span class="fu">survSplit</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> ., veteran, <span class="at">cut=</span>dtime,</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>                    <span class="at">episode=</span> <span class="st">"month"</span>)</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>vfit1 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(tstart, time, status) <span class="sc">~</span> trt <span class="sc">+</span> prior <span class="sc">+</span> karno, vdata2)</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>vfit5 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(tstart, time, status) <span class="sc">~</span> trt <span class="sc">+</span> prior <span class="sc">+</span> karno <span class="sc">+</span> </span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>                   karno<span class="sc">:</span><span class="fu">nsk</span>(month, <span class="at">df=</span><span class="dv">3</span>), vdata2)</span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(vfit1, vfit5)</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Analysis of Deviance Table</span></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  Cox model: response is  Surv(tstart, time, status)</span></span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  Model 1: ~ trt + prior + karno</span></span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  Model 2: ~ trt + prior + karno + karno:nsk(month, df = 3)</span></span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    loglik  Chisq Df Pr(&gt;|Chi|)</span></span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 -483.93                     </span></span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 -475.79 16.283  3   0.000992</span></span>
+<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a>tdata <span class="ot">&lt;-</span> <span class="fu">expand.grid</span>(<span class="at">trt=</span><span class="dv">0</span>, <span class="at">prior=</span><span class="dv">0</span>, <span class="at">karno=</span><span class="dv">30</span>, <span class="at">month=</span><span class="fu">seq</span>(<span class="dv">1</span>,<span class="dv">13</span>, <span class="at">length=</span><span class="dv">50</span>))</span>
+<span id="cb30-17"><a href="#cb30-17" aria-hidden="true" tabindex="-1"></a>yhat <span class="ot">&lt;-</span> <span class="fu">predict</span>(vfit5, <span class="at">newdata=</span>tdata, <span class="at">se.fit=</span><span class="cn">TRUE</span>, <span class="at">reference=</span><span class="st">"zero"</span>)</span>
+<span id="cb30-18"><a href="#cb30-18" aria-hidden="true" tabindex="-1"></a>yy <span class="ot">&lt;-</span> yhat<span class="sc">$</span>fit<span class="sc">+</span> <span class="fu">outer</span>(yhat<span class="sc">$</span>se.fit, <span class="fu">c</span>(<span class="dv">0</span>, <span class="sc">-</span><span class="fl">1.96</span>, <span class="fl">1.96</span>), <span class="st">'*'</span>)</span>
+<span id="cb30-19"><a href="#cb30-19" aria-hidden="true" tabindex="-1"></a><span class="fu">matplot</span>(<span class="fu">seq</span>(<span class="dv">1</span>,<span class="dv">13</span>, <span class="at">length=</span><span class="dv">50</span>), yy, <span class="at">type=</span><span class="st">'l'</span>, <span class="at">lty=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">2</span>), <span class="at">col=</span><span class="dv">1</span>, <span class="at">lwd=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">2</span>),</span>
+<span id="cb30-20"><a href="#cb30-20" aria-hidden="true" tabindex="-1"></a>        <span class="at">xlab=</span><span class="st">"Month of fu"</span>, <span class="at">ylab=</span><span class="st">"Effect, Karnofsky 60 vs 90"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="timedep_files/figure-html/veteran3-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Because the spline is now a direct part of the model downstream functions such as <code>anova</code> work properly, and it is straightforward to create a plot of the of the fit. A Cox model produces <em>relative</em> risk, and the default for the predict function is to use the mean covariates as our reference. We wanted to assess the effect of a 30 point change in Karnofsy, holding the other covariates fixed: values of 0 plus a reference of 0 accomplished this.</p>
+<p>For these small datasets the <code>tt()</code> approach and a subset of times are both feasible, but for a large dataset the first can become very slow, or even run out of resources. The reason is that a a Cox model fit requires computation of a weighted mean and variance of the covariates at each event time, a process that is inherently <span class="math inline">\(O(ndp^2)\)</span> where <span class="math inline">\(n\)</span> = the sample size, <span class="math inline">\(d\)</span> = the number of events and <span class="math inline">\(p\)</span>= the number of covariates. Much of the algorithmic effort in the underlying code is to use clever updating methods for the mean and variance matrices, reducing the compute time to <span class="math inline">\(O(np + d p^2)\)</span>. For a large dataset the tt() approach can produce an intermediate data set with <span class="math inline">\(O(nd)\)</span> rows, however, overcoming the computation. For even moderate datasets the impact of <span class="math inline">\((nd)p\)</span> vs <span class="math inline">\(np\)</span> can be surprising.</p>
+<p>There are other interesting uses for the time-transform capability. One example is O’Brien’s logit-rank test procedure <span class="citation" data-cites="Obrien78">O’Brien (<a href="#ref-Obrien78" role="doc-biblioref">1978</a>)</span>. He proposed replacing the covariate at each event time with a logit transform of its ranks.&nbsp;This removes the influence of any outliers in the predictor <span class="math inline">\(x\)</span>. For this case we ignore the event time argument and concentrate on the groupings to create the following tt function.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="cf">function</span>(x, t, riskset, weights){ </span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    obrien <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>        r <span class="ot">&lt;-</span> <span class="fu">rank</span>(x)</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>        (r<span class="fl">-.5</span>)<span class="sc">/</span>(.<span class="dv">5</span><span class="sc">+</span><span class="fu">length</span>(r)<span class="sc">-</span>r)</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unlist</span>(<span class="fu">tapply</span>(x, riskset, obrien))</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; function (x, t, riskset, weights) </span></span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; {</span></span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     obrien &lt;- function(x) {</span></span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;         r &lt;- rank(x)</span></span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;         (r - 0.5)/(0.5 + length(r) - r)</span></span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     }</span></span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     unlist(tapply(x, riskset, obrien))</span></span>
+<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; }</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>This relies on the fact that the input arguments to <code>tt()</code> are ordered by the event number or risk set. This function is used as a default if no <code>tt</code> argument is present in the coxph call, but there are tt terms in the model formula. (Doing so allowed me to depreciate the survobrien function).</p>
+<p>Another interesting usage is to replace the data by simple ranks, not rescaled to 0–1.</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="cf">function</span>(x, t, riskset, weights) </span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unlist</span>(<span class="fu">tapply</span>(x, riskset, rank))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The score statistic for this model is <span class="math inline">\((C-D)/2\)</span>, where <span class="math inline">\(C\)</span> and <span class="math inline">\(D\)</span> are the number of concordant and discordant pairs, see the concordance function. The score statistic from this fit is then a test for significance of the concordance statistic, and is in fact the basis for an approximate standard error for the concordance. The O’Brien test can be viewed as concordance statistic that gives equal weight to each event time, whereas the standard concordance weights each event proportionally to the size of the risk set.</p>
+</section>
+<section id="references" class="level1" data-number="6">
+
+
+
+
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">6 References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-Anderson83" class="csl-entry" role="listitem">
+Anderson, J. R., K. C. Cain, and R. D. Gelber. 1983. <span>“Analysis of Survival by Tumor Response.”</span> <em>J Clinical Oncology</em> 1: 710–19.
+</div>
+<div id="ref-Bonadonna81" class="csl-entry" role="listitem">
+Bonadonna, G., and P. Valagussa. 1981. <span>“Dose-Response Effect of Adjuvant Chemotherapy in Breast Cancer.”</span> <em>New England J. Medicine</em> 34: 10–15.
+</div>
+<div id="ref-Buyse96" class="csl-entry" role="listitem">
+Buyse, M., and P. Piedbois. 1996. <span>“The Relationship Between Response to Treatment and Survival Time.”</span> <em>Stat. In Medicine</em> 15: 2797–2812.
+</div>
+<div id="ref-Crowley77" class="csl-entry" role="listitem">
+Crowley, J., and M. Hu. 1977. <span>“Covariance Analysis of Heart Transplant Survival Data.”</span> <em>J. Amer. Stat. Assoc.</em> 72: 27–36.
+</div>
+<div id="ref-Kalbfleisch02" class="csl-entry" role="listitem">
+Kalbfleisch, J. D., and R. L. Prentice. 2002. <em>The Statistical Analysis of Failure Time Data, Second Edition</em>. Wiley.
+</div>
+<div id="ref-Obrien78" class="csl-entry" role="listitem">
+O’Brien, Peter C. 1978. <span>“A Nonparmetric Test for Association with Censored Data.”</span> <em>Biometrics</em> 34 (2): 243–50.
+</div>
+<div id="ref-Redmond83" class="csl-entry" role="listitem">
+Redmond, C., B. Fisher, and H. S. Wieand. 1983. <span>“The Methodologic Dilemma in Retrospectively Correlating the Amount of Chemotherapy Received in Adjuvant Therapy Protocols with Disease Free Survival: A Commentary.”</span> <em>Cancer Treatment Reports</em> 67: 519–26.
+</div>
+<div id="ref-Suissa08" class="csl-entry" role="listitem">
+Suissa, S. 2008. <span>“Immortal Time Bias in Pharmacoepidemiology.”</span> <em>American J Epidemiology</em> 167: 492–99.
+</div>
+</div></section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
