@@ -1,7 +1,7 @@
 ---
 title: "Shared coefficients and shared baseline"
 author: "Terry Therneau and Elizabeth Atkinson"
-date: "`r Sys.Date()`"
+date: "May 2025"
 bibliography: refer.bib
 format: 
     html:
@@ -195,7 +195,7 @@ pcheck <- survcheck(Surv(year1, year2, bstate) ~ 1, pdata, id=id, istate=bili3)
 ## Separate coefficients
 
 Separate coefficients and separate hazards for each transition is the 
-default for a multi-state hazards (MSH) model using \code{coxph}. The code
+default for a multi-state hazards (MSH) model using `coxph`. The code
 below uses the NAFLD data.
 
 ```{r nfit1, warning=TRUE, message=TRUE}
@@ -260,12 +260,10 @@ a single call to the internal Cox model fitting routine `agreg.fit`,
 with the transition as a strata.
 
 $$
-\begin{equation}
  \left( \begin{array}{cccc} X^{(1)} &0 & \ldots & 0 \\
    0 & X^{(2)} & \ldots & 0 \\
    0 & \vdots & \ddots & \vdots \\
    0 &  0  &     0     & X^{(10)} \end{array} \right) 
-\end{equation}
 $$ {#eq-blockdiag}
 
 ## Shared coefficients {#sec-sect2}
@@ -472,7 +470,7 @@ the non-intercept coefficients and their estimated standard errors.
 A much more common case is replacement of a 0/1 covariate with 1/0, e.g., 
 one fit coded 1=male and another 1=female. 
 Compare the coefficients of the modified model below.  Nothing changes 
-*except* the ph(1:5) coefficients, and they do they shift by a constant.
+*except* the ph(1:5) coefficients, and they shift by a constant.
 This means that we must be cautious about interpreting the absolute values
 of these coefficients, and perhaps even more so any p-values, just as would be
 the case for intercepts in a linear model.
