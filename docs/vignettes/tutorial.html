@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Terry Therneau, Cynthia Crowson, and Elizabeth Atkinson">
-<meta name="dcterms.date" content="2026-03-26">
+<meta name="dcterms.date" content="2026-07-13">
 
 <title>Competing Risks and Multistate Models – survivalVignettes</title>
 <style>
@@ -273,7 +273,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">March 26, 2026</p>
+      <p class="date">July 13, 2026</p>
     </div>
   </div>
   
@@ -448,12 +448,12 @@ Figure&nbsp;5: Cumulative incidence fit using the cumlative hazard function
 <span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; coxph(formula = Surv(time, event) ~ ccr5, data = aidssi, id = patnr)</span></span>
 <span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;         </span></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1:2       coef exp(coef) se(coef) robust se    z     p</span></span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   ccr5WM -1.24      0.29     0.31      0.30 -4.2 3e-05</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1:2       coef exp(coef) robust se    z     p</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   ccr5WM -1.24      0.29      0.30 -4.2 3e-05</span></span>
 <span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;         </span></span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1:3       coef exp(coef) se(coef) robust se    z   p</span></span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   ccr5WM -0.25      0.78     0.24      0.23 -1.1 0.3</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1:3       coef exp(coef) robust se    z   p</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   ccr5WM -0.25      0.78      0.23 -1.1 0.3</span></span>
 <span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  States:  1= (s0), 2= AIDS, 3= SI </span></span>
 <span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
@@ -819,7 +819,7 @@ Figure&nbsp;9: Reproduce Figure T13
 <span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="dv">1000</span>, .<span class="dv">2</span>, <span class="fu">c</span>(<span class="st">"Platelet recovery"</span>, <span class="st">"Death or Relapse"</span>), </span>
 <span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>       <span class="at">lty=</span><span class="dv">1</span>, <span class="at">col=</span><span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">lwd=</span><span class="dv">2</span>, <span class="at">bty=</span><span class="st">'n'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
-<div id="fig-data1b" class="quarto-float quarto-figure quarto-figure-center anchored" width="672" data-fig-align="center">
+<div id="fig-data1b" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center" width="672">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-data1b-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <img src="tutorial_files/figure-html/fig-data1b-1.png" id="fig-data1b" class="img-fluid quarto-figure quarto-figure-center anchored figure-img" width="672">
@@ -844,31 +844,31 @@ Figure&nbsp;10
 <span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     tcd, data = edata, ties = "breslow", id = id)</span></span>
 <span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                  </span></span>
-<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1:2                 coef exp(coef) se(coef) robust se    z     p</span></span>
-<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   dissubALL       -0.044     0.957    0.078     0.074 -0.6  0.55</span></span>
-<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   dissubCML       -0.297     0.743    0.068     0.068 -4.4 1e-05</span></span>
-<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   age20-40        -0.165     0.848    0.079     0.076 -2.2  0.03</span></span>
-<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   age&gt;40          -0.090     0.914    0.086     0.083 -1.1  0.28</span></span>
-<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   drmatchMismatch  0.046     1.047    0.067     0.064  0.7  0.47</span></span>
-<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   tcdTCD           0.429     1.536    0.080     0.075  5.7 1e-08</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1:2                 coef exp(coef) robust se    z     p</span></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   dissubALL       -0.044     0.957     0.074 -0.6  0.55</span></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   dissubCML       -0.297     0.743     0.068 -4.4 1e-05</span></span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   age20-40        -0.165     0.848     0.076 -2.2  0.03</span></span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   age&gt;40          -0.090     0.914     0.083 -1.1  0.28</span></span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   drmatchMismatch  0.046     1.047     0.064  0.7  0.47</span></span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   tcdTCD           0.429     1.536     0.075  5.7 1e-08</span></span>
 <span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                  </span></span>
-<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1:3                 coef exp(coef) se(coef) robust se    z     p</span></span>
-<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   dissubALL        0.256     1.292    0.135     0.139  1.8  0.07</span></span>
-<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   dissubCML        0.017     1.017    0.108     0.109  0.2  0.88</span></span>
-<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   age20-40         0.255     1.291    0.151     0.149  1.7  0.09</span></span>
-<span id="cb25-22"><a href="#cb25-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   age&gt;40           0.526     1.693    0.158     0.157  3.4 8e-04</span></span>
-<span id="cb25-23"><a href="#cb25-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   drmatchMismatch -0.075     0.928    0.110     0.108 -0.7  0.49</span></span>
-<span id="cb25-24"><a href="#cb25-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   tcdTCD           0.297     1.345    0.150     0.145  2.0  0.04</span></span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1:3                 coef exp(coef) robust se    z     p</span></span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   dissubALL        0.256     1.292     0.139  1.8  0.07</span></span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   dissubCML        0.017     1.017     0.109  0.2  0.88</span></span>
+<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   age20-40         0.255     1.291     0.149  1.7  0.09</span></span>
+<span id="cb25-22"><a href="#cb25-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   age&gt;40           0.526     1.693     0.157  3.4 8e-04</span></span>
+<span id="cb25-23"><a href="#cb25-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   drmatchMismatch -0.075     0.928     0.108 -0.7  0.49</span></span>
+<span id="cb25-24"><a href="#cb25-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   tcdTCD           0.297     1.345     0.145  2.0  0.04</span></span>
 <span id="cb25-25"><a href="#cb25-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb25-26"><a href="#cb25-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                  </span></span>
-<span id="cb25-27"><a href="#cb25-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2:3                coef exp(coef) se(coef) robust se   z     p</span></span>
-<span id="cb25-28"><a href="#cb25-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   dissubALL       0.136     1.146    0.148     0.153 0.9  0.37</span></span>
-<span id="cb25-29"><a href="#cb25-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   dissubCML       0.247     1.280    0.117     0.117 2.1  0.04</span></span>
-<span id="cb25-30"><a href="#cb25-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   age20-40        0.062     1.063    0.153     0.155 0.4  0.69</span></span>
-<span id="cb25-31"><a href="#cb25-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   age&gt;40          0.581     1.787    0.160     0.164 3.5 4e-04</span></span>
-<span id="cb25-32"><a href="#cb25-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   drmatchMismatch 0.173     1.189    0.115     0.113 1.5  0.13</span></span>
-<span id="cb25-33"><a href="#cb25-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   tcdTCD          0.201     1.222    0.126     0.120 1.7  0.09</span></span>
+<span id="cb25-27"><a href="#cb25-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2:3                coef exp(coef) robust se   z     p</span></span>
+<span id="cb25-28"><a href="#cb25-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   dissubALL       0.136     1.146     0.153 0.9  0.37</span></span>
+<span id="cb25-29"><a href="#cb25-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   dissubCML       0.247     1.280     0.117 2.1  0.04</span></span>
+<span id="cb25-30"><a href="#cb25-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   age20-40        0.062     1.063     0.155 0.4  0.69</span></span>
+<span id="cb25-31"><a href="#cb25-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   age&gt;40          0.581     1.787     0.164 3.5 4e-04</span></span>
+<span id="cb25-32"><a href="#cb25-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   drmatchMismatch 0.173     1.189     0.113 1.5  0.13</span></span>
+<span id="cb25-33"><a href="#cb25-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   tcdTCD          0.201     1.222     0.120 1.7  0.09</span></span>
 <span id="cb25-34"><a href="#cb25-34" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb25-35"><a href="#cb25-35" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  States:  1= (s0), 2= PR, 3= RelDeath </span></span>
 <span id="cb25-36"><a href="#cb25-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>

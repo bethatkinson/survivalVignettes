@@ -3,6 +3,7 @@
 .RData
 .Ruserdata
 survivalVignettes.Rproj
+
 vignettes/*.log
 vignettes/*.tex
 vignettes/*.toc
@@ -10,6 +11,9 @@ vignettes/*.bbl
 vignettes/*.synctex.gz
 vignettes/figures
 vignettes/pseudo_files
+vignettes/external_cache
+vignettes/external_files
+vignettes/sascomparisons_cache
 .hg
 vignettes/*.html
 /Meta/

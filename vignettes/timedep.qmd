@@ -1,7 +1,8 @@
 ---
-title: "Using Time-Dependent Covariates in the Cox Model"
-author: "Terry Therneau, Elizabeth Atkinson and Cynthia Crowson"
-date: "`r Sys.Date()`"
+title: "Using Time Dependent Covariates and Time Dependent Coefficients 
+  in the Cox Model"
+author: "Terry Therneau, Cynthia Crowson and Elizabeth Atkinson"
+date: "May 2026"
 bibliography: refer.bib
 format: 
     html:
@@ -20,7 +21,7 @@ execute:
 ```{r setup, include = FALSE}
 options(continue="  ", width=70, prompt="> ")
 options(contrasts=c("contr.treatment", "contr.poly")) #ensure default
-options(show.significant.stars = FALSE) #statistical intelligence
+options(show.signif.stars = FALSE) #statistical intelligence
 
 knitr::opts_chunk$set(
   collapse = TRUE, warning=FALSE, error=FALSE, tidy=FALSE,
@@ -29,8 +30,9 @@ knitr::opts_chunk$set(
   fig.width=7, fig.height=5.5
 )
 
-library("survival")
+library(survival)
 library(gt)
+library(splines)
 ```
 
 # Introduction
@@ -41,82 +43,108 @@ This vignette covers 3 different but interrelated concepts:
 -   Tools for creating time-dependent covariates, or rather the datasets used to encode them.
 -   Time-dependent coefficients.
 
-# Time-dependent covariates
+Suppose that we want to model a medical process over time, the progression of a
+chronic liver disease for instance, and that the patients in the study have
+multiple visits over the time period with several covariates measured at each
+visit. It is straightforward to write down a prediction model that uses patient
+information at enrollment. One of the stengths of the Cox proportional hazard
+model is that it can (properly) also use the values that are updated over time,
+something known as time-dependent covariates. If I am being seen by my physician
+I would like him/her to use the most recent values, after all, not just those at
+inception of disease.
 
-One of the strengths of the Cox model is its ability to encompass covariates
-that change over time. The practical reason that time-dependent covariates work
-is based on the underlying way in which the Cox model works: at each event time
-the program compares the current covariate values of the subject who had the
-event to the current values of all others who were at risk at that time. One can
-think of it as a lottery model, where at each death time there is a drawing to
-decide which subject "wins" the event. Each subject's risk score $\exp(X\beta)$
-determines how likely they are to win, e.g., how many "tickets" they have
-purchased for the drawing. The model tries to assign a risk score to each
-subject that best predicts the outcome of each drawing based on
+One of the common forms to represent this evolving data is to use a *counting
+process* data set. Consider a subject with follow-up from time 0 to death at 185
+days, and assume that we have a time dependent covariate (creatinine) that was
+measured at day 0, 90 and 120 with values of .9, 1.5, and 1.2 mg/dl. The data
+for two subjects might look like the following
 
--   The risk set: which subjects are present for each event; the set of those able to "win the prize".
--   The covariate values of each subject just prior to the event time.
-
-The model has a theoretical foundation in martingale theory, a mathematical
-construct which arose out of the study of games of chance. A key underlying
-condition for a martingale-like game is that present actions depend only on the
-past. The decision of whether to play (is one in the risk set or not) and the
-size of a bet (covariates) can depend in any way on prior bets and patterns of
-won/lost, but cannot look into the future. If this holds then multiple
-properties can be proven about the resulting process.
-
-A simple way to code time-dependent covariates uses intervals of time. Consider
-a subject with follow-up from time 0 to death at 185 days, and assume that we
-have a time-dependent covariate (creatinine) that was measured at day 0, 90 and
-120 with values of 0.9, 1.5, and 1.2 mg/dl. A way to encode that data for the
-computer is to break the subject's time into 3 time intervals 0-90, 90-120,
-120-185, with one row of data for each interval. The data might look like the
-following
-
-```{r, echo=FALSE, eval=TRUE}
-tdata <- data.frame(subject=c(5,5,5), time1=c(0,90, 120),
-                    time2 = c(90, 120, 185), death=c(0,0,1),
-                    creatinine=c(0.9, 1.5, 1.2))
+```{r testdata, echo=FALSE, eval=TRUE}
+tdata <- data.frame(subject=c("Smith", "Smith", "Smith", "Jones", "Jones"), 
+                    time1=  c(0,90, 120, 0, 52),
+                    time2 = c(90, 120, 185, 52, 90), death=c(0,0,0,0,1),
+                    creatinine=c(0.9, 1.5, 1.2, 1.3, 1.8))
 tdata
 ```
 
 We read this as stating that over the interval from 0 to 90 the creatinine for
-subject "5" was 0.9 (last known level), and that this interval did not end in a
-death. The underlying code treats intervals as open on the left and closed on
-the right, e.g. the creatinine on exactly day 90 is 0.9. One way to think of
-this is that all changes for a given day (covariates or status) are recorded at
-the start of the next interval.
+subject Smith is taken to be 0.9 (last known level), and that this interval did
+not end in a death. In fact, Smith was still alive at their last contact on day
+185, while Jones died on day 90. The underlying code treats intervals as open on
+the left and closed on the right, e.g. Smith's creatinine on exactly day 90 is
+0.9; This is the value used when computing the Cox partial likelihood term
+associated with Jone's death on day 90. 
 
-The key rule for time-dependent covariates in a Cox model is simple and
-essentially the same as that for gambling: *you cannot look into the future*. A
-covariate may change in any way based on past data or outcomes, but it may not
-reach forward in time. In the above simple dataset this means that we cannot add
-a linear interpolation between the creatinine values 0.9 and 1.5 to get a
-predicted value of 1.2 on day 45; on day 45 the later value of 1.5 has not yet
-been seen. Covariate values start at the beginning of the interval while
-endpoints happen at the end of the interval.
 
-As an example consider the Mayo Clinic Study of Aging (MCSA) study which
-enrolled a stratified random sample from the population of Olmsted County and
-then followed them forward in time. Consider a table which compares baseline
-covariates for those who were identified as having mild cognitive impairment
-(MCI) at baseline versus those who were cognitively normal. This is a legal
-table. However, a table that compared subjects who did or did not progress to
-MCI during follow-up would be invalid.
+# Time dependent covariates and immortal time bias
 
-One of the more well known examples of this error is analysis by treatment
-response: at the end of a trial a survival curve is made comparing those who had
-an early response to treatment (shrinkage of tumor, lowering of cholesterol, or
-whatever) to those who did not, and it discovered that responders have a better
-curve. A Cox model fit to the same data will demonstrate a strong "significant"
-effect. The problem arises because any early deaths, those that occur before
-response can be assessed, will all be assigned to the non-responder group, even
-deaths that have nothing to do with the condition under study. Below is a simple
-example based on the advanced lung cancer dataset. Assume that subjects came in
-monthly for 12 cycles of treatment, and randomly declare a "response" for 5% of
-the subjects at each visit.
+## Background
 
-```{r fake}
+One of the strengths of the Cox model is its ability to encompass covariates
+that change over time. The practical reason is the form of the Cox parial
+likelihood, which has a term for each death (or event) time.
+$$
+ PL = \prod_{i \in D} \frac{e^{X_i(t_i) \beta}}
+          {\sum_j Y_j(t_i) e^{X_j(t_i)\beta}}
+$$
+In the above $D$ is the set of events, $t_i$ is the time of the $i$th event
+(which occured for subject $i$), $\beta$ the vector of coefficients, 
+$X_j(t)$ the covariates for subject $j$ at time $t$, and
+$Y_j(t)$ a 0/1 indicator that subject $j$ was at risk (under observation)
+at time $t$.
+
+One can think of it as a lottery model, where at each death time there is a
+drawing to decide which subject ``wins'' the event.  Each subject's risk score
+$\exp(X\beta)$ determines how likely they are to win, e.g., how many ``tickets''
+they have purchased for the drawing. The model tries to assign a risk score to
+each subject that best predicts the outcome of each drawing based on
+
+* The risk set: which subjects are present for each event; the set of
+    those able to ``win the prize''.
+* The covariate values of each subject just prior to the event time.
+
+The model has a theoretical foundation in counting process theory and
+martingales, mathematical constructs which arose out of the study of games of
+chance. Key elements of that notation are
+
+* $Y_i(t)$: whether subject $i$ is at risk for an event, at time $t$
+* $N_i(t)$: the cumulative count of events for subject $i$
+* $X_i(t)$: predictive covariats for subject $i$, at time $t$
+
+A key underlying condition for valid inference on a counting process is that
+none of $Y$, $N$ or $X$ depend on the future, or more formally that each is a
+predictable process. actions depend only on the past. The decision of whether to
+play If this holds then multiple properties can be proven about the resulting
+process, including the statistical aspects important to us. The key rule for
+time dependent covariates in a Cox model is
+essentially the same as that for gambling: 
+*you cannot look into the future*.  The size of the wager ($X(t)$) or the decision on
+whether to participate in a given spin of the roulette wheel may may change in
+any way based on past data or outcomes, but it may not reach forward in time.
+
+We refer to the violation of this rule, for any of $X$, $Y$ or $N$ as
+*immortal time bias* (ITB), though the term has most often been associate
+with violations of the covariates $X$. There are myriad ways to break this rule,
+and we will only list a few of the more common ones below as illustration. The
+results of ITB can range from a large negative bias to a large positive one and
+anything in between, the common outcome is that you can't trust the results.
+
+## Analysis by treatment response
+
+One of the more common manifestations of this error is analysis by response. At
+the end of a trial a survival curve is made comparing those who had an early
+response to treatment (shrinkage of tumor, lowering of cholesterol, or whatever)
+to those who did not, and it discovered that responders have a better curve. A
+Cox model fit to the same data will demonstrate a strong "significant" effect.
+The problem arises because any early deaths, those that occur before response
+can be assessed, will all be assigned to the non-responder group, even deaths
+that have nothing to do with the condition under study. Below is a simple
+example based on the advanced lung cancer data set. Assume that subjects came in
+monthly for a total of 12 cycles of treatment, and randomly declare a "response"
+for 5\% of the subjects at each visit. Below is a curve showing the results from
+a random simulation using follow-up time and survival from the lung study.
+
+```{r fake, fig=TRUE}
 set.seed(1953)  # a good year
 nvisit <- floor(pmin(lung$time/30.5, 12))
 response <- rbinom(nrow(lung), nvisit, .05) > 0
@@ -131,51 +159,123 @@ What is most surprising about this error is the *size* of the false effect that
 is produced. A Cox model using the above data reports a hazard ratio of 1.9 fold
 with a p-value of less than 1 in 1000.
 
-The alarm about this incorrect approach has been sounded often [-@Anderson83;
--@Buyse96; -@Suissa08] but the analysis is routinely re-discovered. A slightly
-subtler form of the error is discussed in Redmond et al. [-@Redmond83]. The
-exploration was motivated by a flawed analysis presented in Bonadonna et al.
-[-@Bonadonna81]. Breast cancer chemotherapy patients were divided into three
-groups based on whether the patient eventually received \>85%, 65--85% or \<65%
-of the dose planned at the start of their treatment. This approach leads to a
-severe bias since early deaths do not finish all their cycles of chemotherapy
-and hence by definition get a lower dose. It is early death which predicts a low
-total dose, and not vice-versa. A proportional hazards model using total dose
-received shows a very strong effect for dose, so much so that it could encourage
-a treating physician to defer necessary dose reductions in response to treatment
-toxicity. This false result actively harmed patients.
+The alarm about this incorrect approach has been sounded often
+[-@Anderson83; -@Buyse96; -@Suissa08] but the analysis is routinely 
+re-discovered.
 
-Redmond also looked at a further variant of this: create a variable $p$ for each
-subject which is the fraction of the the target dose, received *up to* the last
-entry for that subject. A subject who died after receiving only 6 weeks of a
-planned 12 week regimen could still score 100%. This looks like it should cure
-the bias issue, but it turns out to give bias in the other direction. The reason
-is that dose reductions due to toxicity occur more often in the later cycles of
-treatment, and thus living longer leads to smaller values of $p$. A proportional
-hazards regression fit to $p$ implies that a smaller dose is protective! The
-proper approach is to code the predictor as a time-dependent covariate. For
-treatment response this will be a variable that starts at 0 for all subjects and
-is recoded to 1 only when the response occurs. For dose it would measure
-cumulative dose to date.
+## Analysis by dose
 
-There are many variations on the error: interpolation of the values of a
-laboratory test linearly between observation times, removing subjects who do not
-finish the treatment plan, imputing the date of an adverse event as midway
-between observation times, etc. Using future data will often generate large
-positive or negative bias in the coefficients, but sometimes it generates little
-bias at all. It is nearly impossible to predict a priori which of these will
-occur in any given dataset. Using such a covariate is similar to jogging across
-a Los Angeles freeway: disaster is not guaranteed --- but it is likely.
+A slightly subtler form of the error is discussed in Redmond et al.
+[-@Redmond83].  The exploration was motivated by a flawed analysis presented
+in Bonadonna et al. [-@Bonadonna81] in a top medical journal.
+When treating breast cancer, chemotherapy dosages are reduced for patients
+who have severe toxicity, e.g., too low a white blood cell count, and the
+question being asked was whether these reductions have a negative impact
+on response and/or survival. To that end
+breast cancer chemotherapy patients were
+divided into three groups based on whether the patient eventually
+received $>85$\%, 65--85\% or $<65$\% of the dose planned at the start of
+their treatment. 
+Since early deaths do not finish all their cycles of chemotherapy and hence
+by definition finish with lower fraction, the result is guarranteed.
+Early death which predicts a low total dose, and not vice-versa.
+A proportional hazards model using total dose received showed a very strong
+effect for dose, so much so that it could encourage a treating physician to
+defer necessary dose reductions in response to treatment toxicity.
+This false result actively harmed patients.
 
-The most common way to encode time-dependent covariates is to use the (start,
-stop\] form of the model.
+Redmond also looked at a further variant of this: 
+create a variable $p$ for each subject which is the fraction of the
+the target dose, received *up to* the last entry for that subject.
+A subject who died after receiving only 6 weeks of a planned 12 week regimen
+could still score 100\%.
+This looks like it should cure the bias issue,
+but it turns out to give bias in the other direction.  The reason
+is that dose reductions due to toxicity occur more often in the later cycles
+of treatment, and thus living longer leads to smaller values of $p$.
+A proportional hazards regression fit to $p$ implies that a smaller dose is
+protective!
+The proper approach is to code the predictor as a time-dependent covariate,
+using a (time1, time2) counting process data set, with cumulative dose
+to date, either total or the fraction expected to date, as the covariate.
 
-```{r echo=TRUE, eval=FALSE}
-fit <- coxph(Surv(time1, time2, status) ~ age + creatinine, 
-             data=mydata)
-```
+## Interpolated values
 
-In dataset `mydata` a patient might have the following observations
+Say that a liver disease subject has 5 visits at 0, 1, \ldots 4 years, with
+bilirubin values of .9, 1.1, NA, 2.5, and 3, i.e.; the value at visit 3 is
+missing. A common impulse is to replace the missing value with the linear
+interpolation of 1.8, but this is again a case of ITB since it make use of
+future data; the value of 2.5 has not yet been seen. A variant of this would be
+multiple imputation that used all covariates at all times. What is valid would
+be to extrapolate as .9, 1.1, 1.3. A good way to think of this is to imagine
+filling in the missing value on the day it arose, using all the information
+available at that time.
+
+## Cases versus controls
+
+A fairly common report in early studies of a condition is to compare all those
+subjects who failed within 3 years to those who survived at least 3
+years without failure, labeled as "cases" and "controls" (replace 3 with
+some value appropriate to the condition). 
+The problem are those who joined the study or acquired the condition 2 years
+ago: severe cases who failed within a year will get counted as a case, those
+who are still alive at 2 years are not counted in either group.
+The result is both an overestimate of the probability of death within
+3 years and biased estimates of effect: the earliest deaths, which presumably
+have the most extreme predictor values, are over-represented.
+A variant of this with regard to cancer death rates was commented on over 75
+years ago @Berkson50.
+
+## Future vs future tabulation
+
+In a recent analysis from the Mayo Clinic
+study of aging (MCSA), the primary interest is the future risks of
+mild cognitive impairment (MCI), dementia, and death.
+The paper starts out with a table comparing baseline covariates for those
+who never progress to MCI versus those who ever did, and likewise baseline
+covariates versus death.
+there is also a table of baseline covariates versus survival.
+Both of these are fine: if you think in terms of an R formula they
+could be written with future outcome on the left hand side of the formula
+and current information on the right.  
+A table that compared the survival of those who did or did not progress
+to MCI, however, would be invalid. 
+It corresponds to a model with a future occurrence on
+both sides of the equation.
+Nevertheless, the table 1 of many research papers contain such a comparison.
+
+## Summary
+
+There are many further variations on this error: removing subjects who do
+not finish the treatment plan, imputing the date of an adverse event as midway
+between observation times, requiring two sequential visits with high blood
+sugar to declare diabetes but then assigned the date of diabetes to the earlier
+of the two, \ldots. 
+Using future data will often generate large positive or negative bias in the 
+coefficients, but sometimes it generates little bias at all.
+It is nearly impossible to predict a priori which of these will occur in any
+given data set.
+Using such a covariate is similar to crossing a freeway on foot:
+disaster is not guaranteed --- but it is likely.
+
+# Creating data sets
+
+The survival package can accommodate three forms of input: simple, "counting
+process" and "timeline" data sets. For simple survival the data has one line
+per subject containing their covariates, time to event, and a status code for
+censored or dead. The latter is normally 0/1 or FALSE/TRUE for censored/event,
+respectively. (As a footnote, 1/2 for censored/event is still allowed, a
+historical artifact dating back to the earliest data sets the authors used. In
+the 1960s and early 1970s much of the data used by the Mayo Clinic Section of
+Biostatistics was still on punch cards, and a FORTRAN program reading numeric
+data from punch cards did not distinguish 0 from blank. Hence '0' was never used
+as a code, a convention and habit that outlived the use of cards.)
+
+## Counting process form
+
+The counting process form has was added to the package in 1986, as a way to
+deal with time dependent covariates.
+For example the data set `mydata` might have the form
 
 | subject | time1 | time2 | status | age | creatinine | ... |
 |---------|-------|-------|--------|-----|------------|-----|
@@ -184,59 +284,70 @@ In dataset `mydata` a patient might have the following observations
 | 1       | 46    | 73    | 0      | 25  | 1.4        |     |
 | 1       | 73    | 100   | 1      | 25  | 1.6        |     |
 
+In this case the variable `age` = age at entry to the study stays the
+same from line to line, while the value of creatinine varies and is treated as
+1.3 over the interval $(0, 15]$, 1.5 over $(15, 46]$, etc.  The intervals are
+open on the left and closed on the right, which means that the creatinine
+is taken to be 1.3 on day 15.
+The status variable describes whether or not each interval ends in an event,
+and will by definition be 0 for all rows of a subject except the last.
 
-In this case the variable `age` = age at entry to the study stays the same from
-line to line, while the value of `creatinine` varies and is treated as 1.3 over
-the interval $(0, 15]$, 1.5 over $(15, 46]$, etc. The intervals are open on the
-left and closed on the right, which means that the creatinine is taken to be 1.3
-on day 15. The `status` variable describes whether or not each interval ends in 
-an event.
+Only later did we realize that this form was useful in other ways.
+Avital Cnaan pointed out fairly early a use for time-dependent strata.  She had a
+data set where the outcome was the use of particular social services, with
+the analysis stratified by county, as they had different policies.  Some subjects
+had moved partway through.
+A bit later we realized that the form could be used for repeated events, i.e.,
+the Andersen-Gill model; the only change is that now some subjects will have
+multiple rows with a status of 1.
+Multistate models are the most recent passenger, and a bit more complex.
 
 One common question with this data setup is whether we need to worry about
-correlated data, since a given subject has multiple observations. The answer is
-no, we do not. The reason is that this representation is simply a programming
-trick. The likelihood equations at any time point use only one copy of any
-subject, the program picks out the correct row of data at each time. There two
-exceptions to this rule:
+correlated data, since a given subject has multiple observations.
+The answer is no, we do not.  The reason is that this representation is
+simply a programming trick.
+The likelihood equations at any time point
+use only one copy of any subject, the program picks out the correct
+row of data at each time.
+There is on exception to this rule, i.e., 
+when a subject appears in overlapping intervals.  This however is 
+almost always a data error, since it corresponds to two copies of the
 
--   When subjects have multiple events, then the rows for the events are correlated within subject and a cluster variance is needed.
--   When a subject appears in overlapping intervals. This however is almost always a data error, since it corresponds to two copies of the subject being present in the same strata at the same time, e.g., she could meet herself at a party.
+## Building time-dependent sets with tmerge
 
-A subject can be at risk in multiple strata at the same time, however. This
-corresponds to being simultaneously at risk for two distinct outcomes.
+A useful function for building data sets is `tmerge`, which is
+part of the survival library.
+The idea is to build up a time dependent data set one endpoint at a time.
+The primary arguments are
 
-# Building time-dependent sets with tmerge
+* data1: the base data set that will be added onto
+* data2: the source for new information
+* id: the subject identifier in both data1 and data2
+* $\ldots$: additional arguments that add variables to the data set
+* tstart, tstop: used to set the time range for each subject
+* options
 
-## The function
+The created data set has three new variables (at least), which are
+`id`, `tstart` and `tstop`.
 
-A useful function for building datasets is `tmerge`, which is part of the
-survival library. The idea is to build up a time-dependent dataset one endpoint
-at a time. The primary arguments are
+The key part of the call are the "$\ldots$" arguments 
+which each can be one of four types:
+tdc() and cumtdc() add a time dependent variable, event() and cumevent()
+add a new endpoint.
+Time intervals are treated as open on the left and
+closed on the right, i.e.,  (tstart, tstop].
+Time dependent covariates apply from the start of an interval and events
+occur at the end of an interval.
+If a data set already had intervals of (0,10] and (10, 14] a new time
+dependent covariate or event at time 8 would lead to three intervals of
+(0,8], (8,10], and (10,14];
+the new time-dependent covariate value would be added to the second interval,
+a new event would be added to the first one.
 
--   data1: the base dataset that will be added onto
--   data2: the source for new information
--   id: the subject identifier in the new data
--   $\ldots$: additional arguments that add variables to the dataset
--   tstart, tstop: used to set the time range for each subject
--   options
-
-The created dataset has three new variables (at least), which are `id`, `tstart`
-and `tstop`.
-
-The key part of the call are the "$\ldots$" arguments which each can be one of
-four types: `tdc()` and `cumtdc()` add a time-dependent variable, `event()` and
-`cumevent()` add a new endpoint. In the survival routines time intervals are
-open on the left and closed on the right, i.e., `(tstart, tstop]`.
-Time-dependent covariates apply from the start of an interval and events occur
-at the end of an interval. If a dataset already had intervals of (0,10\] and
-(10, 14\] a new time dependent covariate or event at time 8 would lead to three
-intervals of (0,8\], (8,10\], and (10,14\]; the new time-dependent covariate
-value would be added to the second interval, a new event would be added to the
-first one.
 
 The basic form of the function is
 
-```{r eval=FALSE, echo=TRUE}
+```{r, eval=FALSE, echo=TRUE}
 newdata <- tmerge(data1, data2, id, newvar=tdc(time, value), ...)
 ```
 
@@ -246,7 +357,7 @@ to the original data in the same way that one would add a new folder into a file
 cabinet. It is a complex function, and we illustrate it below with a set of
 examples that sequentially reveal its features.
 
-## CGD dataset
+### CGD dataset
 
 Chronic granulomatous disease (CGD) is a heterogeneous group of uncommon
 inherited disorders characterized by recurrent pyogenic infections that usually
@@ -355,11 +466,11 @@ newcgd <- tmerge(data1=cgd0[, 1:13], data2=cgd0, id=id, tstop=futime)
 newcgd <- tmerge(newcgd, cgdrecur, id=id, infect= event(etime))
 ```
 
-## Stanford heart transplant
+### Stanford heart transplant
 
 The `jasa` dataset contains information from the Stanford heart transplant
 study, in the form that it appeared in the J American Statistical Association
-paper of Crowley and Hu -@Crowley77. The dataset has one line per subject which
+paper of Crowley and Hu [-@Crowley77]. The dataset has one line per subject which
 contains the baseline covariates along with dates of enrollment, transplant, and
 death or last follow-up. We want to create `transplant` as a time-dependent
 covariate. As is often the case with real data, this dataset contains a few
@@ -370,7 +481,7 @@ anomalies that need to be dealt with when setting up an analysis dataset.
 
 2.  A subject transplanted on day 10 is considered to have been on medical treatment for days 1--10 and as transplanted starting on day 11. That is, except for patient 38 who died on the same day as their procedure. They should be treated as a transplant death; the problem is resolved by moving this forward in time by .5 day.
 
-3.  The treatment coefficients in table 6.1 of the definitive analysis found in Kalbfleisch and Prentice -@Kalbfleisch02 will only be obtained if covariates are defined in precisely the same way, since their models include interactions. (Table 5.2 in the original edition of the book). For age this is (age in days)/ 365.25 - 48 years, and for year of enrollment it is the number of years since the start of the study: (entry date - 1967/10/1)/365.25. (Until I figured this out I would get occasional "why is coxph giving the wrong answers" emails.)
+3.  The treatment coefficients in table 6.1 of the definitive analysis found in Kalbfleisch and Prentice [-@Kalbfleisch02] will only be obtained if covariates are defined in precisely the same way, since their models include interactions. (Table 5.2 in the original edition of the book). For age this is (age in days)/ 365.25 - 48 years, and for year of enrollment it is the number of years since the start of the study: (entry date - 1967/10/1)/365.25. (Until I figured this out I would get occasional "why is coxph giving the wrong answers" emails.)
 
 Since time is in days the fractional time of 0.5 could be any value between 0
 and 1, our choice will not affect the results.
@@ -467,10 +578,10 @@ Things to remember when interpreting the `tcount` summary:
 * Date errors are one of the more common causes for early/late events; so
 they are always worth checking.  
 * "Tied" values, i.e., values measured at the same time for the same subject, are also noted. For instance, assume that the input dataset has two triglyceride observations, for the same subject Smith, on day 135.  Since we can't create a data row with times (135, 135) only the second triglyceride value will be retained. 
-* Missing times are ignored since the split location is unknown. Missing values for a tdc covariate are also ignored, resulting in “last value carried forward” as the default behavior. (There are arguments to override the default and
+* Missing times are ignored since the split location is unknown. Missing values for a tdc covariate are also ignored, resulting in "last value carried forward" as the default behavior. (There are arguments to override the default and
 allow a covariate to revert to missing.)
 
-## PBC data
+### PBC data
 
 The `pbc` dataset contains baseline data and follow-up status for a set of subjects with primary biliary cirrhosis, while the `pbcseq` dataset contains repeated laboratory values for those subjects.\
 The first dataset contains data on 312 subjects in a clinical trial plus 106 that agreed to be followed off protocol, the second dataset has data only on the trial subjects.
@@ -526,20 +637,57 @@ since we would not know where to insert them.
 attr(pbc2, "tcount")
 ```
 
-```{r echo=FALSE}
+```{r, echo=FALSE}
 #grab a couple of numbers for the paragraph below
 atemp <- attr(pbc2, "tcount")[2:3,]
 ```
 
-The tcount results are interesting. For the first addition of ascites we have `r atemp[1, 'leading']` observations on a leading edge of follow up, which is all of the baseline lab values at time 0, and `r atemp[1, 'within']` further additions within the subjects' follow-up interval. The latter cause a new break point to be added at each of these intermediate laboratory dates, for subsequent additions these `r atemp[1, 'within']` times lie on a boundary of two intervals. Another `r atemp[1, 'late']` non-missing alkaline phosphotase values occurred after the last follow-up date of the pbc dataset and are ignored. Bilirubin is missing on no subjects, so its addition creates a few more unique break points in the follow-up, namely those clinical visits for which the ascites value was missing.
+The tcount results are interesting. For the first addition of ascites we have `r
+atemp[1, 'leading']` observations on a leading edge of follow up, which is all
+of the baseline lab values at time 0, and `r atemp[1, 'within']` further
+additions within the subjects' follow-up interval. The latter cause a new break
+point to be added at each of these intermediate laboratory dates, for subsequent
+additions these `r atemp[1, 'within']` times lie on a boundary of two intervals.
+Another `r atemp[1, 'late']` non-missing alkaline phosphotase values occurred
+after the last follow-up date of the pbc dataset and are ignored. Bilirubin is
+missing on no subjects, so its addition creates a few more unique break points
+in the follow-up, namely those clinical visits for which the ascites value was
+missing.
 
-The data for the pbcseq dataset was assembled at a later calendar time than the primary dataset. Since having lab test results is a certain marker that the patient is still alive, would a better analysis have used this test information to extend the last follow-up date for these `r atemp[2,'late']` "late" subjects with a later laboratory date? Not necessarily.
+The data for the pbcseq dataset was assembled at a later calendar time than the
+primary dataset. Since having lab test results is a certain marker that the
+patient is still alive, would a better analysis have used this test information
+to extend the last follow-up date for these `r atemp[2,'late']` "late" subjects
+with a later laboratory date? Not necessarily.
 
-Odd things happen in survival analysis when risk sets are extended piecemeal. A basic tenet of the Cox model is that if someone is marked as being "at risk" over some interval $(s, t)$, this means that "if they had had an event over that interval, we would have recorded it." Say someone ended their initial follow-up time at 3000 days and then had a lab test at 3350 days (subjects returned about once a year). If we only extend the time of those who had a test, then saying that this subject was at risk during the interval (3000, 3350) is false: if they had died in that interval, they would not have had the lab test and would not obtained the extension, nor would their death have been updated in the original `pbc` dataset. The cutoff rule of `tmerge` is purposefully conservative to avoid creating such anomalies.
+Odd things happen in survival analysis when risk sets are extended piecemeal. A
+basic tenet of the Cox model is that if someone is marked as being "at risk"
+over some interval $(s, t)$, this means that "if they had had an event over that
+interval, we would have recorded it." Say someone ended their initial follow-up
+time at 3000 days and then had a lab test at 3350 days (subjects returned about
+once a year). If we only extend the time of those who had a test, then saying
+that this subject was at risk during the interval (3000, 3350) is false: if they
+had died in that interval, they would not have had the lab test and would not
+obtained the extension, nor would their death have been updated in the original
+`pbc` dataset. The cutoff rule of `tmerge` is purposefully conservative to avoid
+creating such anomalies.
 
-In the case of the PBC dataset this author happens to know that active follow-up *was* continued for all subjects, both those that did and did not return for further laboratory tests. This updated follow-up information is included in the pbcseq data and could have been used to set a wider time range. Such is not always the case, however. Automatic additions to a dataset via electronic systems can be particularly troublesome. One case from the author's experience involved a study of patient outcomes after organ transplant. Cases were actively followed up for 3 years, at which time priorities shifted and the clerical staff responsible for the active follow-up were reassigned. Automatic updates from a state death index continued to accumulate, however. A Kaplan-Meier curve computed at 5 years showed the remarkable result of a 3 year survival of .9 followed by a precipitous drop to 0 at 5 years! This is because there was, by definition, 100% mortality in all those subjects with more than 3 years of supposed follow-up.
+In the case of the PBC dataset this author happens to know that active follow-up
+*was* continued for all subjects, both those that did and did not return for
+further laboratory tests. This updated follow-up information is included in the
+pbcseq data and could have been used to set a wider time range. Such is not
+always the case, however. Automatic additions to a dataset via electronic
+systems can be particularly troublesome. One case from the author's experience
+involved a study of patient outcomes after organ transplant. Cases were actively
+followed up for 3 years, at which time priorities shifted and the clerical staff
+responsible for the active follow-up were reassigned. Automatic updates from a
+state death index continued to accumulate, however. A Kaplan-Meier curve
+computed at 5 years showed the remarkable result of a 3 year survival of .9
+followed by a precipitous drop to 0 at 5 years! This is because there was, by
+definition, 100% mortality in all those subjects with more than 3 years of
+supposed follow-up.
 
-## Time delay and other options
+### Time delay and other options
 
 The `options` argument to the tmerge routine is a list with one or more of the following five elements, listed below along with their default values.
 
@@ -549,9 +697,15 @@ The `options` argument to the tmerge routine is a list with one or more of the f
 -   na.rm = TRUE
 -   delay = 0
 
-The first three of these are the variable names that will be used for the identifier, start, and stop variables which are added to the output dataset. They only need to be specified one time within a series of tmerge calls in order to effect a change. The na.rm option has been discussed above; it affects `tdc()` and `cumtdc()` directives within a single tmerge call. The delay option causes any tdc or cumtdc action in the tmerge call to be delayed by a fixed amount. The final two tmerge calls below are *almost* identical in their action:
+The first three of these are the variable names that will be used for the
+identifier, start, and stop variables which are added to the output dataset.
+They only need to be specified one time within a series of tmerge calls in order
+to effect a change. The na.rm option has been discussed above; it affects
+`tdc()` and `cumtdc()` directives within a single tmerge call. The delay option
+causes any tdc or cumtdc action in the tmerge call to be delayed by a fixed
+amount. The final two tmerge calls below are *almost* identical in their action:
 
-```{r echo=TRUE, eval=FALSE}
+```{r, echo=TRUE, eval=FALSE}
 temp <- subset(pbc, id <= 312, select=c(id:sex, stage))
 pbc2 <- tmerge(temp, temp, id=id, death = event(time, status))
 pbc2a <- tmerge(pbc2, pbcseq, id=id, ascites = tdc(day, ascites),
@@ -560,13 +714,32 @@ pbc2b <- tmerge(pbc2, pbcseq, id=id, ascites = tdc(day+14, ascites),
                bili = tdc(day+14, bili))
 ```
 
-The difference between`pbc2a` and `pbc2b` is that the first call does not defer baseline values for each subject, i.e., any value with a time that is on or before the the subject's first time point, as that will introduce intervals with a missing value into the result.
+The difference between`pbc2a` and `pbc2b` is that the first call does not defer
+baseline values for each subject, i.e., any value with a time that is on or
+before the the subject's first time point, as that will introduce intervals with
+a missing value into the result.
 
-The more important question is *why* one would wish to delay or lag a time dependent covariate. One reason is to check for cases of reverse causality. It is sometimes the case that a covariate measured soon before death is not a predictor of death but rather is simply a marker for an event that is already in progress. A simple example would the the time-dependent covariate "have called the family for a final visit". A less obvious one from the author's experience occurs when a clinical visit spans more than one day, the endpoint is progression, and one or more laboratory results that were used to define "progression" get recorded in the dataset 1-2 days before the progression event. (They were perhaps pulled automatically from a laboratory information system). One then ends up with the tautology of a test value predicting its own result.
+The more important question is *why* one would wish to delay or lag a time
+dependent covariate. One reason is to check for cases of reverse causality. It
+is sometimes the case that a covariate measured soon before death is not a
+predictor of death but rather is simply a marker for an event that is already in
+progress. A simple example would the the time-dependent covariate "have called
+the family for a final visit". A less obvious one from the author's experience
+occurs when a clinical visit spans more than one day, the endpoint is
+progression, and one or more laboratory results that were used to define
+"progression" get recorded in the dataset 1-2 days before the progression event.
+(They were perhaps pulled automatically from a laboratory information system).
+One then ends up with the tautology of a test value predicting its own result.
 
-Even more subtle biases can occur via coding errors. For any dataset containing constructed time-dependent covariates, it has become the author's practice to re-run the analyses after adding a 7-14 day lag to key variables. When the results show a substantial change, and this is not infrequent, understanding why this occurred is an critical step. Even if there is not an actual error, one has to question the value of a covariate that can predict death within the next week but fails for a longer horizon.
+Even more subtle biases can occur via coding errors. For any dataset containing
+constructed time-dependent covariates, it has become the author's practice to
+re-run the analyses after adding a 7-14 day lag to key variables. When the
+results show a substantial change, and this is not infrequent, understanding why
+this occurred is an critical step. Even if there is not an actual error, one has
+to question the value of a covariate that can predict death within the next week
+but fails for a longer horizon.
 
-## Cumulative events
+### Cumulative events
 
 The action of the `cumevent` operator is different than `cumtdc` in several ways. Say that we have a subject with outcomes of one type at times 5, 10, and 15 and another type at times 6 and 15, with a follow-up interval of 0 to 20. For illustration I'll call the first event 'asthma' and the second 'IBD' (a disease flare in inflammatory bowel disease). A resulting dataset would have the following form:
 
@@ -639,6 +812,50 @@ event at the same age, we would find out about it because they will later move
 to the county, have a medical encounter here, and have that event written into
 the "prior conditions" section of their medical record.)
 
+## Timeline data
+
+A timeline data set for time-dependent covariates and/or multiple events has a
+simpler form. Each row must contain a subject identifier and a time, followed by
+the covariate values known at that time. There is no restriction on the names of
+these two variables, and there can be no duplicates of the (id, time) pair.
+(Violations of the latter will only be found when the data set is used in for
+instance a survfit or coxph call.)
+
+The timeline form is in some sense more natural in that it can be created
+using standard data manipulation functions. 
+For simple survival data is a bit more clumsy since every subject will
+need to have two rows of data.
+For example the first 3 subjects of the PBC data set will appear as
+(showing only some of the covariates)
+
+```{r timeline1, echo=FALSE}
+p3 <- data.frame(id=c(1,1,2,2,3,3), status=c(0,2,0,0,0,2), 
+                 time=c(0,400, 0, 4500, 0, 1012),
+                 sex=c('f', 'f', 'f', 'f', 'm', 'm'),
+                 bili=c(14.5, NA, 1.1, NA, 1.4, NA),
+                 chol=c(261, NA, 302, NA, 176, NA))
+print(p3, naprint='.')
+```
+
+Bilirubin and cholesterol levels at the moment of death are of course
+not known, so show as NA.
+A covariate which is measured at baseline but then remains constant such
+as sex or age at enrollment will repeat on every line, though the coxph
+function allows it to also be given only once.
+
+Here is the timeline form of the PBC data set.
+In the temp data set we retain the last follow-up time along with the
+three fixed covariates of treatment, age at enrollment, and sex.
+
+```{r pbctimeline}
+pbctime <- subset(pbcseq, select= -c(futime, status))
+pbctime$status <- 0
+temp <- subset(pbcseq, !duplicated(id), c(id, trt, age, sex, futime, status))
+names(temp)[5] <- "day"  # change futime to day
+pbctime <- merge(pbctime, temp, all=TRUE)
+subset(pbctime, id<3, c(id, trt, sex, day, status, edema, bili, chol))
+```
+
 # Time-dependent coefficients
 
 Time-dependent covariates and time-dependent coefficients are two different extensions of a Cox model, as shown in the two equations below. 
@@ -648,7 +865,7 @@ $$
 $$ {#eq-tdcovar}
 $$
   \lambda(t) = \lambda_0(t) e^{\beta(t) X}  
-$${#eq-tdbeta}
+$$ {#eq-tdbeta}
 
 @eq-tdcovar is a time-dependent covariate, a common and well understood usage. @eq-tdbeta has a time-dependent coefficient. These models are much less common, but represent one way to deal with non-proportional hazards -- the proportional hazard assumption is precisely that $\beta(t) = \beta$, i.e., the coefficient does not change over time. The `cox.zph` function will plot an estimate of $\beta(t)$ for a study and is used to diagnose and understand non-proportional hazards. The code below shows a test case using the veterans cancer data, with the results plotted in Figure @fig-veteran1b.
 
@@ -760,6 +977,7 @@ represent the average score for the lower half of the subjects and that for the
 upper half, respectively, and are plotted over the top of the Kaplan-Meier
 curves for those below and above the median.
 
+
 ## Continuous time-dependent coefficients
 
 If $\beta(t)$ is assumed to have a simple functional form we can fool an
@@ -778,76 +996,134 @@ vfit3 <- coxph(Surv(time, status) ~ trt + prior + karno +
                 I(karno * log(time + 20)), data=veteran)
 ```
 
-This mistake has been made often enough the `coxph` routine has been updated to
-print an error message for such attempts. The issue is that the above code does
-not actually create a time-dependent covariate, rather it creates a time-static
-value for each subject based on their value for the covariate `time`; no
-differently than if we had constructed the variable outside of a `coxph` call.
-This variable most definitely breaks the rule about not looking into the future,
-and one would quickly find the circularity: large values of `time` appear to
-predict long survival because long survival leads to large values for `time`.
+This mistake has been made often enough the the `coxph` routine has been
+updated to print an error message for such attempts.
+The issue is that the above code does not actually create a time dependent 
+covariate, the principle reason being that the program cannot read your mind.
+There are two different times: the fixed value `time` in the data
+set, which contains the duration to death or follow-up for each subject,
+and the continuous variable $t$ that appears in the mathematical equations
+as $X(t)$, $N(t)$, etc. 
+As a user you were thinking of fixed duration on the left and $t$ on the right.
 
-A true time-dependent covariate can be constructed using the *time-transform*
+The code above assumes the fixed value for both, and creates a time-static 
+value for each subject based on their value
+for the covariate `time`; no differently than if we had
+constructed the variable \verb+veteran$zed <- veteran$time+ 
+outside of the `coxph` call and used `log(zed)` in the equation.
+This variable most definitely breaks the rule about not looking into the
+future, and if we fit the model one would quickly find the circularity: 
+large values of 
+`time` appear to predict long survival, because long survival leads to 
+large values for `time`.
+
+This same coding dichotomy exists in SAS phreg, by the way.  Adding
+`time` to the right hand side of the model statement will create
+the time-fixed (incorrect) variable,
+while a programming statement within phreg that 
+uses `time` as a variable will generate time-dependent objects.
+The error is less likely there because phreg's model statement is less
+flexible than R, i.e., you cannot simply write
+"log(time)" on the right hand side of a formula for instance.
+
+To deal with this we have four approaches.
+The first, but unwise idea might be to use `tmerge` to break the data
+set into a zillion small intervals, approximating continuous time.
+However, recognize that the underlying Cox likelihood will only be evaluated at
+the observed event times, thus it is sufficient to split at those times:
+
+```{r vfit3b}
+vdeath <- sort(unique(veteran$time[veteran$status==1]))
+length(vdeath)
+vet3 <- survSplit(Surv(time, status) ~ ., data= veteran, cut=vdeath, 
+                  episode= "tgroup", id="id")
+quantile(table(vet3$id))
+```
+
+The 97 cutpoints lead to 98 unique time intervals, and not surprisingly
+an average subject appears in about half of them. 
+To avoid the warning from `coxph` we create a second copy of the 
+time variable, since the warning will be spurious in this case.
+
+```{r vfit3c}
+vet3$xtime <- vet3$time
+vfit3 <- coxph(Surv(tstart, time, status) ~ trt + prior + karno +
+                   I(karno * log(xtime+20)), vet3)
+plot(zp[3])
+abline(coef(vfit3)[3:4], col=2, lty=2)
+```
+
+The time dependent coefficient is estimated to be
+$\beta(t) =$ `r round(coef(vfit3)[3], 3)` + 
+ `r round(coef(vfit3)[4], 3)` * log(t + 20).
+We can add said line to the `cox.zph` plot.
+Not surprisingly, the result is rather too high for time $>$ 300
+and underestimates the steeper part of the slope.
+Still the fit is better than a horizontal line, 
+i.e., a proportional hazards assumption, as confirmed
+by the p-value for the slope term in `vfit3`.
+(The p-value from cox.zph for karno is nearly identical, as it
+must be, since the tests in cox.zph are for a linear effect on the
+chosen time scale.)
+
+The above can be done automatically by using the *time-transform*
 functionality of coxph.
 
-```{r vet3}
-vfit3 <-  coxph(Surv(time, status) ~ trt + prior + karno + tt(karno),
+```{r vet3d}
+vfit3b <-  coxph(Surv(time, status) ~ trt + prior + karno + tt(karno),
                 data=veteran,
                 tt = function(x, t, ...) x * log(t+20))
-vfit3
+rbind(coef(vfit3b), coef(vfit3))
 ```
 
-The time-dependent coefficient is estimated to be 
-$\beta(t) =$ `r round(coef(vfit3)[3], 3)` + 
-`r round(coef(vfit3)[4], 3)` * log(t + 20). We can
-add said line to the `cox.zph` plot. Not surprisingly, the result is rather too
-high for time $>$ 200 and underestimates the initial slope. Still the fit is
-better than a horizontal line, as confirmed by the p-value for the slope term in
-`vfit3`. (The p-value for that term from `cox.zph` is nearly identical, as it
-must be, since the tests in `cox.zph` are for a linear effect on the chosen time
-scale.)
+Realize that it is not necessary to use all 97 cut points: 50 or even 25
+will be more than sufficient to get an accurate approximation. 
+This is particularly important with large data sets, there are for instance
+`r length(unique(nafld2$days))` unique days with a test result and
+`r nrow(nafld1)` subjects, leading to a potential expanded data set of 
+over 100 million observations.  Think first and use a rational grid of
+cutpoints for `survSplit`.
 
-```{r}
-plot(zp[3])
-abline(coef(vfit3)[3:4], lwd=2, lty=3, col=2)
-```
+We no longer recommend the use of the tt functionality for this reason,
+it always does the full expansion. Another reason is that the resulting fit
+is a dead end: the expanded data set created internally
+to coxph is not available after the fit, so residuals and predicted values
+are not available --- they would be residuals for exactly what observations?
 
-This same coding dichotomy exists in SAS phreg, by the way. Adding `time` to the
-right hand side of the model statement will create the time-fixed (incorrect)
-variable, while a programming statement within phreg that uses `time` as a
-variable will generate time-dependent objects. The error is less likely there
-because phreg's model statement is less flexible than R, i.e., you cannot simply
-write "log(time)" on the right hand side of a formula.
+As compared to fitting a single term that is linear in a predetermined
+function of time, i.e., the test for PH done by `cox.zph`,
+a more general approach is to allow a flexible fit on the right hand
+side, mimicking the approximate plot performed by `plot.cox.zph`.
+This is shown in the following.
 
-A more general approach is to allow a flexible fit on the right hand side, as
-shown in the following code. (The Boundary.knots=FALSE argument simply says that
-the `knots` argument contains *all* the knots, i.e., don't separate them into
-two sets.)
-
-```{r}
-vfit4 <-  coxph(Surv(time, status) ~ trt + prior + karno + tt(karno),
-                data=veteran,
-                tt = function(x, t, ...) x*nsk(t, knots=c(5, 100, 200, 400),
-                                               Boundary.knots=FALSE))
+```{r vet4}
+ns2 <- function(x) ns(x, knots=c(100, 200), Boundary.knots = c(5,400))
+vfit4 <-  coxph(Surv(tstart,time, status) ~ trt + prior + karno + 
+                    karno:ns2(xtime), data=vet3)
 vfit4
+
+# termplot does not create sensible estimates for interactions (per its
+#  help page), so do it by hand for the karno term
+smat <- cbind(1, ns2(5:400)) # a range of plotting values
+estimate <- drop(smat %*% coef(vfit4)[3:6])
+sd.est <- sqrt(diag(smat %*% vcov(vfit4)[3:6, 3:6] %*% t(smat)))
+yy <- estimate + outer(sd.est, c(0, -1.96, 1.96), "*")
+matplot(5:400/30.5, yy, type='l', lty=c(1,2,2), col=1, lwd=c(2,1,1),
+        xlab="Months", ylab= "Estimated beta(t) for karno")
+abline(0,0, lty=3)
 ```
 
-The `nsk` function is a variant if `ns` such that the coefficients are the
-predicted values at knots 2, 3, ... - the predicted value at knot 1, the
-`Boundary= FALSE` argument omits addition of extra knots at the boundary times
-of t=1 and 999. We see a large decrease in effect from time= 5 to time 100, a
-coefficient of essentially -.060 + .048 = -.012 for Karnofsky at this later
-point, with minimal changes thereafter. Unfortunately, follow-on functions such
-as `cox.zph` within the survival package do not work reliably. We will come back
-to this example in the next section, using another approach.
+We see a large decrease in effect over the first 5 months, to near zero;
+with very wide CI for any changes thereafter.
 
-The use of programming statements to create a yes/no variable deserves extra
-comment because of a common error. Assume one has a dataset with two time
-variables: the time from enrollment to last follow up and the time to diabetes,
-say, and we want to use the presence of diabetes as time-dependent covariate.
+The use of programming statements to create a yes/no variable deserves
+extra comment because of a common error.
+Assume one has a data set with two time variables: the time from enrollment
+to last follow up and the time to diabetes, say, and we want to use the
+presence of diabetes as time dependent covariate.
 Here is a small made up example.
 
-```{r}
+```{r ties1}
 data1 <- read.table(col.names=c("id", "diabetes", "lfu", "status"),
                           header=FALSE, text="
 1   5 30  1
@@ -867,19 +1143,21 @@ fit2 <- coxph(Surv(lfu, status) ~ tt(d2), data=data1,
 c(coef(fit1), coef(fit2))
 ```
 
-One might have expected fit1 and fit2 to give the same coefficient but they are
-completely different. The issue is subject 7 whose time to diabetes falls
-exactly at one of the event times. In fit1 their diabetes covariate effectively
-changes just after the event at time 30, in fit2 it changes at the event. The
-second is incorrect. Stated in the gambling context, all roulette bets must be
-placed *before* the ball lands in the slot, or they apply to the next spin of
-the wheel. Likewise, a change in diabetes status needs to apply to the next
-event time.
+One might have expected fit1 and fit2 to give the same coefficient but 
+they are completely different. 
+The issue is subject 7 whose time to diabetes falls exactly at one of the
+event times.  In fit1 their diabetes covariate effectively changes just 
+after the event at time 30,
+in fit2 it changes at the event.  The second is incorrect.
+Stated in the gambling context, all roulette bets must be placed
+*before* the ball lands in the slot, or they apply to the next spin of
+the wheel.  
+Likewise, a change in diabetes status needs to apply to the next event time.
 
-When a dataset is expanded into a start, stop format using the `tmerge` function
-ties are dealt with correctly.
+When a data set is expanded into a start, stop format using the
+`tmerge` function ties are dealt with correctly.
 
-```{r}
+```{r ties2}
 data2 <- tmerge(data1, data1, id=id, dstat=event(lfu, status),
                 diab = tdc(diabetes))
 subset(data2, id %in% c(1,7), c(id, tstart:diab))               
@@ -887,171 +1165,116 @@ fit3 <- coxph(Surv(tstart, tstop, dstat) ~ diab, data2)
 c(coef(fit1), coef(fit2), coef(fit3))
 ```
 
+
 # Predictable time-dependent covariates
 
-Occasionally one has a time-dependent covariate whose values in the future are
-predictable. The most obvious of these is patient age, occasionally this may
-also be true for the cumulative dose of a drug; say that subjects are assigned
-to take one 5mg tablet a day (and they keep their schedule). If age is entered
-as a linear term in the model, then the effect of changing age can be ignored in
-a Cox model, due to the structure of the partial likelihood. Assume that subject
-$i$ has an event at time $t_i$, with other subject $j \in R_i$ at risk at that
-time, with $a$ denoting age. The partial likelihood term is
-
+Occasionally one has a time-dependent covariate whose values in the future
+are predictable.
+The most obvious of these is patient age, occasionally this may also be
+true for the cumulative dose of a drug; say that subjects are assigned to
+take one 5mg tablet a day (and they keep their schedule).
+If age is entered as a linear term in the model, then the effect of changing
+age can be ignored in a Cox model, due to the structure of the partial
+likelihood.  Assume that subject $i$ has an event at time $t_i$, with other
+subject $j \in R_i$ at risk at that time, with $a$ denoting age.
+The partial likelihood term is
 \begin{equation*}
   \frac{e^{\beta * a_i}}{\sum_{j \in R_i} e^{\beta* a_j}} =
   \frac{e^{\beta * (a_i + t_i)}}{\sum_{j \in R_i} e^{\beta* (a_j + t_i)}} 
 \end{equation*}
-
-We see that using current age (the right hand version) or age at baseline (left
-hand), the partial likelihood term is identical since $\exp(\beta t_i)$ cancels
-out of the fraction. However, if the effect of age on risk is *non-linear*, this
+We see that using current age (the right hand version) or age at
+baseline (left hand), the partial likelihood term is identical since
+$\exp(\beta t_i)$ cancels out of the fraction.
+However, if the effect of age on risk is *non-linear*, this
 cancellation does not occur.
 
-Since age changes continuously, we would in theory need a very large dataset to
-completely capture the effect, one interval per day to match the usual
-resolution for death times. In practice this level of resolution is not
-necessary; though we all grow older, risk does not increase so rapidly that we
-need to know our age to the day.
+Since age changes continuously, we would in theory need a very large
+data set to completely capture the effect, one interval
+per day to match the usual resolution for death times.
+In practice this level of resolution is not necessary; though we all
+grow older, risk does not increase so rapidly that we need to know
+our age to the day. 
+As an example, below we fit twice, once divided at every death time,
+and once with an update per year.
 
-One method to create a time-changing covariate is to use the *time-transform*
-feature of coxph. Below is an example using the pbc dataset. The longest
-follow-up time in that data set is over 13 years, follow-up time is in days, and
-we might worry that the intermediate dataset would be huge. The program only
-needs the value of the time-dependent covariate(s) for each subject at the times
-of events, however, so the maximum number of rows in the intermediate dataset is
-the number of subjects times the number of unique event times.
-
-```{r}
-pfit1 <- coxph(Surv(time, status==2) ~ log(bili) + ascites + age, pbc)
-pfit2 <- coxph(Surv(time, status==2) ~ log(bili) + ascites + tt(age),
-                data=pbc,
-                tt=function(x, t, ...) {
-                    age <- x + t/365.25 
-                    cbind(cage=age, cage2= (age-50)^2, cage3= (age-50)^3)
-                })
-pfit2
-anova(pfit2)
-# anova(pfit1, pfit2)  #this fails
-2*(pfit2$loglik - pfit1$loglik)[2]
-```
-
-Since initial age is in years and time is in days, it was important to scale
-within the `tt` function. The likelihood ratio of 10.8 on 2 degrees of freedom
-shows that the additional terms are mildly significant.
-
-When there are one or more terms on the right hand side of the equation marked
-with the `tt()` operator, the program will pre-compute the values of that
-variable for each unique event time. A user-defined function is called with
-arguments of
-
--   the covariate: whatever is inside the `tt()` call
--   the event time
--   the event number: if there are multiple strata and the same event time occurs in two of them, they can be treated separately
--   the weight for the observation, if the call used weights
-
-The underlying code constructs a single call to the function with a large $x$
-vector, it contains an element for each subject at risk at each event time. If
-there are multiple `tt()` terms in the formula, then the tt argument should be a
-list of functions with the requisite number of elements. One footnote to this,
-however, is that you cannot have a formula like `log(bili) + tt(age) + tt(age)`.
-The reason is that the R formula parser removes redundant terms before the
-result even gets to the `coxph` function. (This is a convenience for users so
-that `y ~ x1 + x2 + x1` won't generate redundant columns in an X matrix.)
-
-An alternate way to fit the above model is to create the expanded data set
-directly and then do an ordinary `coxph` call on the expanded data. The
-disadvantage of this is the very large dataset, of course, but it is no larger
-than the internal one created by the `tt` call. An advantage is that further
-processing of the model is available, such as residuals, the anova function, or
-survival curves. The following reprises the above `tt` call.
-
-```{r}
+```{r expand}
 dtimes <- sort(unique(with(pbc, time[status==2])))
-tdata <- survSplit(Surv(time, status==2) ~., pbc, cut=dtimes)
-tdata$c.age <- tdata$age + tdata$time/365.25 -50  #current age, centered at 50
-pfit3 <- coxph(Surv(tstart, time, event) ~ log(bili) + ascites + c.age +
-    I(c.age^2) + I(c.age^3), data=tdata)
-rbind(coef(pfit2), coef(pfit3))
-```
+tdata1 <- survSplit(Surv(time, status==2) ~., pbc, cut=dtimes)
+tdata1$c.age <- tdata1$age + tdata1$time/365.25 -50 #current age, centered at 50
+pfit1 <- coxph(Surv(tstart, time, event) ~ log(bili) + ascites + c.age +
+    I(c.age^2) + I(c.age^3), data=tdata1)
 
-The above expansion has resulted in a dataset of `r nrow(tdata)` observations,
-as compared to the `r nrow(pbc)` observations of the starting `pbc` data.
-
-A sensible fit can often be obtained with a coarser time grid: in the pbc data
-there is an event on day 41 and 43, is it really necessary to update all the
-subject ages by 2/365 at the second of these to reflect an increased risk?
-Instead divide the `max(dtimes)/365.25` = 11.5 years of total follow up into
-single years.
-
-```{r}
-dtime2 <- 1:11 * 365.25
-tdata2 <-survSplit(Surv(time, status==2) ~., pbc, cut=dtime2)
-tdata2$c.age <- tdata2$age + tdata2$time/365.25 -50  #current age, centered at 50
-pfit4 <- coxph(Surv(tstart, time, event) ~ log(bili) + ascites + c.age + 
+tdata2 <- survSplit(Surv(time, status==2) ~., pbc, cut=1:12 * 365.25)
+tdata2$c.age <- tdata2$age + tdata2$time/365.25 -50 #current age, centered at 50
+pfit2 <- coxph(Surv(tstart, time, event) ~ log(bili) + ascites + c.age +
     I(c.age^2) + I(c.age^3), data=tdata2)
-rbind('1 day grid'= coef(pfit3), '1 year grid'= coef(pfit4))
-#
-c(tdata=nrow(tdata), tdata2=nrow(tdata2)) 
+
+rbind(coef(pfit1), coef(pfit2))
+c(nrow(pbc), nrow(tdata1), nrow(tdata2))
 ```
 
-We have almost the same result but at 1/20th the dataset size. This can make a
-substantial difference in compute time for large datasets. Exactly how much to
-"thin down" the list of cutpoints can be based on subject specific knowledge,
-one could choose selected points based on a `cox.zph` plot, or start with a very
-coarse time grid and then sequentially refine it. In this dataset we reasoned
-that although risk increases with age, a age change of less than one year would
-have minimal impact.
+We have almost the same result but at 1/20th the data set size.  
+This can make a substantial difference in compute time for large data sets.
+Exactly how much to `thin down' the list of cutpoints can be based on 
+subject specific knowledge, one could choose selected points based on a
+`cox.zph` plot, or start with a very coarse time grid and then sequentially 
+refine it.
+In this data set we reasoned that although risk increases with age, a
+age change of less than one year would have minimal impact.
 
-For the veteran dataset 131/137 of the observation times are 13 months or less.
-Look at cutting this into 14 different points:the interval starting at 0, at 1
-month, at 2 months, ... , 13 for construction of the time-dependent Karnofsy
-coefficient. This does not categorize the follow-up times themselves, only the
-time-dependent effect, so we don't lose precision in the response.
+For the veteran data set 131/137 of the observation times are at 13 months or
+less.  Look at cutting this into 14 different points:the interval starting at
+0, at 1 month, at 2 months, $\ldots$, 13 for construction of the time-dependent
+Karnofsy coefficient.  This does not categorize the follow-up times themselves,
+only the time-dependent effect, so we don't lose precision in the response.
 
-```{r veteran3}
+```{r veteran3, fig=TRUE}
 dtime <- round(1:13 * 30.5)
 vdata2 <- survSplit(Surv(time, status) ~ ., veteran, cut=dtime,
                     episode= "month")
 vfit1 <- coxph(Surv(tstart, time, status) ~ trt + prior + karno, vdata2)
 vfit5 <- coxph(Surv(tstart, time, status) ~ trt + prior + karno + 
-                   karno:nsk(month, df=3), vdata2)
+                   karno:ns(month, df=3), vdata2)
 anova(vfit1, vfit5)
 
 tdata <- expand.grid(trt=0, prior=0, karno=30, month=seq(1,13, length=50))
 yhat <- predict(vfit5, newdata=tdata, se.fit=TRUE, reference="zero")
 yy <- yhat$fit+ outer(yhat$se.fit, c(0, -1.96, 1.96), '*')
-matplot(seq(1,13, length=50), yy, type='l', lty=c(1,2,2), col=1, lwd=c(1,2,2),
+matplot(seq(1,13, length=50), yy, type='l', lty=c(1,2,2), col=1, lwd=c(2,1,1),
         xlab="Month of fu", ylab="Effect, Karnofsky 60 vs 90")
 ```
 
-Because the spline is now a direct part of the model downstream functions such
-as `anova` work properly, and it is straightforward to create a plot of the of
-the fit. A Cox model produces *relative* risk, and the default for the predict
-function is to use the mean covariates as our reference. We wanted to assess the
-effect of a 30 point change in Karnofsy, holding the other covariates fixed:
-values of 0 plus a reference of 0 accomplished this.
+Because the spline is now a direct part of the model downstream
+functions such as `anova` work properly, and it is straightforward to
+create a plot of the of the fit.
+A Cox model produces *relative* risk, and the default for the predict
+function is to use the mean covariates as our reference.  We wanted to
+assess the effect of a 30 point change in Karnofsy, holding the other covariates
+fixed: values of 0 plus a reference of 0 accomplished this.
 
-For these small datasets the `tt()` approach and a subset of times are both
-feasible, but for a large dataset the first can become very slow, or even run
-out of resources. The reason is that a a Cox model fit requires computation of a
-weighted mean and variance of the covariates at each event time, a process that
-is inherently $O(ndp^2)$ where $n$ = the sample size, $d$ = the number of events
-and $p$= the number of covariates. Much of the algorithmic effort in the
-underlying code is to use clever updating methods for the mean and variance
-matrices, reducing the compute time to $O(np + d p^2)$. For a large dataset the
-tt() approach can produce an intermediate data set with $O(nd)$ rows, however,
-overcoming the computation. For even moderate datasets the impact of $(nd)p$ vs
-$np$ can be surprising.
+For these small data sets the tt() approach and a subset of times are both
+feasible, but for a large data set the first can become very slow, or even
+run out of resources.  The reason is that a
+a Cox model fit requires computation of a weighted mean and variance of
+the covariates at each event time, a process that is inherently 
+$O(ndp^2)$ where $n$ = the sample size, $d$ = the number of events and $p$=
+the number of covariates.  
+Much of the algorithmic effort in the underlying code is to use clever 
+updating methods for
+the mean and variance matrices, reducing the compute time to $O(np + d p^2)$.
+For a large data set the tt() approach can produce an intermediate data
+set with $O(nd)$ rows, however, overcoming the computation.
+For even moderate data sets the impact of $(nd)p$ vs $np$ can be surprising.
 
-There are other interesting uses for the time-transform capability. One example
-is O'Brien's logit-rank test procedure @Obrien78. He proposed replacing the
-covariate at each event time with a logit transform of its ranks.\ This removes
-the influence of any outliers in the predictor $x$. For this case we ignore the
-event time argument and concentrate on the groupings to create the following tt
-function.
+There are other interesting uses for the time-transform capability.
+One example is O'Brien's logit-rank test procedure [-@Obrien78].
+He proposed replacing the covariate at each event time with a logit
+transform of its ranks.  
+This removes the influence of any outliers in the predictor $x$.
+For this case we ignore the event time argument and concentrate on the
+groupings to create the following tt function.
 
-```{r}
+```
 function(x, t, riskset, weights){ 
     obrien <- function(x) {
         r <- rank(x)
@@ -1061,25 +1284,28 @@ function(x, t, riskset, weights){
 }
 ```
 
-This relies on the fact that the input arguments to `tt()` are ordered by the
-event number or risk set. This function is used as a default if no `tt` argument
-is present in the coxph call, but there are tt terms in the model formula.
+This relies on the fact that the input arguments to tt() are ordered by the 
+event number or risk set.
+This function is used as a default if no tt argument is present in the
+coxph call, but there are tt terms in the model formula.
 (Doing so allowed me to depreciate the survobrien function).
 
-Another interesting usage is to replace the data by simple ranks, not rescaled
-to 0--1.
+Another interesting usage is to replace the data by simple ranks, not
+rescaled to 0--1.
 
-```{r, eval=FALSE}
+```
 function(x, t, riskset, weights) 
     unlist(tapply(x, riskset, rank))
 ```
 
 The score statistic for this model is $(C-D)/2$, where $C$ and $D$ are the
-number of concordant and discordant pairs, see the concordance function. The
-score statistic from this fit is then a test for significance of the concordance
-statistic, and is in fact the basis for an approximate standard error for the
-concordance. The O'Brien test can be viewed as concordance statistic that gives
-equal weight to each event time, whereas the standard concordance weights each
+number of concordant and discordant pairs, see the
+concordance function.  
+The score statistic from this fit is then a test for significance of the
+concordance statistic, and is in fact the basis for an approximate 
+standard error for the concordance.
+The O'Brien test can be viewed as concordance statistic that gives equal  %'
+weight to each event time, whereas the standard concordance weights each
 event proportionally to the size of the risk set.
 
 # References

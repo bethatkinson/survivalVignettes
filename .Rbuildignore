@@ -5,6 +5,7 @@
 ^vignettes/sas_runbyhand\.Rnw$
 ^vignettes/external\.Rnw$
 ^vignettes/poisson.Rmd$
+^vignettes/timedep.Rnw
 ^extra_stuff$
 ^.*\.Rproj$
 ^\.Rproj\.user$

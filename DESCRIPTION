@@ -1,10 +1,10 @@
 Package: survivalVignettes
-Version: 0.3.0
-Date: 2026-03-26
+Version: 0.3.1
+Date: 2026-07-13
 Title: Survival Analysis Vignettes and Optional Datasets
 Depends: R (>= 4.4.1), survival
 Imports: graphics
-Suggests: knitr, rmarkdown, broom, survey, geepack, mstate, R.rsp, splines2, quarto
+Suggests: knitr, rmarkdown, broom, survey, geepack, mstate, R.rsp, splines, splines2, quarto
 Authors@R: c(person(c("Terry", "M"), "Therneau",
 	                  role="aut"),
  	           person("Elizabeth","Atkinson",  
@@ -18,5 +18,5 @@ Description: Vignettes for the 'survival' package. Split from the 'survival'
     recommended package it cannot make use of other packages outside of 
     base+recommended (e.g. 'rmarkdown').
 License: LGPL (>=2)
-LazyData: Yes
+LazyData: true
 VignetteBuilder: quarto
